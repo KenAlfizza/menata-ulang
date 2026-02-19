@@ -8,7 +8,9 @@
     "npm:dotenv@^17.3.1": "17.3.1",
     "npm:hono@*": "4.11.10",
     "npm:hono@^4.11.10": "4.11.10",
-    "npm:prisma@*": "7.4.0"
+    "npm:pg@^8.18.0": "8.18.0",
+    "npm:prisma@*": "7.4.0",
+    "npm:prisma@^7.4.0": "7.4.0"
   },
   "jsr": {
     "@std/assert@1.0.18": {
@@ -600,6 +602,7 @@
       "npm:@prisma/client@^7.4.0",
       "npm:dotenv@^17.3.1",
       "npm:hono@^4.11.10",
+      "npm:pg@^8.18.0",
       "npm:prisma@^7.4.0"
     ]
   }
