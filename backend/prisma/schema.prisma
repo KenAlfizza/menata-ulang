@@ -11,3 +11,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model AuthToken {
+  id          Int       @id @default(autoincrement())
+  loginToken  String?   @unique
+  resetToken  String?   @unique
+  createdAt   DateTime  @default(now())
+}
