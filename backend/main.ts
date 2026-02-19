@@ -1,25 +1,8 @@
-import { serveDir } from "@std/http";
+import { Hono } from "npm:hono";
 
-const userPagePattern = new URLPattern({ pathname: "/users/:id" });
-const staticPathPattern = new URLPattern({ pathname: "/static/*" });
+const app = new Hono();
 
-export default {
-  fetch(req) {
-    const url = new URL(req.url);
+app.get("/", (c) => c.text("Hello World!"));
+app.get("/json", (c) => c.json({ ok: true }));
 
-    if (url.pathname === "/") {
-      return new Response("Home page");
-    }
-
-    const userPageMatch = userPagePattern.exec(url);
-    if (userPageMatch) {
-      return new Response(userPageMatch.pathname.groups.id);
-    }
-
-    if (staticPathPattern.test(url)) {
-      return serveDir(req);
-    }
-
-    return new Response("Not found", { status: 404 });
-  },
-} satisfies Deno.ServeDefaultExport;
+export default app;
