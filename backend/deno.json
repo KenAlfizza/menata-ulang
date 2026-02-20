@@ -12,6 +12,7 @@
     "dotenv": "npm:dotenv@^17.3.1",
     "hono": "npm:hono@^4.11.10",
     "hono/cookie": "npm:hono/cookie",
+    "hono/factory": "npm:hono/factory",
     "pg": "npm:pg@^8.18.0",
     "prisma": "npm:prisma@^7.4.0",
     "jose": "npm:jose@^6.1.3"
