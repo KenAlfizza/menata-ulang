@@ -1,6 +1,9 @@
 import { createMiddleware } from 'hono/factory';
 import { verifyToken } from "../lib/jwt.ts";
 
+/**
+ * Authentication middleware to verify user
+ */
 export const authMiddleware = createMiddleware(async (c, next) => {
     // Get the auth header
     const authHeader = c.req.header("Authorization");
