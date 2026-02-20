@@ -37,13 +37,14 @@ auth.post("/register", async (c) => {
     });
 
     // Return status
-    return c.json({ message: "Account created", ok: true }, 201);
+    return c.json({ message: "Registration successful", ok: true }, 201);
 })
 
 /** Login endpoint 
  * Verify user information
  * On success, generate access token and refresh token.
- * On failure, return 404 if the account not found, 402 if unauthorized 
+ * Note: access token is in auth header and refresh token is in secure cookie
+ * On failure, return 404 if the account not found, 401 if unauthorized 
 */
 auth.post("/login", async (c) => {
     const { email, password } = await c.req.json();
@@ -76,14 +77,6 @@ auth.post("/login", async (c) => {
     });
 
     // Set cookie
-    setCookie(c, "access_token", accessToken, {
-        httpOnly: true,
-        secure: Deno.env.get("DENO_ENV") === "production",
-        sameSite: "Lax",
-        maxAge: 60 * 15, // 15 min
-        path: "/",
-    });
-
     setCookie(c, "refresh_token", refreshToken, {
         httpOnly: true,
         secure: Deno.env.get("DENO_ENV") === "production",
@@ -91,13 +84,18 @@ auth.post("/login", async (c) => {
         maxAge: 60 * 60 * 24 * 30, // 30 days
         path: "/auth/refresh",
     });
-    return c.json({ message: "Login successfull", ok: true }, 200);
+
+    // Access token in response body used in auth header
+    return c.json({ 
+        message: "Login successful", 
+        ok: true,
+        token: accessToken
+    }, 200);
 });
 
 /** Refresh token endpoint 
  * If the user is active at any point under 15 minute window since the access token is issued, 
  * regenerate new access token and record the date. Otherwise, logout the user and remove the access token
- * 
 */
 auth.post("/refresh", async (c) => {
     const refreshToken = getCookie(c, "refresh_token");
@@ -107,8 +105,7 @@ auth.post("/refresh", async (c) => {
     const storedRefreshToken = await prisma.token.findUnique({where: {token: refreshToken}});
     if (!storedRefreshToken || storedRefreshToken.expiresAt < new Date()) {
         await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "access_token");
-        deleteCookie(c, "refresh_token");
+        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
         return c.json({ error: "Session expired, please login again" }, 401);
     }
 
@@ -116,8 +113,7 @@ auth.post("/refresh", async (c) => {
     const idleTimeout = 15 * 60 * 1000;
     if (Date.now() - storedRefreshToken.lastAccessTokenAt.getTime() > idleTimeout) {
         await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "access_token");
-        deleteCookie(c, "refresh_token");
+        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
         return c.json({ error: "Session expired due to inactivity" }, 401);
     }
 
@@ -137,29 +133,29 @@ auth.post("/refresh", async (c) => {
             where: { token: refreshToken },
             data: { lastAccessTokenAt: new Date() },
         });
-
-        // Set cookie with new access token
-        setCookie(c, "access_token", accessToken, {
-            httpOnly: true,
-            secure: Deno.env.get("DENO_ENV") === "production",
-            sameSite: "Lax",
-            maxAge: 60 * 15,
-            path: "/",
-        });
+        // return new access token
+        return c.json({ ok: true, token: accessToken });
 
     } catch {
         await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "access_token");
-        deleteCookie(c, "refresh_token");
+        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
         return c.json({ error: "Invalid token, please login again" }, 401);
     }
-    return c.json({ ok: true });
 });
 
-/** Logout endpoint */
-auth.post("/logout", (c) => {
-  setCookie(c, "token", "", { maxAge: 0, path: "/" });
-  return c.json({ ok: true });
+/** Logout endpoint 
+ * Remove refresh token and clear cookie
+*/
+auth.post("/logout", async (c) => {
+    const refreshToken = getCookie(c, "refresh_token");
+
+    // Remove refresh token
+    if (refreshToken) {
+        await prisma.token.deleteMany({where : {token: refreshToken}}); 
+    }
+
+    deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
+    return c.json({ message: "Logout sucessfull", ok: true });
 });
 
 export default auth;
