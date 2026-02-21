@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 const secret = new TextEncoder().encode(Deno.env.get("JWT_SECRET"));
 const alg = 'HS256';

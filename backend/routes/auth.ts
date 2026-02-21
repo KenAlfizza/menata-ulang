@@ -1,11 +1,13 @@
-import { Hono } from 'hono';
+import { Hono } from "hono";
 import { prisma } from "../lib/prisma.ts";
 
-import { setCookie, getCookie, deleteCookie} from 'hono/cookie'
+import { setCookie, getCookie, deleteCookie} from "hono/cookie";
 
 // Library imports
 import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt.ts";
-import { hashPassword, comparePassword } from '../lib/hash.ts';
+import { hashPassword, comparePassword } from "../lib/hash.ts";
+import { generateResetToken } from "../lib/resetToken.ts";
+import { sendPasswordResetEmail } from "../lib/mail.ts";
 
 const auth = new Hono();
 
@@ -149,13 +151,49 @@ auth.post("/refresh", async (c) => {
 auth.post("/logout", async (c) => {
     const refreshToken = getCookie(c, "refresh_token");
 
-    // Remove refresh token
+    // Remove refresh token from db
     if (refreshToken) {
         await prisma.token.deleteMany({where : {token: refreshToken}}); 
     }
-
+    // Remove refresh token form cookie
     deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
     return c.json({ message: "Logout sucessfull", ok: true });
 });
+
+/** Forgot password endpoint
+ * Allows the user to reset password when the user forgets them
+ * Generate reset token and send email to user
+ */
+auth.post("/forgot-password", async (c) => {
+    const { email } = await c.req.json();
+    
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: {email: email}});
+    
+    // Always return success even if user not found to prevent email enumeration
+    if (!user) return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
+    
+    // Delete any existing reset token
+    await prisma.token.deleteMany(
+        {where: {userId: user.id, type: "RESET"}}
+    )
+
+    // Generate new reset token and store in DB
+    const resetToken = generateResetToken();
+    await prisma.token.create({
+        data: {
+            token: resetToken,
+            type: "RESET",
+            userId: user.id,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        }
+    });
+
+    // Send email to user
+    await sendPasswordResetEmail(user.email, resetToken);
+    // Return success
+    return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
+});
+
 
 export default auth;
