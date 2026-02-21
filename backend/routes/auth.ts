@@ -8,6 +8,7 @@ import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt.ts";
 import { hashPassword, comparePassword } from "../lib/hash.ts";
 import { generateResetToken } from "../lib/resetToken.ts";
 import { sendPasswordResetEmail } from "../lib/mail.ts";
+import { userInfo } from "node:os";
 
 const auth = new Hono();
 
@@ -176,7 +177,7 @@ auth.post("/forgot-password", async (c) => {
     // Delete any existing reset token
     await prisma.token.deleteMany(
         {where: {userId: user.id, type: "RESET"}}
-    )
+    );
 
     // Generate new reset token and store in DB
     const resetToken = generateResetToken();
@@ -194,6 +195,48 @@ auth.post("/forgot-password", async (c) => {
     // Return success
     return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
 });
+
+/** Reset password endpoint 
+ * Verify reset token and update password
+*/
+auth.post("/reset-password", async (c) => {
+    const { token, password } = await c.req.json();
+
+    if (!token || !password) {
+        return c.json({ error: "Missing required fields"}, 400);
+    }
+
+    // Verify token
+    const storedToken = await prisma.token.findUnique({ where: { token }});
+    if (!storedToken || storedToken.type !== "RESET" || storedToken.expiresAt < new Date()) {
+        // Delete if expired
+        if (storedToken) await prisma.token.delete({where: { token }});
+        return c.json({ error: "Invalid or expired reset token" }, 401);
+    } 
+
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+
+    // Update password, delete reset and refresh token
+    await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+            where: { id : storedToken.userId },
+            data : { password: hashedPassword},
+        });
+
+        await tx.token.delete({ where: { token }});
+
+        await tx.token.deleteMany({ 
+            where: {
+                userId: storedToken.userId,
+                type: "REFRESH",
+            }
+        });
+    });
+
+    return c.json({ message: "Password reset successful, please login again" }, 200);
+});
+
 
 
 export default auth;
