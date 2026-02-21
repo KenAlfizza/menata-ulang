@@ -8,7 +8,6 @@ import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt.ts";
 import { hashPassword, comparePassword } from "../lib/hash.ts";
 import { generateResetToken } from "../lib/resetToken.ts";
 import { sendPasswordResetEmail } from "../lib/mail.ts";
-import { userInfo } from "node:os";
 
 const auth = new Hono();
 
@@ -198,6 +197,7 @@ auth.post("/forgot-password", async (c) => {
 
 /** Reset password endpoint 
  * Verify reset token and update password
+ * Delete reset token and refresh token so user logged out from all devices
 */
 auth.post("/reset-password", async (c) => {
     const { token, password } = await c.req.json();
@@ -236,7 +236,5 @@ auth.post("/reset-password", async (c) => {
 
     return c.json({ message: "Password reset successful, please login again" }, 200);
 });
-
-
 
 export default auth;
