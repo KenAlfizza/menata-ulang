@@ -31,7 +31,9 @@ user.get("/me", authMiddleware, async (c) => {
 /** Retrieve user details endpoint from id
  * Superuser only
 */
-user.get("/:id", authMiddleware, async (c) => {
+user.get("/:id", authMiddleware,
+    validate("param", paramsSchema), 
+    async (c) => {
     // Priviledge check
     const { role } = c.get("user");
     if (role != "SUPERUSER") return c.json({ error: "Unauthorized" }, 401);
@@ -78,7 +80,9 @@ user.patch("/me", authMiddleware,
     }
 });
 
-/** Update the current user details */
+/** Update user details with specified id 
+ * Superuser only
+*/
 user.patch("/:id", authMiddleware,
     validate("param", paramsSchema),
     validate("json", updateUserSchema),
