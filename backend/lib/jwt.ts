@@ -26,5 +26,5 @@ export const signRefreshToken = async (payload: TokenPayload) => {
 
 export const verifyToken = async (token: string) => {
   const { payload } = await jwtVerify(token, secret);
-  return payload;
+  return payload as TokenPayload;
 };

@@ -1,9 +1,8 @@
 import { Hono } from "hono";
-import { prisma } from "../lib/prisma.ts";
-
 import { setCookie, getCookie, deleteCookie} from "hono/cookie";
 
 // Library imports
+import { prisma } from "../lib/prisma.ts";
 import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt.ts";
 import { hashPassword, comparePassword } from "../lib/hash.ts";
 import { generateResetToken } from "../lib/resetToken.ts";

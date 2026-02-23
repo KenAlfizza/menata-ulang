@@ -1,10 +1,11 @@
 import { createMiddleware } from 'hono/factory';
 import { verifyToken } from "../lib/jwt.ts";
+import type { AppVariables } from "../types.ts";
 
 /**
  * Authentication middleware to verify user
  */
-export const authMiddleware = createMiddleware(async (c, next) => {
+export const authMiddleware = createMiddleware<{ Variables: AppVariables }>(async (c, next) => {
     // Get the auth header
     const authHeader = c.req.header("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -16,7 +17,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     try {
         // Verify the token
         const payload = await verifyToken(token);
-        // Set user to containt he payload
+        // Set user to containt the payload
         c.set("user", payload);
         // Move to the next task
         await next();
