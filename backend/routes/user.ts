@@ -18,14 +18,18 @@ user.get("/me", authMiddleware, async (c) => {
     // Get user id from access token
     const { id } = c.get("user");
     // Get the current user from prisma
-    const user = await prisma.user.findUnique({ 
-        where: { id }, 
-        omit: { id: true, password: true}
-    });
-    if (!user) return c.json({ error: "Unable to retrieve profile"}, 404);
+    try {
+        const user = await prisma.user.findUnique({ 
+            where: { id }, 
+            omit: { id: true, password: true}
+        });
+        if (!user) return c.json({ error: "Unable to retrieve profile"}, 404);
 
-    // Return profile
-    return c.json({ message: "Profile loaded", ok: true, user }, 200);
+        // Return profile
+        return c.json({ message: "Profile loaded", ok: true, user }, 200);
+    } catch {
+        return c.json({ error: 'Internal server error' }, 500);
+    }
 });
 
 /** Retrieve user details endpoint from id
@@ -43,14 +47,18 @@ user.get("/:id", authMiddleware,
     if (isNaN(id)) return c.json({ error: "Invalid id"}, 400);
 
     // Get the user from prisma
-    const user = await prisma.user.findUnique({ 
-        where: { id }, 
-        omit: { id: true, password: true }
-    });
-    if (!user) return c.json({ error: "User not found"}, 404);
+    try {
+        const user = await prisma.user.findUnique({ 
+            where: { id }, 
+            omit: { id: true, password: true }
+        });
+        if (!user) return c.json({ error: "User not found"}, 404);
 
-    // Return user
-    return c.json({ ok: true, user }, 200);
+        // Return user
+        return c.json({ ok: true, user }, 200);
+    } catch {
+        return c.json({ error: 'Internal server error' }, 500);
+    }
 
 });
 
