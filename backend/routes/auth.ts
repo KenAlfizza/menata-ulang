@@ -2,43 +2,50 @@ import { Hono } from "hono";
 import { setCookie, getCookie, deleteCookie} from "hono/cookie";
 
 // Library imports
-import { prisma } from "../lib/prisma.ts";
+import { prisma, Prisma } from "../lib/prisma.ts";
 import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt.ts";
 import { hashPassword, comparePassword } from "../lib/hash.ts";
 import { generateResetToken } from "../lib/resetToken.ts";
 import { sendPasswordResetEmail } from "../lib/mail.ts";
 
+import { validate } from "../lib/validators/index.ts";
+import { forgotSchema, loginSchema, registerSchema, resetSchema } from "../lib/validators/auth.ts";
+
 const auth = new Hono();
 
 /** Register endpoint */
-auth.post("/register", async (c) => {
-    const { email, password, name } = await c.req.json();
-    // Check if any fields missing
-    if (!email || !password || !name) {
-        return c.json({ error: "Missing required fields" }, 400);
-    }
-
-    // Check if user exists, return 409 if user exists
-    const user = await prisma.user.findFirst({
-        where: {email: email}
-    });
-    if (user) return c.json({ error: "Account with specified email exists" }, 409);
+auth.post("/register", 
+    validate("json", registerSchema),
+    async (c) => {
+    const { email, password, name } = c.req.valid("json");
 
     // Encrypt password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
-    await prisma.user.create({
-        data: {
-            email,
-            name,
-            password: hashedPassword,
-            role: "USER",
-        },
-    });
+    try {
+        // Create user
+        await prisma.user.create({
+            data: {
+                email,
+                name,
+                password: hashedPassword,
+                role: "USER",
+            },
+        });
 
-    // Return status
-    return c.json({ message: "Registration successful", ok: true }, 201);
+        // Return status
+        return c.json({ message: "Registration successful", ok: true }, 201);
+    } catch (error) {
+        // If account with email exists return 409
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            return c.json({ error: "Account with specified email exists" }, 409);
+        }
+
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+        return c.json({ error: 'Failed to process request' }, 500);
+    }
 })
 
 /** Login endpoint 
@@ -47,51 +54,62 @@ auth.post("/register", async (c) => {
  * Note: access token is in auth header and refresh token is in secure cookie
  * On failure, return 404 if the account not found, 401 if unauthorized 
 */
-auth.post("/login", async (c) => {
-    const { email, password } = await c.req.json();
+auth.post("/login", 
+    validate("json", loginSchema),
+    async (c) => {
+    const { email, password } = c.req.valid("json");
     
     // Get user with specified email
-    const user = await prisma.user.findUnique({
-        where: {email: email}
-    })
-    // Return 404 if account is not found
-    if (!user) return c.json({ error: "Account not found" }, 404);
+    try {
+        const user = await prisma.user.findUnique({
+            where: {email}
+        });
+        // Return 404 if account is not found
+        if (!user) return c.json({ error: "Account not found" }, 404);
 
-    // Verify password
-    const verified = await comparePassword(password, user.password);
-    if (!verified) return c.json({ error: "Invalid credentials" }, 401);
-    
-    // Create access and refresh token
-    const payload = { id: user.id, email: user.email, role: user.role };
-    const accessToken = await signAccessToken(payload);
-    const refreshToken = await signRefreshToken(payload);
+        // Verify password
+        const verified = await comparePassword(password, user.password);
+        if (!verified) return c.json({ error: "Invalid credentials" }, 401);
+        
+        // Create access and refresh token
+        const payload = { id: user.id, email: user.email, role: user.role };
+        const accessToken = await signAccessToken(payload);
+        const refreshToken = await signRefreshToken(payload);
 
-    // Store refresh token in DB
-    await prisma.token.create({
-            data: {
-            token: refreshToken,
-            type: "REFRESH",
-            userId: user.id,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-            lastAccessTokenAt: new Date()
-        },
-    });
+        // Store refresh token in DB
+        await prisma.token.create({
+                data: {
+                token: refreshToken,
+                type: "REFRESH",
+                userId: user.id,
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                lastAccessTokenAt: new Date()
+            },
+        });
 
-    // Set cookie
-    setCookie(c, "refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: Deno.env.get("DENO_ENV") === "production",
-        sameSite: "Lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: "/auth/refresh",
-    });
+        // Set cookie
+        setCookie(c, "refresh_token", refreshToken, {
+            httpOnly: true,
+            secure: Deno.env.get("DENO_ENV") === "production",
+            sameSite: "Lax",
+            maxAge: 60 * 60 * 24 * 30, // 30 days
+            path: "/",
+        });
 
-    // Access token in response body used in auth header
-    return c.json({ 
-        message: "Login successful", 
-        ok: true,
-        token: accessToken
-    }, 200);
+        // Access token in response body used in auth header
+        return c.json({ 
+            message: "Login successful", 
+            ok: true,
+            token: accessToken
+        }, 200);
+
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+        return c.json({ error: 'Failed to process request' }, 500);
+    }
+
 });
 
 /** Refresh token endpoint 
@@ -101,27 +119,27 @@ auth.post("/login", async (c) => {
 auth.post("/refresh", async (c) => {
     const refreshToken = getCookie(c, "refresh_token");
     if (!refreshToken) return c.json({ error: "Unauthorized" }, 401);
-    
-    // If refresh token expired or not found, force logout
-    const storedRefreshToken = await prisma.token.findUnique({where: {token: refreshToken}});
-    if (!storedRefreshToken || storedRefreshToken.expiresAt < new Date()) {
-        await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
-        return c.json({ error: "Session expired, please login again" }, 401);
-    }
 
-    // 15 minute idle timeout check
-    const idleTimeout = 15 * 60 * 1000;
-    if (Date.now() - storedRefreshToken.lastAccessTokenAt.getTime() > idleTimeout) {
-        await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
-        return c.json({ error: "Session expired due to inactivity" }, 401);
-    }
-
-    // Verify JWT
     try {
+        // If refresh token expired or not found, force logout
+        const storedRefreshToken = await prisma.token.findUnique({ where: { token: refreshToken } });
+        if (!storedRefreshToken || storedRefreshToken.expiresAt < new Date()) {
+            await prisma.token.deleteMany({ where: { token: refreshToken } });
+            deleteCookie(c, "refresh_token", { path: "/" });
+            return c.json({ error: "Session expired, please login again" }, 401);
+        }
+
+        // 15 minute idle timeout check
+        const idleTimeout = 15 * 60 * 1000;
+        if (Date.now() - storedRefreshToken.lastAccessTokenAt.getTime() > idleTimeout) {
+            await prisma.token.deleteMany({ where: { token: refreshToken } });
+            deleteCookie(c, "refresh_token", { path: "/" });
+            return c.json({ error: "Session expired due to inactivity" }, 401);
+        }
+
         // Get the payload from refresh token
         const payload = await verifyToken(refreshToken);
+
         // Generate new access token
         const accessToken = await signAccessToken({
             id: payload.id as number,
@@ -134,12 +152,17 @@ auth.post("/refresh", async (c) => {
             where: { token: refreshToken },
             data: { lastAccessTokenAt: new Date() },
         });
-        // return new access token
+
         return c.json({ ok: true, token: accessToken });
 
-    } catch {
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+
+        // JWT error
         await prisma.token.deleteMany({ where: { token: refreshToken } });
-        deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
+        deleteCookie(c, "refresh_token", { path: "/" });
         return c.json({ error: "Invalid token, please login again" }, 401);
     }
 });
@@ -152,88 +175,107 @@ auth.post("/logout", async (c) => {
 
     // Remove refresh token from db
     if (refreshToken) {
-        await prisma.token.deleteMany({where : {token: refreshToken}}); 
+        try {
+            await prisma.token.deleteMany({where : {token: refreshToken}}); 
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                deleteCookie(c, "refresh_token", { path: "/" });
+                return c.json({ error: "Internal server error" }, 500);
+            }
+        }
     }
     // Remove refresh token form cookie
     deleteCookie(c, "refresh_token", { path: "/auth/refresh" });
-    return c.json({ message: "Logout sucessfull", ok: true });
+    return c.json({ message: "Logout successful", ok: true });
 });
 
 /** Forgot password endpoint
  * Allows the user to reset password when the user forgets them
  * Generate reset token and send email to user
  */
-auth.post("/forgot-password", async (c) => {
-    const { email } = await c.req.json();
+auth.post("/forgot-password", validate("json", forgotSchema), async (c) => {
+    const { email } = c.req.valid("json");
     
-    // Check if user exists
-    const user = await prisma.user.findUnique({ where: {email: email}});
-    
-    // Always return success even if user not found to prevent email enumeration
-    if (!user) return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
-    
-    // Delete any existing reset token
-    await prisma.token.deleteMany(
-        {where: {userId: user.id, type: "RESET"}}
-    );
+    try {
+        // Check if user exists
+        const user = await prisma.user.findUnique({ where: {email: email}});
+        
+        // Always return success even if user not found to prevent email enumeration
+        if (!user) return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
+        
+        // Delete any existing reset token
+        await prisma.token.deleteMany(
+            {where: {userId: user.id, type: "RESET"}}
+        );
 
-    // Generate new reset token and store in DB
-    const resetToken = generateResetToken();
-    await prisma.token.create({
-        data: {
-            token: resetToken,
-            type: "RESET",
-            userId: user.id,
-            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        // Generate new reset token and store in DB
+        const resetToken = generateResetToken();
+        await prisma.token.create({
+            data: {
+                token: resetToken,
+                type: "RESET",
+                userId: user.id,
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+            }
+        });
+
+        // Send email to user
+        await sendPasswordResetEmail(user.email, resetToken);
+        // Return success
+        return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
+
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Internal server error" }, 500);
         }
-    });
-
-    // Send email to user
-    await sendPasswordResetEmail(user.email, resetToken);
-    // Return success
-    return c.json({ message: "If that email exists, a reset link has been sent" }, 200);
+        return c.json({ error: "Failed to process request" }, 500);
+    }
 });
 
 /** Reset password endpoint 
  * Verify reset token and update password
  * Delete reset token and refresh token so user logged out from all devices
 */
-auth.post("/reset-password", async (c) => {
-    const { token, password } = await c.req.json();
+auth.post("/reset-password", validate("json", resetSchema), async (c) => {
+    const { token, password } = c.req.valid("json");
 
-    if (!token || !password) {
-        return c.json({ error: "Missing required fields"}, 400);
+    try {
+        // Verify token
+        const storedToken = await prisma.token.findUnique({ where: { token } });
+
+        if (!storedToken || storedToken.type !== "RESET" || storedToken.expiresAt < new Date()) {
+            if (storedToken) await prisma.token.delete({ where: { token } });
+            return c.json({ error: "Invalid or expired reset token" }, 401);
+        }
+
+        // Hash password
+        const hashedPassword = await hashPassword(password);
+
+        // Update password, delete reset and refresh tokens
+        await prisma.$transaction(async (tx) => {
+            await tx.user.update({
+                where: { id: storedToken.userId },
+                data: { password: hashedPassword },
+            });
+
+            await tx.token.delete({ where: { token } });
+
+            await tx.token.deleteMany({
+                where: {
+                    userId: storedToken.userId,
+                    type: "REFRESH",
+                }
+            });
+        });
+        // Return success
+        return c.json({ message: "Password reset successful, please login again" }, 200);
+
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+        return c.json({ error: "Failed to reset password" }, 500);
     }
-
-    // Verify token
-    const storedToken = await prisma.token.findUnique({ where: { token }});
-    if (!storedToken || storedToken.type !== "RESET" || storedToken.expiresAt < new Date()) {
-        // Delete if expired
-        if (storedToken) await prisma.token.delete({where: { token }});
-        return c.json({ error: "Invalid or expired reset token" }, 401);
-    } 
-
-    // Hash password
-    const hashedPassword = await hashPassword(password);
-
-    // Update password, delete reset and refresh token
-    await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-            where: { id : storedToken.userId },
-            data : { password: hashedPassword},
-        });
-
-        await tx.token.delete({ where: { token }});
-
-        await tx.token.deleteMany({ 
-            where: {
-                userId: storedToken.userId,
-                type: "REFRESH",
-            }
-        });
-    });
-
-    return c.json({ message: "Password reset successful, please login again" }, 200);
 });
 
 export default auth;

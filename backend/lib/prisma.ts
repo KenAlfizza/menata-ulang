@@ -1,5 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client.ts";
+import { PrismaClient, Prisma } from "../generated/prisma/client.ts";
+
+export { Prisma };
 
 declare global {
   var prisma: PrismaClient | undefined;
