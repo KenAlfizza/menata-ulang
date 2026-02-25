@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno serve --watch --allow-net --allow-env --allow-read --allow-write --allow-sys --allow-ffi --env -R main.ts",
+    "dev": "deno serve --watch --allow-net=localhost:8000,localhost:5432 --allow-read=. --allow-env=PORT,DB_URL,JWT_SECRET,NODE_DISABLE_COLORS,TERM,USERNAME --allow-sys=hostname,networkInterfaces --env -R main.ts",
     "test": "deno test --allow-net",
     "prisma": "deno run -A npm:prisma"
   },
@@ -9,7 +9,7 @@
     "@prisma/adapter-pg": "npm:@prisma/adapter-pg@^7.4.0",
     "@prisma/client": "npm:@prisma/client@^7.4.0",
     "@std/assert": "jsr:@std/assert@^1.0.18",
-    "bcrypt": "npm:bcrypt@^6.0.0",
+    "bcryptjs": "npm:bcryptjs@^3.0.3",
     "dotenv": "npm:dotenv@^17.3.1",
     "hono": "npm:hono@^4.11.10",
     "hono/cookie": "npm:hono/cookie",
@@ -23,6 +23,5 @@
   "nodeModulesDir": "auto",
   "allowScripts": {
     "allow": ["npm:@prisma/engines@7.4.0", "npm:prisma@7.4.0"],
-    "deny": ["npm:bcrypt@6.0.0"]
   }
 }

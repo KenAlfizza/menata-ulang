@@ -6,7 +6,7 @@
     "npm:@hono/zod-validator@~0.7.6": "0.7.6_hono@4.11.10_zod@4.3.6",
     "npm:@prisma/adapter-pg@^7.4.0": "7.4.0",
     "npm:@prisma/client@^7.4.0": "7.4.0_prisma@7.4.0",
-    "npm:bcrypt@6": "6.0.0",
+    "npm:bcryptjs@^3.0.3": "3.0.3",
     "npm:dotenv@^17.3.1": "17.3.1",
     "npm:hono@*": "4.11.10",
     "npm:hono@^4.11.10": "4.11.10",
@@ -207,13 +207,9 @@
     "aws-ssl-profiles@1.1.2": {
       "integrity": "sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g=="
     },
-    "bcrypt@6.0.0": {
-      "integrity": "sha512-cU8v/EGSrnH+HnxV2z0J7/blxH8gq7Xh2JFT6Aroax7UohdmiJJlxApMxtKfuI7z68NvvVcmR78k2LbT6efhRg==",
-      "dependencies": [
-        "node-addon-api",
-        "node-gyp-build"
-      ],
-      "scripts": true
+    "bcryptjs@3.0.3": {
+      "integrity": "sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==",
+      "bin": true
     },
     "c12@3.1.0": {
       "integrity": "sha512-uWoS8OU1MEIsOv8p/5a82c3H31LsWVR5qiyXVfBNOzfffjUWtPnhAb4BYI2uG2HfGmZmFjCtui5XNWaps+iFuw==",
@@ -409,15 +405,8 @@
         "lru.min"
       ]
     },
-    "node-addon-api@8.5.0": {
-      "integrity": "sha512-/bRZty2mXUIFY/xU5HLvveNHlswNJej+RnxBjOMkidWfwZzgTbPG1E3K5TOxRLOR+5hX7bSofy8yf1hZevMS8A=="
-    },
     "node-fetch-native@1.6.7": {
       "integrity": "sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q=="
-    },
-    "node-gyp-build@4.8.4": {
-      "integrity": "sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==",
-      "bin": true
     },
     "nodemailer@8.0.1": {
       "integrity": "sha512-5kcldIXmaEjZcHR6F28IKGSgpmZHaF1IXLWFTG+Xh3S+Cce4MiakLtWY+PlBU69fLbRa8HlaGIrC/QolUpHkhg=="
@@ -638,7 +627,7 @@
       "npm:@hono/zod-validator@~0.7.6",
       "npm:@prisma/adapter-pg@^7.4.0",
       "npm:@prisma/client@^7.4.0",
-      "npm:bcrypt@6",
+      "npm:bcryptjs@^3.0.3",
       "npm:dotenv@^17.3.1",
       "npm:hono@*",
       "npm:hono@^4.11.10",
