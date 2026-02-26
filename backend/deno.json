@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno serve --watch --allow-net=localhost:8000,localhost:5432 --allow-read=. --allow-env=PORT,DB_URL,JWT_SECRET,NODE_DISABLE_COLORS,TERM,USERNAME --allow-sys=hostname,networkInterfaces --env -R main.ts",
+    "dev": "deno serve --watch --allow-net=localhost:8000,localhost:5432 --allow-read --allow-env --allow-sys=hostname,networkInterfaces --env -R main.ts",
     "test": "deno test --allow-net",
     "prisma": "deno run -A npm:prisma"
   },

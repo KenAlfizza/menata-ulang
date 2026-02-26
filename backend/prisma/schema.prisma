@@ -37,6 +37,7 @@ model User {
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   tokens    Token[]
+  deletedAt DateTime?
 }
 
 enum UserRole {
