@@ -6,13 +6,10 @@ import { Prisma, prisma } from "../lib/prisma.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 
 // Validators
-import { z } from "zod";
 import { validate } from "../lib/validators/index.ts";
 import { paramsSchema, updateUserSchema} from "../lib/validators/user.ts";
-import { error } from "node:console";
 
 const user = new Hono<{ Variables: AppVariables }>();
-
 
 /** Retrieve the current user details */
 user.get("/me", authMiddleware, async (c) => {

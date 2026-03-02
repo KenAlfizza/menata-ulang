@@ -13,6 +13,24 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  tokens    Token[]
+  stories   Story[]
+  deletedAt DateTime?
+}
+
+enum UserRole {
+  SUPERUSER
+  AUTHOR
+  USER
+}
+
 model Token {
   id                  Int       @id @default(autoincrement())
   token               String    @unique
@@ -29,19 +47,16 @@ enum TokenType {
   RESET
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  tokens    Token[]
-  deletedAt DateTime?
-}
-
-enum UserRole {
-  SUPERUSER
-  AUTHOR
-  USER
+model Story {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  text        String
+  createdAt   DateTime  @default(now())
+  author      User      @relation(fields: [authorId], references: [id])
+  imageUrl    String    @default("")
+  published   Boolean   @default(false)
+  publishedAt DateTime?  
+  // researchId
+  // reflectionId
 }
