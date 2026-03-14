@@ -236,7 +236,9 @@ story.patch("/:id",
         } catch (error) {
             // Cleanup newly uploaded image if DB update failed
             if (newImageUrl) {
-                try { await storage.delete(newImageUrl); } catch {}
+                try { await storage.delete(newImageUrl); } catch {
+                    return c.json({ error: "Internal server error" }, 500);
+                }
             }
             console.error("Update Error:", error);
             return c.json({ error: "Internal server error" }, 500);
