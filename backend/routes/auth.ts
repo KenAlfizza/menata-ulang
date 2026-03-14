@@ -13,7 +13,20 @@ import { forgotSchema, loginSchema, registerSchema, resetSchema } from "../lib/v
 
 const auth = new Hono();
 
-/** Register endpoint */
+/**
+ * POST /register - Register new account
+ *
+ * Middleware: `authMiddleware`, `validate("json", registerSchema)`.
+ * Authorization: users with role `AUTHOR` or `SUPERUSER` may create stories.
+ *
+ * Accepted form fields: `email`, `password`, `email`.
+ * Behavior: register a new account and error if account already exists
+ *
+ * Responses:
+ * - 201: regsitration successful
+ * - 409: account already exists
+ * - 500: internal server error
+ */
 auth.post("/register", 
     validate("json", registerSchema),
     async (c) => {
@@ -46,14 +59,26 @@ auth.post("/register",
         }
         return c.json({ error: 'Failed to process request' }, 500);
     }
-})
+});
 
-/** Login endpoint 
- * Verify user information
+/**
+ * POST /login - Login a user
+ *
+ * Middleware: `validate("json", loginSchema)`.
+ * Authorization: None.
+ *
+ * Accepted form fields: `email`, `password`.
+ * Behavior: Verify user information
  * On success, generate access token and refresh token.
  * Note: access token is in auth header and refresh token is in secure cookie
  * On failure, return 404 if the account not found, 401 if unauthorized 
-*/
+ *
+ * Responses:
+ * - 200: login successful
+ * - 404: account not found
+ * - 401: invalid credentials
+ * - 500: internal server error
+ */
 auth.post("/login", 
     validate("json", loginSchema),
     async (c) => {
@@ -112,10 +137,25 @@ auth.post("/login",
 
 });
 
-/** Refresh token endpoint 
- * If the user is active at any point under 15 minute window since the access token is issued, 
- * regenerate new access token and record the date. Otherwise, logout the user and remove the access token
-*/
+/**
+ * POST /refresh - Refresh an access token
+ *
+ * Middleware: None.
+ * Authorization: Requires valid refresh token in secure cookie `refresh_token`.
+ *
+ * Accepted form fields: None.
+ * Behavior: Validate the refresh token stored in the secure cookie.
+ * If the refresh token exists, is not expired, and the user has been active
+ * within the 15 minute idle window since the last access token was issued,
+ * generate and return a new access token and update the last activity timestamp.
+ * If the refresh token is expired, invalid, or the idle timeout has been exceeded,
+ * delete the refresh token, clear the cookie, and force the user to login again.
+ *
+ * Responses:
+ * - 200: access token refreshed successfully
+ * - 401: unauthorized, invalid token, expired session, or inactivity timeout
+ * - 500: internal server error
+ */
 auth.post("/refresh", async (c) => {
     const refreshToken = getCookie(c, "refresh_token");
     if (!refreshToken) return c.json({ error: "Unauthorized" }, 401);
@@ -167,9 +207,23 @@ auth.post("/refresh", async (c) => {
     }
 });
 
-/** Logout endpoint 
- * Remove refresh token and clear cookie
-*/
+/**
+ * POST /logout - Logout a user
+ *
+ * Middleware: None.
+ * Authorization: Requires refresh token in secure cookie `refresh_token`.
+ *
+ * Accepted form fields: None.
+ * Behavior: Retrieve the refresh token from the secure cookie and remove the
+ * corresponding token record from the database. The refresh token cookie is
+ * then cleared so it can no longer be used to generate new access tokens.
+ * If the token does not exist, the endpoint still clears the cookie and
+ * returns a successful logout response.
+ *
+ * Responses:
+ * - 200: logout successful
+ * - 500: internal server error
+ */
 auth.post("/logout", async (c) => {
     const refreshToken = getCookie(c, "refresh_token");
 
@@ -189,9 +243,23 @@ auth.post("/logout", async (c) => {
     return c.json({ message: "Logout successful", ok: true });
 });
 
-/** Forgot password endpoint
- * Allows the user to reset password when the user forgets them
- * Generate reset token and send email to user
+/**
+ * POST /forgot-password - Request a password reset
+ *
+ * Middleware: `validate("json", forgotSchema)`.
+ * Authorization: None.
+ *
+ * Accepted form fields: `email`.
+ * Behavior: Check if a user with the given email exists. To prevent email
+ * enumeration, the endpoint always returns a success response regardless
+ * of whether the account exists. If the user exists, any existing password
+ * reset tokens for that user are removed, a new reset token is generated
+ * and stored with a 15 minute expiration, and a password reset email
+ * containing the token is sent to the user.
+ *
+ * Responses:
+ * - 200: reset request processed (email sent if account exists)
+ * - 500: internal server error
  */
 auth.post("/forgot-password", validate("json", forgotSchema), async (c) => {
     const { email } = c.req.valid("json");
@@ -232,10 +300,25 @@ auth.post("/forgot-password", validate("json", forgotSchema), async (c) => {
     }
 });
 
-/** Reset password endpoint 
- * Verify reset token and update password
- * Delete reset token and refresh token so user logged out from all devices
-*/
+/**
+ * POST /reset-password - Reset a user's password
+ *
+ * Middleware: `validate("json", resetSchema)`.
+ * Authorization: None.
+ *
+ * Accepted form fields: `token`, `password`.
+ * Behavior: Verify the provided password reset token. If the token does not
+ * exist, is not of type `RESET`, or has expired, the token is removed (if it
+ * exists) and the request is rejected. If the token is valid, the new password
+ * is hashed and the user's password is updated. The reset token is then deleted
+ * and all existing refresh tokens for the user are removed to force logout from
+ * all sessions.
+ *
+ * Responses:
+ * - 200: password reset successful
+ * - 401: invalid or expired reset token
+ * - 500: internal server error
+ */
 auth.post("/reset-password", validate("json", resetSchema), async (c) => {
     const { token, password } = c.req.valid("json");
 
