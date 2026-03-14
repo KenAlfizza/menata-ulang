@@ -43,7 +43,7 @@ const createPrismaClient = () => {
     if (!url.password) {
       throw new Error("Database connection string missing password.");
     }
-  } catch (e) {
+  } catch {
     // If parsing fails, rethrow a helpful error
     throw new Error("Invalid DATABASE_URL. Ensure it's a valid Postgres URL, e.g. postgresql://user:password@host:5432/db?schema=public");
   }
