@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+const STORY_MAX_WORD = 500;
+const RESEARCH_MAX_WORD = 500;
+
 /**
  * Zod validation schemas for story endpoints.
  *
@@ -42,6 +45,24 @@ const imageRule = z
     .refine((f) => ACCEPTED_TYPES.includes(f.type), "Only JPEG, PNG, WebP");
 
 /**
+ * Max words validation rule
+ * @param max 
+ * @param message
+ * Validates the text provided is less than or equal to the max words
+ */
+const maxWords = (max: number, message?: string) =>
+  z.string().refine(
+    (val) => {
+      const trimmed = val.trim();
+      if (trimmed === '') return true; // Empty string has 0 words
+      return trimmed.split(/\s+/).length <= max;
+    },
+    {
+      message: message || `Must be ${max} words or less`
+    }
+  );
+
+/**
  * Params schema
  *
  * Validates route parameters for story endpoints. Currently only `id`
@@ -57,18 +78,20 @@ export const paramsSchema = z.object({
  * Schema for creating a new story. All fields are required:
  * - title: string
  * - description: string
- * - text: string
+ * - text: string (max 500 words)
  * - image: File
  * - published: boolean (coerced from string if necessary)
+ * - researchText: string (max 500 words)
  *
  * Behavior: Ensures that all necessary fields for story creation are valid.
  */
 export const storySchema = z.object({
     title: z.string(),
     description: z.string(),
-    text: z.string(),
+    text: maxWords(STORY_MAX_WORD, `Story text must be ${STORY_MAX_WORD} words or less`),
     image: imageRule,
     published: z.coerce.boolean(),
+    researchText: maxWords(RESEARCH_MAX_WORD, `Research text must be ${RESEARCH_MAX_WORD} words or less`),
 });
 
 /**

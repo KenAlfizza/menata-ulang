@@ -96,17 +96,19 @@ story.get("/:id", validate("param", paramsSchema), async (c) => {
     try {
         const storedStory = await prisma.story.findUnique({ 
             where: { id },
-            include: { author: true }
+            include: { author: true, research: true }
         });
         if (!storedStory) return c.json({ error: "Story does not exists" }, 404)
         if (!storedStory.published) return c.json({ error: "Story is not yet published"}, 403)
+        
         const author = storedStory.author;
         const story = {
             imageUrl: storedStory.imageUrl,
             title: storedStory.title,
             description: storedStory.description,
             text: storedStory.text,
-            pubslishedAt: storedStory.publishedAt,
+            researchText: storedStory.research?.text,
+            publishedAt: storedStory.publishedAt,
             author: author.name,
         }
         return c.json({ message: "Profile loaded", ok:true, story});
@@ -122,9 +124,11 @@ story.get("/:id", validate("param", paramsSchema), async (c) => {
  * Middleware: `authMiddleware`, `validate("form", storySchema)`.
  * Authorization: users with role `AUTHOR` or `SUPERUSER` may create stories.
  *
- * Accepted form fields: `title`, `description`, `text`, `image`, `published`.
+ * Accepted form fields: 
+ * `title`, `description`, `text`, `image`, `published`, `researchText`.
  * Behavior: uploads provided `image`, creates the story tied to the current
- * user. If DB creation fails the uploaded image is deleted to avoid orphans.
+ * user, create the research tied to the story. If DB creation fails the 
+ * uploaded image is deleted to avoid orphans.
  *
  * Responses:
  * - 201: story created
@@ -141,7 +145,7 @@ story.post("/",
         if (role !== "AUTHOR" && role !== "SUPERUSER") return c.json({ error: "Forbidden: Authors only" }, 403);
 
         // Get the story elements
-        const { title, description, text, image, published } = c.req.valid("form");
+        const { title, description, text, image, published, researchText } = c.req.valid("form");
         
         // Upload image
         const imageUrl = await storage.save(image, "stories");
@@ -156,7 +160,16 @@ story.post("/",
                     author: {connect: {id: id}},
                     published,
                     imageUrl,
+                    research: {
+                        // Create research
+                        create: { 
+                            text: researchText
+                        }
+                    }
                 },
+                include: {
+                    research: true  // Include research in the result
+                }
             });
             return c.json({ message: "Story created", ok:true, story }, 201);
         } catch (error) {
@@ -187,6 +200,8 @@ story.post("/",
  *   the DB with the new URL, and deletes the old image after success.
  *   If DB update fails the newly uploaded image is deleted to avoid
  *   orphaned files.
+ * - `researchText` - if provided, the handler will update the research
+ *   tied to the story.
  *
  * Responses:
  * - 200: updated story
@@ -201,13 +216,16 @@ story.patch("/:id",
     async (c) => {
         const { id } = c.req.valid("param");
         const user = c.get("user");
-        const { title, description, text, published, image } = c.req.valid("form");
+        const { title, description, text, published, image, researchText } = c.req.valid("form");
 
         let newImageUrl: string | undefined;
 
         try {
             // Ensure story exists and user is the owner
-            const existing = await prisma.story.findUnique({ where: { id }, include: { author: true } });
+            const existing = await prisma.story.findUnique({ 
+                where: { id }, 
+                include: { author: true, research: true } 
+            });
             if (!existing) return c.json({ error: "Story does not exists" }, 404);
             // Allow owners or SUPERUSERs to edit
             if (existing.author?.id !== user.id && user.role !== "SUPERUSER") return c.json({ error: "Forbidden" }, 403);
@@ -218,6 +236,16 @@ story.patch("/:id",
             if (description !== undefined) data.description = description;
             if (text !== undefined) data.text = text;
             if (published !== undefined) data.published = published;
+            
+            // Handle research text update
+            if (researchText !== undefined) {
+                data.research = {
+                    upsert: {
+                        create: { text: researchText },
+                        update: { text: researchText }
+                    }
+                }
+            }
 
             // Handle image replacement if provided
             if (image) {
@@ -225,11 +253,18 @@ story.patch("/:id",
                 data.imageUrl = newImageUrl;
             }
 
-            const updatedStory = await prisma.story.update({ where: { id }, data });
+            // Update database record
+            const updatedStory = await prisma.story.update({ 
+                where: { id }, data, include: { research: true } 
+            });
 
             // Delete old image after successful update (avoid orphan on failure)
             if (newImageUrl && existing.imageUrl) {
-                try { await storage.delete(existing.imageUrl); } catch (e) { console.error("Failed deleting old image", e); }
+                try { 
+                    await storage.delete(existing.imageUrl); 
+                } catch (e) { 
+                    console.error("Failed deleting old image", e); 
+                }
             }
 
             return c.json({ message: "Story updated", ok:true, story: updatedStory });
@@ -269,11 +304,14 @@ story.delete("/:id",
 
         try {
             // Ensure story exists and user is the owner
-            const existing = await prisma.story.findUnique({ where: { id }, include: { author: true } });
+            const existing = await prisma.story.findUnique({ 
+                where: { id }, 
+                include: { author: true, research: true } 
+            });
             if (!existing) return c.json({ error: "Story does not exists" }, 404);
             // Allow owners or SUPERUSERs to delete
             if (existing.author?.id !== user.id && user.role !== "SUPERUSER") return c.json({ error: "Forbidden" }, 403);
-
+            
             // Delete image if exists
             if (existing.imageUrl) {
                 try { 
@@ -283,7 +321,6 @@ story.delete("/:id",
                     return c.json({ error: "Internal server error" }, 500);
                 }
             }
-
             // Delete story from DB
             await prisma.story.delete({ where: { id } });
 
