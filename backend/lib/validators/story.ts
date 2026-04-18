@@ -76,8 +76,8 @@ export const paramsSchema = z.object({
  * Story creation schema
  *
  * Schema for creating a new story. All fields are required:
- * - title: string
- * - description: string
+ * - title: string (max 100 chars)
+ * - description: string (max 200 chars)
  * - text: string (max 500 words)
  * - image: File
  * - published: boolean (coerced from string if necessary)
@@ -86,8 +86,8 @@ export const paramsSchema = z.object({
  * Behavior: Ensures that all necessary fields for story creation are valid.
  */
 export const storySchema = z.object({
-    title: z.string(),
-    description: z.string(),
+    title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or fewer"),
+    description: z.string().max(200, "Description must be 200 characters or fewer"),
     text: maxWords(STORY_MAX_WORD, `Story text must be ${STORY_MAX_WORD} words or less`),
     image: imageRule,
     published: z.string().transform(val => val === "true"),
@@ -109,7 +109,7 @@ export const storyPatchSchema = storySchema.partial();
  * Validates optional query parameters for listing stories:
  * - page: integer >= 1
  * - limit: integer 1-100
- * - search: optional string
+ * - search: optional string (max 100 chars) 
  *
  * Behavior: Coerces `page` and `limit` from strings to numbers to
  * support query string values.
@@ -117,5 +117,5 @@ export const storyPatchSchema = storySchema.partial();
 export const listQuerySchema = z.object({
     page: z.coerce.number().int().min(1).optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
-    search: z.string().optional(),
+    search: z.string().max(100, "Search keyword must be 100 characters or fewer").optional(),
 });

@@ -36,16 +36,20 @@ story.get("/", validate("query", listQuerySchema), async (c) => {
     try {
         const q = c.req.valid("query");
         const page = q.page ?? 1;
-        const limit = q.limit ?? 20;
+        const limit = q.limit ?? 10;
         const search = q.search?.trim();
 
-        const where: Prisma.StoryWhereInput = { published: true };
-        if (search) {
-            where.OR = [
-                { title: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-            ];
-        }
+        const where: Prisma.StoryWhereInput = {
+        published: true,
+            ...(search && {
+                AND: {
+                    OR: [
+                        { title: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                    ],
+                },
+            }),
+        };
 
         const [total, stories] = await prisma.$transaction([
         // The count of total published stories (for pagination)
@@ -54,12 +58,12 @@ story.get("/", validate("query", listQuerySchema), async (c) => {
         prisma.story.findMany({
             where,
             select: {
-            id: true,
-            title: true,
-            description: true,
-            imageUrl: true,
-            publishedAt: true,
-            author: { select: { id: true, name: true } },
+                id: true,
+                title: true,
+                description: true,
+                imageUrl: true,
+                publishedAt: true,
+                author: { select: { id: true, name: true } },
             },
             orderBy: { publishedAt: 'desc' },
             skip: (page - 1) * limit,
