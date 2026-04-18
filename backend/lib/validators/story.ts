@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const STORY_MAX_WORD = 500;
-const RESEARCH_MAX_WORD = 500;
+const RESEARCH_MAX_WORD = 750;
 
 /**
  * Zod validation schemas for story endpoints.
@@ -90,7 +90,7 @@ export const storySchema = z.object({
     description: z.string(),
     text: maxWords(STORY_MAX_WORD, `Story text must be ${STORY_MAX_WORD} words or less`),
     image: imageRule,
-    published: z.coerce.boolean(),
+    published: z.string().transform(val => val === "true"),
     researchText: maxWords(RESEARCH_MAX_WORD, `Research text must be ${RESEARCH_MAX_WORD} words or less`),
 });
 

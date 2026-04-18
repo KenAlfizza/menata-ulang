@@ -98,7 +98,7 @@ story.get("/:id", validate("param", paramsSchema), async (c) => {
             where: { id },
             include: { author: true, research: true }
         });
-        if (!storedStory) return c.json({ error: "Story does not exists" }, 404)
+        if (!storedStory) return c.json({ error: "Story is not found" }, 404)
         if (!storedStory.published) return c.json({ error: "Story is not yet published"}, 403)
         
         const author = storedStory.author;
@@ -111,7 +111,7 @@ story.get("/:id", validate("param", paramsSchema), async (c) => {
             publishedAt: storedStory.publishedAt,
             author: author.name,
         }
-        return c.json({ message: "Profile loaded", ok:true, story});
+        return c.json({ message: "Story fetched", ok:true, story});
 
     } catch {
         return c.json({ error: "Internal server error" }, 500);
@@ -146,7 +146,7 @@ story.post("/",
 
         // Get the story elements
         const { title, description, text, image, published, researchText } = c.req.valid("form");
-        
+
         // Upload image
         const imageUrl = await storage.save(image, "stories");
 

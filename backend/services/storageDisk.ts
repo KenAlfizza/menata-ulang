@@ -1,5 +1,6 @@
-import { join } from "jsr:@std/path";
+import { join } from "path";
 import { StorageProvider } from "./storageInterface.ts";
+import { extname } from "path";
 
 export class StorageDisk implements StorageProvider {
   private uploadDir: string;
@@ -33,7 +34,8 @@ export class StorageDisk implements StorageProvider {
     await Deno.mkdir(targetDir, { recursive: true });
 
     // Sanitize filename with a UUID to prevent collisions/attacks
-    const fileName = `${crypto.randomUUID()}-${file.name}`;
+    const fileExt = extname(file.name);
+    const fileName = `${crypto.randomUUID() + fileExt}`;
     const filePath = join(targetDir, fileName);
 
     const bytes = new Uint8Array(await file.arrayBuffer());
