@@ -10,7 +10,7 @@ export class StorageDisk implements StorageProvider {
    *
    * @param uploadDir Base directory where uploaded files will be stored.
    * Behavior: Initializes the storage provider with a base upload directory.
-   * If no directory is provided, files are stored in the default `uploads` folder.
+   * If no directory is provided, files are stored in the default `storage` folder.
    */
   constructor(uploadDir = "storage") {
     this.uploadDir = uploadDir;

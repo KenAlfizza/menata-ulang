@@ -22,6 +22,7 @@ model User {
   createdAt DateTime @default(now())
   tokens    Token[]
   stories   Story[]
+  podcasts  Podcast[]
   deletedAt DateTime?
 }
 
@@ -67,4 +68,19 @@ model Research {
   text        String
   storyId     Int       @unique   
   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)   
+}
+
+model Podcast {
+    id              Int         @id @default(autoincrement())
+    title           String           
+    description     String      
+    duration        Int
+    audioUrl        String      @default("")
+    imageUrl        String      @default("")
+    listener        Int         @default(0)
+    hearts          Int         @default(0)
+    hostId          Int
+    host            User        @relation(fields: [hostId], references: [id])
+    createdAt       DateTime    @default(now())
+    deletedAt       DateTime?
 }
