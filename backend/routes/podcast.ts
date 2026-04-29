@@ -106,6 +106,7 @@ podcast.get("/", validate("query", podcastGetListSchema), async (c) => {
  * 
  * Responses:
  * - 200: podcast payload
+ * - 400: bad request
  * - 404: podcast not found
  * - 500: internal server error
  */
@@ -155,6 +156,7 @@ podcast.get("/:id", validate("param", podcastGetByIdSchema), async (c) => {
  * 
  * Responses:
  * - 200: podcast payload
+ * - 400: bad request
  * - 403: forbidden
  * - 500: internal server error
  */
@@ -224,6 +226,7 @@ podcast.post("/",
  * - if the databse update success, clean up the old files
  * Responses:
  * - 200: podcast payload
+ * - 400: bad request
  * - 403: forbidden
  * - 500: internal server error
  * 
@@ -327,6 +330,7 @@ podcast.patch("/:id",
  * 
  * Responses:
  * - 200: podcast deleted
+ * - 400: bad request
  * - 403: forbidden
  * - 404: podcast not found
  * - 500: internal server error

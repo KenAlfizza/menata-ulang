@@ -30,7 +30,9 @@ const PODCAST_MAX_SIZE_BYTES = PODCAST_MAX_SIZE_MB * 1024 * 1024;
  * - MIME type must be one of: MP3, AAC, FLAC, WAV
  */
 const podcastAudioRule = z
-    .instanceof(File)
+    .instanceof(File, { 
+        message: "Please upload an audio file" 
+    })
     .refine(
         (file) => file.size > 0,
         "Podcast file cannot be empty",
@@ -69,7 +71,9 @@ const IMAGE_MAX_SIZE_BYTES = IMAGE_MAX_SIZE_MB * 1024 * 1024;
  * Note: Runtime must provide `File` (Deno/Web API environment).
  */
 const podcastImageRule = z
-    .instanceof(File)
+    .instanceof(File, { 
+        message: "Please upload an image file" 
+    })
     .refine(
         (file) => file.size > 0,
         "Image file cannot be empty",
