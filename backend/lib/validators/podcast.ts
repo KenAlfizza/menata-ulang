@@ -15,8 +15,6 @@ const ACCEPTED_AUDIO_TYPES = [
     "audio/x-wav",      // WAV (legacy)
     ] as const;
 
-const AudioMimeType = z.enum(ACCEPTED_AUDIO_TYPES);
-
 const PODCAST_MAX_SIZE_MB = 50;
 const PODCAST_MAX_SIZE_BYTES = PODCAST_MAX_SIZE_MB * 1024 * 1024;
 
