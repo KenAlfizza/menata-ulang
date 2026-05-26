@@ -9,6 +9,7 @@ import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectio
 
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts"
+import { rateLimitMiddleware } from "../middleware/rateLimiter.ts";
 
 const reflection = new Hono<{ Variables: AppVariables}>();
 
@@ -107,7 +108,7 @@ reflection.get("/:id/replies", validate("param", reflectionGetReplyParamSchema),
  * - parentId   : Optional string ID of a parent reflection if replying
  * - isAnonymous: Optional boolean. Defaults to false.
  */
-reflection.post("/", authOptionalMiddleware, validate("json", reflectionPostSchema), async (c) => {
+reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json", reflectionPostSchema), async (c) => {
     try {
         const authUser = c.get("user");
         const j = c.req.valid("json");
