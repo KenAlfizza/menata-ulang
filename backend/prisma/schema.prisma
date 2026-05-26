@@ -24,11 +24,13 @@ model User {
   deletedAt   DateTime? 
 
   // Relationships
-  tokens        Token[]
-  stories       Story[]
-  podcasts      Podcast[]
-  reflections   Reflection[]
+  tokens      Token[]
+  stories     Story[]
+  podcasts    Podcast[]
+  reflections Reflection[]
   
+  /// Hearts given by this user across different content types.
+  hearts      Heart[]
 }
 
 enum UserRole {
@@ -38,14 +40,14 @@ enum UserRole {
 }
 
 model Token {
-  id                  Int       @id @default(autoincrement())
-  token               String    @unique
-  type                TokenType
-  userId              Int
-  user                User      @relation(fields: [userId], references: [id])
-  expiresAt           DateTime
-  lastAccessTokenAt   DateTime  @default(now())
-  createdAt           DateTime  @default(now())
+  id                Int       @id @default(autoincrement())
+  token             String    @unique
+  type              TokenType
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  expiresAt         DateTime
+  lastAccessTokenAt DateTime  @default(now())
+  createdAt         DateTime  @default(now())
 }
 
 enum TokenType {
@@ -70,13 +72,19 @@ model Story {
   // Connects this Story directly to a dedicated Thread container
   threadId    String     @unique
   thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  /// Cached counter for total hearts received by this story.
+  heartsCount Int        @default(0)
+
+  /// Relation link to individual heart records.
+  hearts      Heart[]
 }
 
 model Research {
-  id          Int       @id @default(autoincrement())
-  text        String
-  storyId     Int       @unique   
-  story       Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
+  id        Int       @id @default(autoincrement())
+  text      String
+  storyId   Int       @unique   
+  story     Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
 }
 
 model Podcast {
@@ -87,7 +95,6 @@ model Podcast {
   audioUrl    String    @default("")
   imageUrl    String    @default("")
   listener    Int       @default(0)
-  hearts      Int       @default(0)
   createdAt   DateTime  @default(now())
   deletedAt   DateTime?
 
@@ -99,6 +106,12 @@ model Podcast {
   // Connects this Podcast directly to a dedicated Thread container
   threadId    String    @unique
   thread      Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  /// Cached counter for total hearts received by this podcast.
+  heartsCount Int       @default(0) 
+
+  /// Relation link to individual heart records.
+  hearts      Heart[]
 }
 
 // Dedicated container model for managing conversational streams
@@ -117,7 +130,6 @@ model Thread {
 model Reflection {
   id          String   @id @default(uuid(7)) 
   text        String      
-  hearts      Int      @default(0)
   createdAt   DateTime @default(now())
 
   // User Relation
@@ -135,6 +147,12 @@ model Reflection {
   parent      Reflection?  @relation("ThreadBranch", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Reflection[] @relation("ThreadBranch")
 
+  /// Cached counter for total hearts received by this reflection.
+  heartsCount Int      @default(0) 
+
+  /// Relation link to individual heart records.
+  hearts      Heart[]
+
   // Database Indexing for Blazing-Fast Pagination
   @@index([threadId, parentId, id])
 }
@@ -146,4 +164,38 @@ model RateLimit {
   reset    DateTime
   created  DateTime @default(now())
   updated  DateTime @updatedAt
+}
+
+/// A universal "Heart" (like) join table linking users to various content types.
+/// A single heart record can only belong to one piece of content.
+model Heart {
+  id        String   @id @default(uuid())
+  
+  /// The timestamp when the user hearted the content.
+  createdAt DateTime @default(now())
+
+  /// The ID of the user that performed the heart operation.
+  userId    Int
+  /// User link relation.
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The ID of the target Story (optional).
+  storyId   Int?
+  /// Story link relation.
+  story     Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  
+  /// The ID of the target Podcast (optional).
+  podcastId Int?
+  /// Podcast link relation.
+  podcast   Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  
+  /// The ID of the target Reflection (optional).
+  reflectionId String?
+  /// Reflection link relation.
+  reflection   Reflection? @relation(fields: [reflectionId], references: [id], onDelete: Cascade)
+  
+  // Composite unique constraints to ensure a user can only heart a specific item once.
+  @@unique([userId, storyId], name: "user_story_heart_unique")
+  @@unique([userId, podcastId], name: "user_podcast_heart_unique")
+  @@unique([userId, reflectionId], name: "user_reflection_heart_unique")
 }
