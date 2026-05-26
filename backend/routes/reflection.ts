@@ -5,11 +5,13 @@ import type { AppVariables } from "../types.ts";
 import { prisma, Prisma } from "../lib/prisma.ts";
 
 import { validate } from "../lib/validators/index.ts";
-import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema } from "../lib/validators/reflection.ts"
+import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema, reflectionHeartSchema } from "../lib/validators/reflection.ts"
 
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts"
 import { rateLimitMiddleware } from "../middleware/rateLimiter.ts";
+import { authMiddleware } from "../middleware/auth.ts";
+import { error } from "node:console";
 
 const reflection = new Hono<{ Variables: AppVariables}>();
 
@@ -100,7 +102,9 @@ reflection.get("/:id/replies", validate("param", reflectionGetReplyParamSchema),
 
 /**
  * POST / - Post a reflection
- * Middleware   : verify("form", reflectionPostSchema)
+ * Middleware   : rateLimitMiddleware, 
+ *                authOptionalMiddleware,
+ *                verify("form", reflectionPostSchema)
  * Behaviour    : Post a reflection or reply to existing reflection message
  * JSON:
  * - threadId   : The ID of the container Thread
@@ -159,7 +163,7 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
             
             // If the isAnonymous fields is false, 
             // it is an error as unauthenticated user cannot post as a user
-            if (j.isAnonymous === false) {
+            if (j.isAnonymous !== undefined && j.isAnonymous === false) {
                 return c.json({ error: "Unauthenticated user cannot post as a user" }, 404);
             }
         }
@@ -183,6 +187,44 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
             return c.json({ error: "Database constraint failure", details: error.message }, 400);
         }
         return c.json({ error: "Failed to create reflection" }, 500);
+    }
+});
+
+
+/**
+ * PATCH / - Heart a reflection
+ * Middleware   : authMiddleware
+ *                verify("form", reflectionHeartsSchema)
+ * Behaviour    : Add 1 heart to a reflection message
+ * JSON:
+ * - id         : The ID of the reflection to increment heart
+ */
+reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionHeartSchema), async (c) => {
+    try {
+        const p = c.req.valid("param");
+        const reflectionId = p.id;
+
+        // Validate that the reflection with id exists
+        const reflectionExists = await prisma.reflection.findUnique({ where: { id: reflectionId } })
+        if (!reflectionExists) {
+            return c.json({error: "Reflection message not found" }, 404);
+        }
+
+        // Update the reflection heart
+        const reflection = await prisma.reflection.update({
+            where: {id: reflectionId},
+            data: {hearts: {increment: 1}}
+        });
+
+        return c.json({ message: "Reflection hearted", ok: true, reflection}, 200);
+
+    } catch (error) {
+        // Handle error
+        console.error("Reflection heart error:", error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            return c.json({ error: "Database constraint failure", details: error.message }, 400);
+        }
+        return c.json({ error: "Failed to heart reflection" }, 500);
     }
 });
 
