@@ -25,7 +25,6 @@ import { silentDelete } from "../lib/storage.ts";
 // Media service
 import { getAudioDuration } from "../services/audio.ts";
 
-
 const isProduction = Deno.env.get("DENO_ENV") === "production" || 
                      Deno.env.get("DENO_REGION") !== undefined;
 
@@ -118,7 +117,7 @@ podcast.get("/:id", validate("param", podcastGetByIdSchema), async (c) => {
     try {
         const storedPodcast = await prisma.podcast.findUnique({ 
             where: { id },
-            include: { host: true }
+            include: { host: true, thread: true }
         });
         if (!storedPodcast) return c.json({ error: "Podcast is not found" }, 404)
         
@@ -129,6 +128,7 @@ podcast.get("/:id", validate("param", podcastGetByIdSchema), async (c) => {
             description: storedPodcast.description,
             imageUrl: storedPodcast.imageUrl,
             audioUrl: storedPodcast.audioUrl,
+            threadId: storedPodcast.threadId
         }
         return c.json({ message: "Podcast fetched", ok:true, podcast});
 
@@ -186,7 +186,7 @@ podcast.post("/",
             // Upload image
             const imageUrl = await storage.save(image, "podcasts/images");
             toRollback.push(imageUrl);
-            
+
             // Database create
             const podcast = await prisma.podcast.create({
                 data: {
@@ -196,7 +196,17 @@ podcast.post("/",
                     audioUrl,
                     imageUrl,
                     host: {connect: {id: user.id}},
-                }
+                    thread: {
+                        create: {
+                            reflections: {
+                                create: {
+                                    userName: "admin",
+                                    text: "Hi! Please write your own reflection to see what others have to say.",
+                                }
+                            }
+                        }
+                    }
+                },
             });
             return c.json({ message: "Podcast created", ok: true, podcast});
         } catch {

@@ -14,16 +14,21 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  tokens    Token[]
-  stories   Story[]
-  podcasts  Podcast[]
-  deletedAt DateTime?
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  password    String?   // Optional for anonymous
+  name        String    @default("Anonymous")
+  role        UserRole  @default(USER)
+  isAnonymous Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime? 
+
+  // Relationships
+  tokens        Token[]
+  stories       Story[]
+  podcasts      Podcast[]
+  reflections   Reflection[]
+  
 }
 
 enum UserRole {
@@ -58,29 +63,87 @@ model Story {
   author      User      @relation(fields: [authorId], references: [id])
   imageUrl    String    @default("")
   published   Boolean   @default(false)
-  publishedAt DateTime?    
+  publishedAt DateTime?   
   research    Research?
-  // reflectionId
+
+  // Updated Thread Relation (Strict 1-to-1)
+  // Connects this Story directly to a dedicated Thread container
+  threadId    String     @unique
+  thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
 }
 
 model Research {
   id          Int       @id @default(autoincrement())
   text        String
   storyId     Int       @unique   
-  story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)   
+  story       Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
 }
 
 model Podcast {
-    id              Int         @id @default(autoincrement())
-    title           String           
-    description     String      
-    duration        Int
-    audioUrl        String      @default("")
-    imageUrl        String      @default("")
-    listener        Int         @default(0)
-    hearts          Int         @default(0)
-    hostId          Int
-    host            User        @relation(fields: [hostId], references: [id])
-    createdAt       DateTime    @default(now())
-    deletedAt       DateTime?
+  id          Int       @id @default(autoincrement())
+  title       String           
+  description String      
+  duration    Int
+  audioUrl    String    @default("")
+  imageUrl    String    @default("")
+  listener    Int       @default(0)
+  hearts      Int       @default(0)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  // Host Relation
+  hostId      Int
+  host        User      @relation(fields: [hostId], references: [id])
+
+  // Updated Thread Relation (Strict 1-to-1)
+  // Connects this Podcast directly to a dedicated Thread container
+  threadId    String    @unique
+  thread      Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
+
+// Dedicated container model for managing conversational streams
+model Thread {
+  id          String       @id @default(uuid(7)) // Thread ID shared seamlessly with parents
+  createdAt   DateTime     @default(now())
+
+  // Inverse 1-to-1 relations mapping back to content types
+  podcast     Podcast?
+  story       Story?
+
+  // A Thread owns many individual Reflection comments/replies
+  reflections Reflection[]
+}
+
+model Reflection {
+  id          String   @id @default(uuid(7)) 
+  text        String      
+  hearts      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // User Relation
+  userId      Int?
+  userName    String          
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Master Thread Cluster Relation
+  // Ties every comment and reply directly back to its container Thread
+  threadId    String       
+  thread      Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  // Recursive Self-Relation for Nested Comment Trees (unchanged but fully compatible)
+  parentId    String?
+  parent      Reflection?  @relation("ThreadBranch", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Reflection[] @relation("ThreadBranch")
+
+  // Database Indexing for Blazing-Fast Pagination
+  @@index([threadId, parentId, id])
+}
+
+model RateLimit {
+  id       String   @id @default(uuid(7))
+  ip       String   @unique
+  count    Int      @default(1)
+  reset    DateTime
+  created  DateTime @default(now())
+  updated  DateTime @updatedAt
 }

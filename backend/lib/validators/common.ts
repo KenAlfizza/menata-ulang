@@ -11,15 +11,12 @@ import { z } from 'zod';
  */
 
 export const idRule = z.string()
-    .trim() // Explicitly remove whitespace
+    .trim()
     .min(1, "Id is required")
-    .transform((val) => {
-        const parsed = parseInt(val, 10);
-        // Ensure it's a valid finite integer
-        if (isNaN(parsed)) throw new Error("Invalid id format");
-        return parsed;
-    })
-    .refine((val) => val > 0, "Id must be a positive number");
+    .max(20, "Id is too long")
+    .refine(val => !isNaN(parseInt(val, 10)), "Id must be a number")
+    .refine(val => parseInt(val, 10) > 0, "Id must be positive")
+    .transform(val => parseInt(val, 10));
 
 /**
  * UUIDv7 validation rule
@@ -28,3 +25,22 @@ export const idRule = z.string()
  * - GET, PATCH, DELETE endpoints
  */
 export const uuidRule = z.uuidv7();
+
+
+/**
+ * Max words validation rule
+ * @param max 
+ * @param message
+ * Validates the text provided is less than or equal to the max words
+ */
+export const maxWordRule = (max: number, message?: string) =>
+  z.string().refine(
+    (val) => {
+      const trimmed = val.trim();
+      if (trimmed === '') return true; // Empty string has 0 words
+      return trimmed.split(/\s+/).length <= max;
+    },
+    {
+      message: message || `Must be ${max} words or less`
+    }
+  );

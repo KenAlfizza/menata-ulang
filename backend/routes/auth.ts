@@ -93,6 +93,9 @@ auth.post("/login",
         if (!user) return c.json({ error: "Account not found" }, 404);
 
         // Verify password
+        if (user.password === null) {
+            return c.json({ error: "Unauthorized" }, 401)
+        }
         const verified = await comparePassword(password, user.password);
         if (!verified) return c.json({ error: "Invalid credentials" }, 401);
         

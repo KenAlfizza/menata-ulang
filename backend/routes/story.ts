@@ -18,8 +18,8 @@ const isProduction = Deno.env.get("DENO_ENV") === "production" ||
                      Deno.env.get("DENO_REGION") !== undefined;
 
 export const storage: StorageProvider = isProduction
-  ? new StorageDisk("uploads") // Change this to AWS A3 or Clouldflare R2
-  : new StorageDisk("uploads");
+  ? new StorageDisk() // Change this to AWS A3 or Clouldflare R2
+  : new StorageDisk();
 
 const story = new Hono<{ Variables: AppVariables}>();
 
@@ -169,12 +169,23 @@ story.post("/",
                         create: { 
                             text: researchText
                         }
-                    }
+                    },
+                    thread: {
+                        create: {
+                            reflections: {
+                                create: {
+                                    userName: "admin",
+                                    text: "Hi! Please write your own reflection to see what others have to say.",
+                                }
+                            }
+                        }
+                    }                    
                 },
                 include: {
                     research: true  // Include research in the result
                 }
             });
+
             return c.json({ message: "Story created", ok:true, story }, 201);
         } catch (error) {
             // On failure, delete the uploaded image to prevent orphaned files
