@@ -5,7 +5,7 @@ import type { AppVariables } from "../types.ts";
 import { prisma, Prisma } from "../lib/prisma.ts";
 
 import { validate } from "../lib/validators/index.ts";
-import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema, reflectionHeartSchema } from "../lib/validators/reflection.ts"
+import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema, reflectionPatchchema, reflectionParamSchema } from "../lib/validators/reflection.ts"
 
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts"
@@ -201,7 +201,7 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
  * Param        :
  * - id         : The string ID of the reflection to increment heart (passed as a URL path parameter).
  */
-reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionHeartSchema), async (c) => {
+reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionParamSchema), async (c) => {
     try {
         const authUser = c.get("user");
         const p = c.req.valid("param");
@@ -252,14 +252,14 @@ reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("pa
  * DELETE /:id/heart - Unheart a reflection
  * Middleware   : rateLimitMiddleware
  * authMiddleware
- * validate("param", reflectionHeartSchema)
+ * validate("param", reflectionParamSchema)
  * Behaviour    : Remove 1 heart from a reflection message uniquely per user.
  * Uses an atomic transaction to delete from the Heart join table
  * and simultaneously decrement the reflection's heartsCount.
  * Param        :
  * - id         : The string ID of the reflection to decrement heart (passed as a URL path parameter).
  */
-reflection.delete("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionHeartSchema), async (c) => {
+reflection.delete("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionParamSchema), async (c) => {
     try {
         const authUser = c.get("user");
         const p = c.req.valid("param");
@@ -301,6 +301,67 @@ reflection.delete("/:id/heart", rateLimitMiddleware, authMiddleware, validate("p
         // Catch-all for true 500 runtime/connection errors
         console.error("Reflection unheart system failure:", error);
         return c.json({ error: "Failed to unheart reflection due to a server error" }, 500);
+    }
+});
+
+/**
+ * PATCH /:id - Edit a user's own reflection message
+ * Middleware   : 
+ * - rateLimitMiddleware, 
+ * - authMiddleware, 
+ * - validate("param", reflectionParamSchema), 
+ * - validate("json", reflectionPatchchema), 
+ * Behaviour    : Update the text of a reflection message, ensuring the authenticated
+ * user is the original author of the message.
+ * Param:
+ * - id     : The string ID of the reflection to edit (passed as a URL path parameter).
+ * JSON:
+ * - text   : The new string content of the reflection message (passed in JSON body).
+ */
+reflection.patch("/:id", 
+    rateLimitMiddleware, 
+    authMiddleware, 
+    validate("param", reflectionParamSchema), 
+    validate("json", reflectionPatchchema), 
+    async (c) => {
+    try {
+        const authUser = c.get("user");
+        const p = c.req.valid("param");
+        const body = c.req.valid("json");
+        const reflectionId = p.id;
+
+        // Fetch the reflection to verify existence and ownership
+        const reflection = await prisma.reflection.findUnique({
+            where: { id: reflectionId },
+            select: { userId: true } // Only select userId to keep the query lightweight
+        });
+
+        // 404 Error: The reflection simply doesn't exist in the database
+        if (!reflection) {
+            return c.json({ error: "Reflection message not found" }, 404);
+        }
+
+        // 403 Error: The reflection exists, but the userId doesn't match the authenticated user
+        if (reflection.userId !== authUser.id) {
+            return c.json({ error: "Unauthorized: You can only edit your own reflections" }, 403);
+        }
+
+        // Perform the update now that validation checks have passed safely
+        const updatedReflection = await prisma.reflection.update({
+            where: { id: reflectionId },
+            data: {
+                text: body.text,
+            },
+        });
+
+        const isEdited = (updatedReflection.updatedAt.getTime() - updatedReflection.createdAt.getTime()) > 1000;
+
+        return c.json({ message: "Reflection updated successfully", ok: true, isEdited, reflection: updatedReflection }, 200);
+
+    } catch (error) {
+        // Catch-all for true 500 runtime/connection errors
+        console.error("Reflection edit system failure:", error);
+        return c.json({ error: "Failed to update reflection due to a server error" }, 500);
     }
 });
 
