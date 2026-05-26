@@ -24,5 +24,11 @@ export const reflectionPostSchema = z.object({
         .min(1, "Reflection is required")
         .max(250, "Reflection must be 250 characters or less")
         .regex(/^[a-zA-Z0-9\s.,!?;:'"()-]+$/, "Reflection contains invalid characters"),
-    isAnonymous: z.boolean().optional().default(false),
+    isAnonymous: z.boolean().optional(),
+});
+
+
+/** PATCH Schemas */
+export const reflectionHeartSchema = z.object({
+    id: uuidRule
 });
