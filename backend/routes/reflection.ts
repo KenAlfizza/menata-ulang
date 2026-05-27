@@ -385,8 +385,9 @@ reflection.delete("/:id",
             const p = c.req.valid("param")
             const reflectionId = p.id;
 
-            if (authUser.role !== "SUPERUSER") {
-                return c.json({error: "Unauthorized"}, 401);
+            const requiredRoles = ["SUPERUSER", "MODERATOR"];
+            if (!requiredRoles.includes(authUser.role)) {
+                return c.json({error: "Forbidden"}, 403);
             }
 
             // Delete reflection message
@@ -396,7 +397,7 @@ reflection.delete("/:id",
 
         } catch (error) {
             // Catch-all for true 500 runtime/connection errors
-            console.error("Reflection edit system failure:", error);
+            console.error("Reflection delete system failure:", error);
 
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
                 // P2025: Record to delete not found
