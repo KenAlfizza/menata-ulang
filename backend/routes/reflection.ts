@@ -365,4 +365,50 @@ reflection.patch("/:id",
     }
 });
 
+/**
+ * DELETE /:id - Delete a reflection message
+ * Middleware   : 
+ * - rateLimitMiddleware, 
+ * - authMiddleware, 
+ * - validate("param", reflectionParamSchema), 
+ * - validate("json", reflectionPatchchema), 
+ * Behaviour    : Delete a reflection message, ensuring the authenticated user is superuser
+ * Param:
+ * - id     : The string ID of the reflection to delete (passed as a URL path parameter).
+ */
+reflection.delete("/:id",
+    authMiddleware,
+    validate("param", reflectionParamSchema),
+    async (c) => {
+        try {
+            const authUser = c.get("user");
+            const p = c.req.valid("param")
+            const reflectionId = p.id;
+
+            if (authUser.role !== "SUPERUSER") {
+                return c.json({error: "Unauthorized"}, 401);
+            }
+
+            // Delete reflection message
+            await prisma.reflection.delete({ where: { id: reflectionId } });
+
+            return c.json({ message: "Reflection deleted", ok: true}, 200);
+
+        } catch (error) {
+        // Catch-all for true 500 runtime/connection errors
+        console.error("Reflection edit system failure:", error);
+
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            // P2025: Record to delete not found
+            if (error.code === "P2025") {
+                return c.json({ error: "Reflection is not found" }, 404); // 404 Not Found
+            }
+        }
+
+        return c.json({ error: "Failed to update reflection due to a server error" }, 500);
+    }
+    }
+)
+
+
 export default reflection;
