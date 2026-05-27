@@ -163,7 +163,7 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
             // If the isAnonymous fields is false, 
             // it is an error as unauthenticated user cannot post as a user
             if (j.isAnonymous !== undefined && j.isAnonymous === false) {
-                return c.json({ error: "Unauthenticated user cannot post as a user" }, 404);
+                return c.json({ error: "Unauthenticated user cannot post as a user" }, 401);
             }
         }
 
