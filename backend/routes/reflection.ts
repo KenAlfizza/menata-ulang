@@ -5,13 +5,12 @@ import type { AppVariables } from "../types.ts";
 import { prisma, Prisma } from "../lib/prisma.ts";
 
 import { validate } from "../lib/validators/index.ts";
-import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema, reflectionHeartSchema } from "../lib/validators/reflection.ts"
+import { reflectionGetReplyQuerySchema, reflectionGetReplyParamSchema, reflectionGetSchema, reflectionPostSchema, reflectionPatchchema, reflectionParamSchema } from "../lib/validators/reflection.ts"
 
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts"
 import { rateLimitMiddleware } from "../middleware/rateLimiter.ts";
 import { authMiddleware } from "../middleware/auth.ts";
-import { error } from "node:console";
 
 const reflection = new Hono<{ Variables: AppVariables}>();
 
@@ -164,7 +163,7 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
             // If the isAnonymous fields is false, 
             // it is an error as unauthenticated user cannot post as a user
             if (j.isAnonymous !== undefined && j.isAnonymous === false) {
-                return c.json({ error: "Unauthenticated user cannot post as a user" }, 404);
+                return c.json({ error: "Unauthenticated user cannot post as a user" }, 401);
             }
         }
 
@@ -192,40 +191,224 @@ reflection.post("/", rateLimitMiddleware, authOptionalMiddleware, validate("json
 
 
 /**
- * PATCH / - Heart a reflection
- * Middleware   : authMiddleware
- *                verify("form", reflectionHeartsSchema)
- * Behaviour    : Add 1 heart to a reflection message
- * JSON:
- * - id         : The ID of the reflection to increment heart
+ * PATCH /:id/heart - Heart a reflection
+ * Middleware   : rateLimitMiddleware
+ * authMiddleware
+ * validate("param", reflectionHeartSchema)
+ * Behaviour    : Add 1 heart to a reflection message uniquely per user.
+ * Uses a transaction to write to the Heart join table
+ * and simultaneously increment the reflection's heartsCount.
+ * Param        :
+ * - id         : The string ID of the reflection to increment heart (passed as a URL path parameter).
  */
-reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionHeartSchema), async (c) => {
+reflection.patch("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionParamSchema), async (c) => {
     try {
+        const authUser = c.get("user");
         const p = c.req.valid("param");
         const reflectionId = p.id;
 
-        // Validate that the reflection with id exists
-        const reflectionExists = await prisma.reflection.findUnique({ where: { id: reflectionId } })
-        if (!reflectionExists) {
-            return c.json({error: "Reflection message not found" }, 404);
-        }
+        // Run the atomic operation
+        const [_heart, updatedReflection] = await prisma.$transaction([
+            // Create the unique Heart record
+            prisma.heart.create({
+                data: {
+                    userId: authUser.id,
+                    reflectionId: reflectionId,
+                },
+            }),
 
-        // Update the reflection heart
-        const reflection = await prisma.reflection.update({
-            where: {id: reflectionId},
-            data: {hearts: {increment: 1}}
-        });
+            // Increment the cached counter. Throws P2025 automatically if ID doesn't exist.
+            prisma.reflection.update({
+                where: { id: reflectionId },
+                data: {
+                    heartsCount: {
+                        increment: 1,
+                    },
+                },
+            }),
+        ]);
 
-        return c.json({ message: "Reflection hearted", ok: true, reflection}, 200);
+        return c.json({ message: "Reflection hearted", ok: true, reflection: updatedReflection }, 200);
 
     } catch (error) {
-        // Handle error
-        console.error("Reflection heart error:", error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            return c.json({ error: "Database constraint failure", details: error.message }, 400);
+            // Target record unique constraint violation (User already liked it)
+            if (error.code === "P2002") {
+                return c.json({ error: "You have already hearted this reflection" }, 409); // 409 Conflict
+            }
+            // Record to update not found (Reflection does not exist)
+            if (error.code === "P2003") {
+                return c.json({ error: "Reflection message not found" }, 404); // 404 Not Found
+            }
         }
-        return c.json({ error: "Failed to heart reflection" }, 500);
+
+        // Catch-all for genuine 500 runtime/connection errors
+        console.error("Reflection heart system failure:", error);
+        return c.json({ error: "Failed to heart reflection due to a server error" }, 500);
     }
 });
+
+/**
+ * DELETE /:id/heart - Unheart a reflection
+ * Middleware   : rateLimitMiddleware
+ * authMiddleware
+ * validate("param", reflectionParamSchema)
+ * Behaviour    : Remove 1 heart from a reflection message uniquely per user.
+ * Uses an atomic transaction to delete from the Heart join table
+ * and simultaneously decrement the reflection's heartsCount.
+ * Param        :
+ * - id         : The string ID of the reflection to decrement heart (passed as a URL path parameter).
+ */
+reflection.delete("/:id/heart", rateLimitMiddleware, authMiddleware, validate("param", reflectionParamSchema), async (c) => {
+    try {
+        const authUser = c.get("user");
+        const p = c.req.valid("param");
+        const reflectionId = p.id;
+
+        // Run the atomic operation
+        const [_heart, updatedReflection] = await prisma.$transaction([
+            // Delete the specific Heart record using its composite unique key
+            prisma.heart.delete({
+                where: {
+                    user_reflection_heart_unique: {
+                        userId: authUser.id,
+                        reflectionId: reflectionId,
+                    },
+                },
+            }),
+
+            // Decrement the cached counter directly on the Reflection model
+            prisma.reflection.update({
+                where: { id: reflectionId },
+                data: {
+                    heartsCount: {
+                        decrement: 1,
+                    },
+                },
+            }),
+        ]);
+
+        return c.json({ message: "Reflection unhearted", ok: true, reflection: updatedReflection }, 200);
+
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            // P2025: Record to delete not found (User never hearted it, or the reflection doesn't exist)
+            if (error.code === "P2025") {
+                return c.json({ error: "Reflection already unhearted" }, 404); // 404 Not Found
+            }
+        }
+
+        // Catch-all for true 500 runtime/connection errors
+        console.error("Reflection unheart system failure:", error);
+        return c.json({ error: "Failed to unheart reflection due to a server error" }, 500);
+    }
+});
+
+/**
+ * PATCH /:id - Edit a user's own reflection message
+ * Middleware   : 
+ * - rateLimitMiddleware, 
+ * - authMiddleware, 
+ * - validate("param", reflectionParamSchema), 
+ * - validate("json", reflectionPatchchema), 
+ * Behaviour    : Update the text of a reflection message, ensuring the authenticated
+ * user is the original author of the message.
+ * Param:
+ * - id     : The string ID of the reflection to edit (passed as a URL path parameter).
+ * JSON:
+ * - text   : The new string content of the reflection message (passed in JSON body).
+ */
+reflection.patch("/:id", 
+    rateLimitMiddleware, 
+    authMiddleware, 
+    validate("param", reflectionParamSchema), 
+    validate("json", reflectionPatchchema), 
+    async (c) => {
+    try {
+        const authUser = c.get("user");
+        const p = c.req.valid("param");
+        const body = c.req.valid("json");
+        const reflectionId = p.id;
+
+        // Fetch the reflection to verify existence and ownership
+        const reflection = await prisma.reflection.findUnique({
+            where: { id: reflectionId },
+            select: { userId: true } // Only select userId to keep the query lightweight
+        });
+
+        // 404 Error: The reflection simply doesn't exist in the database
+        if (!reflection) {
+            return c.json({ error: "Reflection message not found" }, 404);
+        }
+
+        // 403 Error: The reflection exists, but the userId doesn't match the authenticated user
+        if (reflection.userId !== authUser.id) {
+            return c.json({ error: "Unauthorized: You can only edit your own reflections" }, 403);
+        }
+
+        // Perform the update now that validation checks have passed safely
+        const updatedReflection = await prisma.reflection.update({
+            where: { id: reflectionId },
+            data: {
+                text: body.text,
+            },
+        });
+
+        const isEdited = (updatedReflection.updatedAt.getTime() - updatedReflection.createdAt.getTime()) > 1000;
+
+        return c.json({ message: "Reflection updated successfully", ok: true, isEdited, reflection: updatedReflection }, 200);
+
+    } catch (error) {
+        // Catch-all for true 500 runtime/connection errors
+        console.error("Reflection edit system failure:", error);
+        return c.json({ error: "Failed to update reflection due to a server error" }, 500);
+    }
+});
+
+/**
+ * DELETE /:id - Delete a reflection message
+ * Middleware   : 
+ * - rateLimitMiddleware, 
+ * - authMiddleware, 
+ * - validate("param", reflectionParamSchema), 
+ * - validate("json", reflectionPatchchema), 
+ * Behaviour    : Delete a reflection message, ensuring the authenticated user is superuser
+ * Param:
+ * - id     : The string ID of the reflection to delete (passed as a URL path parameter).
+ */
+reflection.delete("/:id",
+    authMiddleware,
+    validate("param", reflectionParamSchema),
+    async (c) => {
+        try {
+            const authUser = c.get("user");
+            const p = c.req.valid("param")
+            const reflectionId = p.id;
+
+            const requiredRoles = ["SUPERUSER", "MODERATOR"];
+            if (!requiredRoles.includes(authUser.role)) {
+                return c.json({error: "Forbidden"}, 403);
+            }
+
+            // Delete reflection message
+            await prisma.reflection.delete({ where: { id: reflectionId } });
+
+            return c.json({ message: "Reflection deleted", ok: true}, 200);
+
+        } catch (error) {
+            // Catch-all for true 500 runtime/connection errors
+            console.error("Reflection delete system failure:", error);
+
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // P2025: Record to delete not found
+                if (error.code === "P2025") {
+                    return c.json({ error: "Reflection is not found" }, 404); // 404 Not Found
+                }
+            }
+
+            return c.json({ error: "Failed to update reflection due to a server error" }, 500);
+        }
+    }
+);
 
 export default reflection;

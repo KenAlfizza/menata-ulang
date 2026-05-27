@@ -36,6 +36,7 @@ model User {
 enum UserRole {
   SUPERUSER
   AUTHOR
+  MODERATOR
   USER
 }
 
@@ -131,6 +132,9 @@ model Reflection {
   id          String   @id @default(uuid(7)) 
   text        String      
   createdAt   DateTime @default(now())
+
+  // Automatically updates timestaps when there is any change
+  updatedAt   DateTime @updatedAt
 
   // User Relation
   userId      Int?
