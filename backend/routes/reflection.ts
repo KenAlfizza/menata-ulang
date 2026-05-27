@@ -395,20 +395,19 @@ reflection.delete("/:id",
             return c.json({ message: "Reflection deleted", ok: true}, 200);
 
         } catch (error) {
-        // Catch-all for true 500 runtime/connection errors
-        console.error("Reflection edit system failure:", error);
+            // Catch-all for true 500 runtime/connection errors
+            console.error("Reflection edit system failure:", error);
 
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            // P2025: Record to delete not found
-            if (error.code === "P2025") {
-                return c.json({ error: "Reflection is not found" }, 404); // 404 Not Found
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // P2025: Record to delete not found
+                if (error.code === "P2025") {
+                    return c.json({ error: "Reflection is not found" }, 404); // 404 Not Found
+                }
             }
+
+            return c.json({ error: "Failed to update reflection due to a server error" }, 500);
         }
-
-        return c.json({ error: "Failed to update reflection due to a server error" }, 500);
     }
-    }
-)
-
+);
 
 export default reflection;
