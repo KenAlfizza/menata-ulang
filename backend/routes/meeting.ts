@@ -552,6 +552,14 @@ meeting.get("/:id",
     }
 );
 
-
+/** TODO
+ * Meeting application system
+ * - Users can apply to a meeting using a form
+ * - The user is selected with the following priority algorithm
+ *      - Self compassion scale (SCS) score: low to high
+ *      - Immediate urgent response: high to low
+ *      - Application date: early to late
+ *      - Limit: 10-15
+ */
 
 export default meeting;
