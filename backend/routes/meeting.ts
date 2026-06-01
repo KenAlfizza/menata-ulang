@@ -20,6 +20,86 @@ import {
 const meeting = new Hono<{ Variables: AppVariables}>();
 
 /**
+ * GET /host - Fetch a paginated list of meetings hosted by an authenticated user with host permission
+ *
+ * Middleware: `authMiddleware`, `validate("query", meetingGetListSchema)`.
+ * Authorization: Authenticated users only. Filters results strictly by the logged-in user's ID.
+ *
+ * Query Parameters:
+ * - page   : (Optional) The page number for pagination (defaults to 1)
+ * - limit  : (Optional) The number of items to return per page (defaults to 10)
+ * - search : (Optional) Case-insensitive search filter matching against `title` or `meetingLink`
+ *
+ * Behavior:
+ * - Extracts the current authenticated host's ID from context.
+ * - Constructs a where clause targeting only the host's hosted meetings.
+ * - If a search term exists, appends an OR clause to match the term in either titles or links.
+ * - Executes a database transaction to concurrently fetch the total count and the paginated subset.
+ *
+ * Responses:
+ * - 200: success payload containing the list of meetings and pagination metadata
+ * - 400/500: handled by validation or global error middleware
+ */
+meeting.get("/host",
+    authMiddleware, 
+    validate("query", meetingGetListSchema), 
+    async (c) => {
+        try {
+            // Get queries
+            const q = c.req.valid("query");
+            const page = q.page ?? 1;
+            const limit = q.limit ?? 10;
+            const search = q.search?.trim();
+            
+            // Meeting host
+            const user = c.get("user");
+            const hostId = user.id;
+            if (!["HOST", "SUPERUSER"].includes(user.role)) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            // Strictly filter by user's own meetings
+            const where: Prisma.MeetingWhereInput = { 
+                hostId: { equals: hostId } 
+            };
+
+            if (search) {
+                where.OR = [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { meetingLink: { contains: search, mode: 'insensitive' } },
+                ];
+            }
+
+            const [total, meetings] = await prisma.$transaction([
+                prisma.meeting.count({ where }),
+                prisma.meeting.findMany({
+                    where,
+                    select: {
+                        id: true,
+                        title: true,
+                        hostId: true,
+                        host: { select: { id: true, name: true } },
+                        dateTime: true,
+                        meetingLink: true,
+                        createdAt: true,
+                    },
+                    orderBy: { dateTime: 'desc' },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                }),
+            ]);
+
+            return c.json({ 
+                data: meetings, 
+                meta: { page, limit, total } 
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
  * POST / - Create a new meeting
  *
  * Middleware: `authMiddleware`, `validate("form", meetingPostSchema)`.
@@ -39,7 +119,7 @@ const meeting = new Hono<{ Variables: AppVariables}>();
  * - 403: forbidden
  * - 500: internal server error
  */
-meeting.post("/", 
+meeting.post("/host", 
     authMiddleware, 
     validate("json", meetingPostSchema), 
     async (c) => {
@@ -132,5 +212,6 @@ meeting.get("/:id",
         }
     }
 );
+
 
 export default meeting;
