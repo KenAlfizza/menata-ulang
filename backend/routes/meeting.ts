@@ -15,6 +15,9 @@ import {
     meetingPostSchema,
     meetingGetByIdSchema,
     meetingGetListSchema, 
+    meetingPatchParamSchema,
+    meetingPatchJSONSchema,
+
 } from "../lib/validators/meeting.ts";
 
 const meeting = new Hono<{ Variables: AppVariables}>();
@@ -150,6 +153,170 @@ meeting.post("/host",
             return c.json({ message: "Meeting created", ok: true, meeting });
         } catch {
             return c.json({ error: "Internal server error"}, 500);
+        }
+    }
+);
+
+/**
+ * PATCH /host/:id - Update an existing meeting owned by the host
+ *
+ * Middleware: `authMiddleware`, `validate("param", meetingGetByIdSchema)`, `validate("json", meetingUpdateSchema)`.
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles. Hosts can only update their own meetings.
+ *
+ * Params:
+ * - id         : The unique identifier of the meeting to update
+ *
+ * JSON (All fields optional):
+ * - title      : Updated meeting title
+ * - dateTime   : Updated meeting date time
+ * - meetingLink: Updated meeting link
+ *
+ * Behavior:
+ * - Validates user permissions ('HOST' or 'SUPERUSER').
+ * - Verifies the meeting exists and belongs strictly to the authenticated host.
+ * - Updates the fields provided in the request body.
+ *
+ * Responses:
+ * - 200: success payload with updated meeting details
+ * - 403: forbidden (not the host or insufficient role)
+ * - 404: meeting not found
+ * - 500: internal server error
+ */
+/**
+ * PATCH /host/:id - Partially update an existing meeting owned by the host
+ *
+ * Middleware: `authMiddleware`, `validate("param", meetingGetByIdSchema)`, `validate("json", meetingPatchSchema)`.
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles. Hosts can only update their own meetings.
+ *
+ * Params:
+ * - id         : The unique identifier of the meeting to update
+ *
+ * JSON (All fields optional):
+ * - title      : Updated meeting title
+ * - dateTime   : Updated meeting date time
+ * - meetingLink: Updated meeting link
+ *
+ * Behavior:
+ * - Validates user permissions ('HOST' or 'SUPERUSER').
+ * - Verifies the meeting exists and belongs strictly to the authenticated host.
+ * - Updates only the specific fields provided in the payload.
+ *
+ * Responses:
+ * - 200: success payload with updated meeting details
+ * - 403: forbidden (not the host or insufficient role)
+ * - 404: meeting not found
+ * - 500: internal server error
+ */
+meeting.patch("/host/:id",
+    authMiddleware,
+    validate("param", meetingPatchParamSchema),
+    validate("json", meetingPatchJSONSchema), 
+    async (c) => {
+        try {
+            // Validate current user permission
+            const user = c.get("user");
+            if (!["HOST", "SUPERUSER"].includes(user.role)) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            // Get the meeting elements from params
+            const p = c.req.valid("param");
+            const id = p.id;
+
+            // Get the meeting elements from json body
+            const b = c.req.valid("json");
+            const title = b.title;
+            const dateTime = b.dateTime;
+            const meetingLink = b.meetingLink;
+
+            // Verify meeting exists
+            const existingMeeting = await prisma.meeting.findUnique({
+                where: { id }
+            });
+
+            if (!existingMeeting) {
+                return c.json({ error: "Meeting not found" }, 404);
+            }
+
+            // Verify resource ownership
+            if (existingMeeting.hostId !== user.id) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            // Execute partial update
+            const updatedMeeting = await prisma.meeting.update({
+                where: { id },
+                data: {
+                    title: title !== undefined ? title : undefined,
+                    dateTime: dateTime !== undefined ? new Date(dateTime) : undefined,
+                    meetingLink: meetingLink !== undefined ? meetingLink : undefined,
+                },
+            });
+
+            return c.json({ message: "Meeting updated", ok: true, meeting: updatedMeeting });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
+ * DELETE /host/:id - Delete a meeting owned by the host
+ *
+ * Middleware: `authMiddleware`, `validate("param", meetingGetByIdSchema)`.
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles. Hosts can only delete their own meetings.
+ *
+ * Params:
+ * - id         : The unique identifier of the meeting to delete
+ *
+ * Behavior:
+ * - Validates user permissions ('HOST' or 'SUPERUSER').
+ * - Verifies the meeting exists and belongs strictly to the authenticated host.
+ * - Deletes the record from the database.
+ *
+ * Responses:
+ * - 200: success payload confirming deletion
+ * - 403: forbidden (not the host or insufficient role)
+ * - 404: meeting not found
+ * - 500: internal server error
+ */
+meeting.delete("/host/:id",
+    authMiddleware,
+    validate("param", meetingGetByIdSchema),
+    async (c) => {
+        try {
+            // Validate current user permission
+            const user = c.get("user");
+            if (!["HOST", "SUPERUSER"].includes(user.role)) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            // Get the meeting elements
+            const p = c.req.valid("param");
+            const id = p.id;
+
+            // Verify meeting exists
+            const existingMeeting = await prisma.meeting.findUnique({
+                where: { id }
+            });
+
+            if (!existingMeeting) {
+                return c.json({ error: "Meeting not found" }, 404);
+            }
+
+            // Verify resource ownership
+            if (existingMeeting.hostId !== user.id) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            // Execute delete
+            await prisma.meeting.delete({
+                where: { id }
+            });
+
+            return c.json({ message: "Meeting deleted", ok: true });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
         }
     }
 );
