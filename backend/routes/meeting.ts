@@ -23,7 +23,7 @@ const meeting = new Hono<{ Variables: AppVariables}>();
  * GET /host - Fetch a paginated list of meetings hosted by an authenticated user with host permission
  *
  * Middleware: `authMiddleware`, `validate("query", meetingGetListSchema)`.
- * Authorization: Authenticated users only. Filters results strictly by the logged-in user's ID.
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles only. Filters results strictly by the logged-in user's ID.
  *
  * Query Parameters:
  * - page   : (Optional) The page number for pagination (defaults to 1)
@@ -102,22 +102,23 @@ meeting.get("/host",
 /**
  * POST / - Create a new meeting
  *
- * Middleware: `authMiddleware`, `validate("form", meetingPostSchema)`.
- * Authorization: users with any role may create a meeting
+ * Middleware: `authMiddleware`, `validate("json", meetingPostSchema)`.
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles only.
  *
  * JSON:
- * - title      : meeting title
- * - dateTime   : meeting date time
- * - meetingLink: meeting link
+ * - title      : Meeting title
+ * - dateTime   : Meeting date and time (ISO string)
+ * - meetingLink: URL link for the meeting
  *
  * Behavior: 
- * - create the meeting with the current user as host
- * - if the database creation failed, return error
+ * - Validates that the authenticated user possesses an allowed role.
+ * - Creates a new meeting record in the database, connecting the current user as the host.
+ * - Parses the provided dateTime string into a native Date object before insertion.
  *
  * Responses:
- * - 200: meeting payload
- * - 403: forbidden
- * - 500: internal server error
+ * - 200: Success payload with a confirmation message and the full meeting object
+ * - 403: Forbidden if the user lacks the necessary role permissions
+ * - 500: Internal server error if the database operation fails
  */
 meeting.post("/host", 
     authMiddleware, 
@@ -212,6 +213,5 @@ meeting.get("/:id",
         }
     }
 );
-
 
 export default meeting;
