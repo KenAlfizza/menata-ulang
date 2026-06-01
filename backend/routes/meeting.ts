@@ -12,7 +12,8 @@ import { authMiddleware } from "../middleware/auth.ts";
 
 // Validators
 import { 
-    meetingPostSchema, 
+    meetingPostSchema,
+    meetingGetByIdSchema, 
 } from "../lib/validators/meeting.ts";
 
 const meeting = new Hono<{ Variables: AppVariables}>();
@@ -68,6 +69,61 @@ meeting.post("/",
         } catch {
             return c.json({ error: "Internal server error"}, 500);
         }
+    }
+);
+
+/**
+ * GET /:id - Fetch a meeting by its ID
+ *
+ * Middleware: `authOptionalMiddleware`, `validate("param", meetingGetByIdSchema)`.
+ * Authorization: public access, but `meetingLink` is only visible to authenticated users.
+ *
+ * Params:
+ * - id         : meeting unique identifier
+ *
+ * Behavior: 
+ * - fetch the meeting and its host from the database
+ * - return 404 if the meeting doesn't exist
+ * - include `meetingLink` in the payload only if an authenticated user is making the request
+ *
+ * Responses:
+ * - 200: success payload with meeting details
+ * - 404: meeting not found
+ * - 400/500: handled by validation or global error middleware
+ */
+meeting.get("/:id", 
+    authOptionalMiddleware,
+    validate("param", meetingGetByIdSchema), 
+    async (c) => {
+        const { id } = c.req.valid("param");
+
+        const storedMeeting = await prisma.meeting.findUnique({ 
+            where: { id },
+            include: { host: true } 
+        });
+        
+        if (!storedMeeting) return c.json({ error: "Meeting is not found" }, 404);
+        
+        const user = c.get("user");
+        
+        // Show meetingLink for ALL authenticated users, hide for unauthenticated
+        const meetingPayload = user && user.id 
+            ? {
+                id: storedMeeting.id,
+                title: storedMeeting.title,
+                host: storedMeeting.host.name,
+                dateTime: storedMeeting.dateTime,
+                meetingLink: storedMeeting.meetingLink
+            }
+            : {
+                id: storedMeeting.id,
+                title: storedMeeting.title,
+                host: storedMeeting.host.name,
+                dateTime: storedMeeting.dateTime,
+                meetingLink: undefined
+            };
+            
+        return c.json({ message: "Meeting fetched", ok: true, meeting: meetingPayload });
     }
 );
 
