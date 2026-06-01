@@ -29,7 +29,7 @@ export const meetingGetByIdSchema = z.object({
 export const meetingPostSchema = z.object({
   title: textRule,
   dateTime: dateTimeRule,
-  meetingLink: z.url("Must be a valid URL"),
+  meetingLink: z.string().url("Must be a valid URL"),
 });
 
 /** PATCH Schemas */
@@ -40,7 +40,7 @@ export const meetingPatchParamSchema = z.object({
 export const meetingPatchFormSchema = z.object({
   title: textRule.optional(),
   dateTime: dateTimeRule.optional(),
-  meetingLink: z.url().optional(),
+  meetingLink: z.string().url().optional(),
 });
 
 /** DELETE Schemas */
