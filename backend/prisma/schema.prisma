@@ -28,6 +28,7 @@ model User {
   stories     Story[]
   podcasts    Podcast[]
   reflections Reflection[]
+  meetings    Meeting[]
   
   /// Hearts given by this user across different content types.
   hearts      Heart[]
@@ -36,6 +37,7 @@ model User {
 enum UserRole {
   SUPERUSER
   AUTHOR
+  HOST
   MODERATOR
   USER
 }
@@ -202,4 +204,15 @@ model Heart {
   @@unique([userId, storyId], name: "user_story_heart_unique")
   @@unique([userId, podcastId], name: "user_podcast_heart_unique")
   @@unique([userId, reflectionId], name: "user_reflection_heart_unique")
+}
+
+model Meeting {
+  id             String      @id @default(cuid(2))
+  title          String      @default("New Meeting")
+  hostId         Int
+  host           User        @relation(fields: [hostId], references: [id])
+  dateTime       DateTime
+  meetingLink    String
+  createdAt      DateTime    @default(now())
+  deletedAt      DateTime?
 }
