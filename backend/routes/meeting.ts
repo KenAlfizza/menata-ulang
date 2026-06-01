@@ -80,7 +80,6 @@ meeting.get("/host",
                     select: {
                         id: true,
                         title: true,
-                        hostId: true,
                         host: { select: { id: true, name: true } },
                         dateTime: true,
                         meetingLink: true,
@@ -157,31 +156,6 @@ meeting.post("/host",
     }
 );
 
-/**
- * PATCH /host/:id - Update an existing meeting owned by the host
- *
- * Middleware: `authMiddleware`, `validate("param", meetingGetByIdSchema)`, `validate("json", meetingUpdateSchema)`.
- * Authorization: Users with 'HOST' or 'SUPERUSER' roles. Hosts can only update their own meetings.
- *
- * Params:
- * - id         : The unique identifier of the meeting to update
- *
- * JSON (All fields optional):
- * - title      : Updated meeting title
- * - dateTime   : Updated meeting date time
- * - meetingLink: Updated meeting link
- *
- * Behavior:
- * - Validates user permissions ('HOST' or 'SUPERUSER').
- * - Verifies the meeting exists and belongs strictly to the authenticated host.
- * - Updates the fields provided in the request body.
- *
- * Responses:
- * - 200: success payload with updated meeting details
- * - 403: forbidden (not the host or insufficient role)
- * - 404: meeting not found
- * - 500: internal server error
- */
 /**
  * PATCH /host/:id - Partially update an existing meeting owned by the host
  *
