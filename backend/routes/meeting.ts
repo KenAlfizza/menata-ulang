@@ -13,7 +13,8 @@ import { authMiddleware } from "../middleware/auth.ts";
 // Validators
 import { 
     meetingPostSchema,
-    meetingGetByIdSchema, 
+    meetingGetByIdSchema,
+    meetingGetListSchema, 
 } from "../lib/validators/meeting.ts";
 
 const meeting = new Hono<{ Variables: AppVariables}>();
@@ -95,35 +96,40 @@ meeting.get("/:id",
     authOptionalMiddleware,
     validate("param", meetingGetByIdSchema), 
     async (c) => {
-        const { id } = c.req.valid("param");
+        try {
+            const p = c.req.valid("param");
+            const meetingId = p.id;
 
-        const storedMeeting = await prisma.meeting.findUnique({ 
-            where: { id },
-            include: { host: true } 
-        });
-        
-        if (!storedMeeting) return c.json({ error: "Meeting is not found" }, 404);
-        
-        const user = c.get("user");
-        
-        // Show meetingLink for ALL authenticated users, hide for unauthenticated
-        const meetingPayload = user && user.id 
-            ? {
-                id: storedMeeting.id,
-                title: storedMeeting.title,
-                host: storedMeeting.host.name,
-                dateTime: storedMeeting.dateTime,
-                meetingLink: storedMeeting.meetingLink
-            }
-            : {
-                id: storedMeeting.id,
-                title: storedMeeting.title,
-                host: storedMeeting.host.name,
-                dateTime: storedMeeting.dateTime,
-                meetingLink: undefined
-            };
+            const storedMeeting = await prisma.meeting.findUnique({ 
+                where: { id: meetingId },
+                include: { host: true } 
+            });
             
-        return c.json({ message: "Meeting fetched", ok: true, meeting: meetingPayload });
+            if (!storedMeeting) return c.json({ error: "Meeting is not found" }, 404);
+            
+            const user = c.get("user");
+            
+            // Show meetingLink for ALL authenticated users, hide for unauthenticated
+            const meetingPayload = user && user.id 
+                ? {
+                    id: storedMeeting.id,
+                    title: storedMeeting.title,
+                    host: storedMeeting.host.name,
+                    dateTime: storedMeeting.dateTime,
+                    meetingLink: storedMeeting.meetingLink
+                }
+                : {
+                    id: storedMeeting.id,
+                    title: storedMeeting.title,
+                    host: storedMeeting.host.name,
+                    dateTime: storedMeeting.dateTime,
+                    meetingLink: undefined
+                };
+                
+            return c.json({ message: "Meeting fetched", ok: true, meeting: meetingPayload });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
     }
 );
 
