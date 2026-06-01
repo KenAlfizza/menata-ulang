@@ -296,6 +296,203 @@ meeting.delete("/host/:id",
 );
 
 /**
+ * GET / - Fetch a paginated list of all historical and future meetings
+ *
+ * Middleware: `authOptionalMiddleware`, `validate("query", meetingGetListSchema)`
+ * Authorization: Public access
+ *
+ * Query Parameters:
+ * - page   : (Optional) The page number for pagination (defaults to 1)
+ * - limit  : (Optional) The number of items to return per page (defaults to 10)
+ * - search : (Optional) Case-insensitive search filter matching against `title`
+ */
+meeting.get("/", 
+    authOptionalMiddleware,
+    validate("query", meetingGetListSchema),
+    async (c) => {
+        try {
+            const q = c.req.valid("query");
+            const page = q.page ?? 1;
+            const limit = q.limit ?? 10;
+            const search = q.search?.trim();
+
+            const where: Prisma.MeetingWhereInput = {};
+            if (search) {
+                where.title = { contains: search, mode: 'insensitive' };
+            }
+
+            const [total, storedMeetings] = await prisma.$transaction([
+                prisma.meeting.count({ where }),
+                prisma.meeting.findMany({
+                    where,
+                    select: {
+                        id: true,
+                        title: true,
+                        dateTime: true,
+                        host: {
+                            select: { name: true }
+                        }
+                    },
+                    orderBy: { dateTime: "desc" },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                })
+            ]);
+
+            const meetingsList = storedMeetings.map(m => ({
+                id: m.id,
+                title: m.title,
+                host: m.host.name,
+                dateTime: m.dateTime,
+            }));
+
+            return c.json({ 
+                message: "All meetings fetched", 
+                ok: true, 
+                meetings: meetingsList,
+                meta: { page, limit, total }
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
+ * GET /upcoming - Fetch a paginated list of all future scheduled meetings
+ *
+ * Middleware: `authOptionalMiddleware`, `validate("query", meetingGetListSchema)`
+ * Authorization: Public access
+ *
+ * Query Parameters:
+ * - page   : (Optional) The page number for pagination (defaults to 1)
+ * - limit  : (Optional) The number of items to return per page (defaults to 10)
+ * - search : (Optional) Case-insensitive search filter matching against `title`
+ */
+meeting.get("/upcoming", 
+    authOptionalMiddleware,
+    validate("query", meetingGetListSchema),
+    async (c) => {
+        try {
+            const q = c.req.valid("query");
+            const page = q.page ?? 1;
+            const limit = q.limit ?? 10;
+            const search = q.search?.trim();
+
+            const now = new Date();
+            const where: Prisma.MeetingWhereInput = {
+                dateTime: { gte: now }
+            };
+
+            if (search) {
+                where.title = { contains: search, mode: 'insensitive' };
+            }
+
+            const [total, storedMeetings] = await prisma.$transaction([
+                prisma.meeting.count({ where }),
+                prisma.meeting.findMany({
+                    where,
+                    select: {
+                        id: true,
+                        title: true,
+                        dateTime: true,
+                        host: {
+                            select: { name: true }
+                        }
+                    },
+                    orderBy: { dateTime: "asc" },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                })
+            ]);
+
+            const meetingsList = storedMeetings.map(m => ({
+                id: m.id,
+                title: m.title,
+                host: m.host.name,
+                dateTime: m.dateTime,
+            }));
+
+            return c.json({ 
+                message: "Upcoming meetings fetched", 
+                ok: true, 
+                meetings: meetingsList,
+                meta: { page, limit, total }
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
+ * GET /past - Fetch a paginated list of all concluded meetings
+ *
+ * Middleware: `authOptionalMiddleware`, `validate("query", meetingGetListSchema)`
+ * Authorization: Public access
+ *
+ * Query Parameters:
+ * - page   : (Optional) The page number for pagination (defaults to 1)
+ * - limit  : (Optional) The number of items to return per page (defaults to 10)
+ * - search : (Optional) Case-insensitive search filter matching against `title`
+ */
+meeting.get("/past", 
+    authOptionalMiddleware,
+    validate("query", meetingGetListSchema),
+    async (c) => {
+        try {
+            const q = c.req.valid("query");
+            const page = q.page ?? 1;
+            const limit = q.limit ?? 10;
+            const search = q.search?.trim();
+
+            const now = new Date();
+            const where: Prisma.MeetingWhereInput = {
+                dateTime: { lt: now }
+            };
+
+            if (search) {
+                where.title = { contains: search, mode: 'insensitive' };
+            }
+
+            const [total, storedMeetings] = await prisma.$transaction([
+                prisma.meeting.count({ where }),
+                prisma.meeting.findMany({
+                    where,
+                    select: {
+                        id: true,
+                        title: true,
+                        dateTime: true,
+                        host: {
+                            select: { name: true }
+                        }
+                    },
+                    orderBy: { dateTime: "desc" },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                })
+            ]);
+
+            const meetingsList = storedMeetings.map(m => ({
+                id: m.id,
+                title: m.title,
+                host: m.host.name,
+                dateTime: m.dateTime,
+            }));
+
+            return c.json({ 
+                message: "Past meetings fetched", 
+                ok: true, 
+                meetings: meetingsList,
+                meta: { page, limit, total }
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
  * GET /:id - Fetch a meeting by its ID
  *
  * Middleware: `authOptionalMiddleware`, `validate("param", meetingGetByIdSchema)`.
@@ -354,5 +551,7 @@ meeting.get("/:id",
         }
     }
 );
+
+
 
 export default meeting;
