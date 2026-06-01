@@ -1,6 +1,6 @@
 // lib/validators/meeting.ts
 import z from 'zod';
-import { uuidRule } from "./common.ts";
+import { cuidRule } from "./common.ts";
 
 /**
  * Common rules for meeting endpoints
@@ -22,7 +22,7 @@ export const meetingGetListSchema = z.object({
 });
 
 export const meetingGetByIdSchema = z.object({
-  id: uuidRule,
+  id: cuidRule,
 });
 
 /** POST Schemas */
@@ -34,10 +34,10 @@ export const meetingPostSchema = z.object({
 
 /** PATCH Schemas */
 export const meetingPatchParamSchema = z.object({
-  id: uuidRule,
+  id: cuidRule,
 });
 
-export const meetingPatchFormSchema = z.object({
+export const meetingPatchJSONSchema = z.object({
   title: textRule.optional(),
   dateTime: dateTimeRule.optional(),
   meetingLink: z.url().optional(),
@@ -45,5 +45,5 @@ export const meetingPatchFormSchema = z.object({
 
 /** DELETE Schemas */
 export const meetingDeleteParamSchema = z.object({
-  id: uuidRule,
+  id: cuidRule,
 });

@@ -28,6 +28,15 @@ export const uuidRule = z.uuidv7();
 
 
 /**
+ * CUIDv2 validation rule
+ * - Must be a non-empty string
+ * Usages:
+ * - GET, PATCH, DELETE endpoints
+ */
+export const cuidRule = z.cuid2();
+
+
+/**
  * Max words validation rule
  * @param max 
  * @param message
