@@ -32,13 +32,15 @@ const feedback = new Hono<{ Variables: AppVariables }>();
  * - isAnonymous : (Optional) Boolean flag to obscure name and email fields (defaults to false)
  *
  * Behavior:
- * - Reads metadata directly from the incoming form/JSON payload rather than database user contexts.
- * - If `isAnonymous` evaluates to true, values default to "Anonymous" and an empty string respectively.
- * - If `isAnonymous` is false, it sanitizes input or defaults empty structures to "Guest".
+ * - Validates basic structural shape via Zod.
+ * - Checks if the user is posting as non-anonymous but left the `userName` empty; throws a 400 Bad Request error if so.
+ * - If `isAnonymous` is true, sets identity fields to "Anonymous" and an empty string.
+ * - Falls back to "Guest" for any other valid structural bypass edge cases.
  *
  * Responses:
  * - 201: Success payload acknowledging entry creation alongside the newly generated record ID
- * - 400/500: Handled by validation or global error middleware
+ * - 400: Bad Request if non-anonymous submission lacks a valid name
+ * - 500: Handled by global error middleware
  */
 feedback.post("/",
     authOptionalMiddleware,
@@ -46,11 +48,20 @@ feedback.post("/",
     async (c) => {
         try {
             const body = c.req.valid("json");
+            const trimmedName = body.userName?.trim();
 
-            // Fallback to "Anonymous" or empty string if fields are empty
+            // If NOT anonymous, and no name is provided (or it's just whitespace) return error
+            if (!body.isAnonymous && (!trimmedName || trimmedName === "")) {
+                return c.json({
+                    success: false,
+                    error: "Name is required when submission is not anonymous"
+                }, 400);
+            }
+
+            // Determine final database values based on identity rules
             const finalName = body.isAnonymous 
                 ? "Anonymous" 
-                : (body.userName?.trim() || "Guest");
+                : (trimmedName || "Guest");
 
             const finalEmail = body.isAnonymous 
                 ? "" 
