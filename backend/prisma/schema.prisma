@@ -203,3 +203,12 @@ model Heart {
   @@unique([userId, podcastId], name: "user_podcast_heart_unique")
   @@unique([userId, reflectionId], name: "user_reflection_heart_unique")
 }
+
+model Feedback {
+  id          String   @id @default(uuid())
+  userName    String  
+  email       String  
+  content     String   @db.Text
+  resolved    Boolean  @default(false) // Added resolved flag
+  createdAt   DateTime @default(now())
+}
