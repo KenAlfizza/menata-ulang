@@ -101,9 +101,10 @@ feedback.post("/",
  * - Validates that the requesting client possesses adequate administrative credentials.
  * - Evaluates optional filter expressions onto the targeting Prisma condition query layer.
  * - Executes a unified database transaction block to collect both aggregate counting metrics and subset target rows.
+ * - Post-processes the resulting dataset to truncate long text contents to a preview maximum threshold (100 characters), appending ellipses where truncated.
  *
  * Responses:
- * - 200: Success payload containing the flat list of feedback submissions and associated pagination metadata
+ * - 200: Success payload containing the preview-optimized flat list of feedback submissions and associated pagination metadata
  * - 403: Forbidden if the user lacks the necessary administrative role permissions
  * - 500: Handled by global error middleware
  */
@@ -145,10 +146,19 @@ feedback.get("/",
                 })
             ]);
 
+            // Truncate the content field dynamically for the list view
+            const MAX_PREVIEW_LENGTH = 100;
+            const processedItems = feedbackItems.map(item => ({
+                ...item,
+                content: item.content.length > MAX_PREVIEW_LENGTH
+                    ? `${item.content.substring(0, MAX_PREVIEW_LENGTH)}...`
+                    : item.content
+            }));
+
             return c.json({
                 message: "Feedback records fetched successfully",
                 ok: true,
-                data: feedbackItems,
+                data: processedItems,
                 meta: { page, limit, total }
             });
         } catch {
