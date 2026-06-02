@@ -8,6 +8,7 @@ import { validate } from "../lib/validators/index.ts";
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts";
 import { authMiddleware } from "../middleware/auth.ts";
+import { rateLimitMiddleware } from "../middleware/rateLimiter.ts";
 
 // Validators
 import { 
@@ -44,6 +45,7 @@ const feedback = new Hono<{ Variables: AppVariables }>();
  */
 feedback.post("/",
     authOptionalMiddleware,
+    rateLimitMiddleware,
     validate("json", feedbackPostSchema),
     async (c) => {
         try {
