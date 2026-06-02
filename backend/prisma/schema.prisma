@@ -205,7 +205,7 @@ model Heart {
 }
 
 model Feedback {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid(7))
   userName    String  
   email       String  
   content     String   @db.Text

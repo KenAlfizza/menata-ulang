@@ -22,21 +22,6 @@ export const updateUserSchema = z.object({
 });
 
 /**
- * Schema for validating route parameters containing an ID.
- *
- * Fields:
- * - id: Required string from route parameters. Parsed into an integer.
- *
- * Behavior: Transforms the string `id` parameter to a number and ensures
- * it is a positive integer. Throws an error if invalid.
- */
-export const paramsSchema = z.object({
-  id: z.string().min(1, "Id is required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val) && val > 0, "Invalid id"),
-});
-
-/**
  * Schema for submitting feedback entries.
  *
  * Fields:

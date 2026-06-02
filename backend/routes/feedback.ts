@@ -8,6 +8,7 @@ import { validate } from "../lib/validators/index.ts";
 // Middleware Imports
 import { authOptionalMiddleware } from "../middleware/authOptional.ts";
 import { authMiddleware } from "../middleware/auth.ts";
+import { rateLimitMiddleware } from "../middleware/rateLimiter.ts";
 
 // Validators
 import { 
@@ -44,6 +45,7 @@ const feedback = new Hono<{ Variables: AppVariables }>();
  */
 feedback.post("/",
     authOptionalMiddleware,
+    rateLimitMiddleware,
     validate("json", feedbackPostSchema),
     async (c) => {
         try {
@@ -95,17 +97,18 @@ feedback.post("/",
  * Query Parameters:
  * - page     : (Optional) The page number for pagination (defaults to 1)
  * - limit    : (Optional) The number of items to return per page (defaults to 10, max 100)
- * - resolved : (Optional) Explicit string filter ("true" or "false") to isolate items by resolution status
+ * - resolved : (Optional) Explicit string filter ("true" or "false") to isolate items by completion status
  *
  * Behavior:
  * - Validates that the requesting client possesses adequate administrative credentials.
- * - Applies optional filter expressions onto the targeting Prisma condition query layer.
- * - Executes a unified database transaction block to collect aggregate counts and flat row structures.
+ * - Evaluates optional filter expressions onto the targeting Prisma condition query layer.
+ * - Executes a unified database transaction block to collect both aggregate counting metrics and subset target rows.
+ * - Post-processes the resulting dataset to truncate long text contents to a preview maximum threshold (100 characters), appending ellipses where truncated.
  *
  * Responses:
- * - 200: Success payload containing the flat feedback list and associated pagination metadata
+ * - 200: Success payload containing the preview-optimized flat list of feedback submissions and associated pagination metadata
  * - 403: Forbidden if the user lacks the necessary administrative role permissions
- * - 400/500: Handled by validation or global error middleware
+ * - 500: Handled by global error middleware
  */
 feedback.get("/",
     authMiddleware,
@@ -145,11 +148,72 @@ feedback.get("/",
                 })
             ]);
 
+            // Truncate the content field dynamically for the list view
+            const MAX_PREVIEW_LENGTH = 100;
+            const processedItems = feedbackItems.map(item => ({
+                ...item,
+                content: item.content.length > MAX_PREVIEW_LENGTH
+                    ? `${item.content.substring(0, MAX_PREVIEW_LENGTH)}...`
+                    : item.content
+            }));
+
             return c.json({
                 message: "Feedback records fetched successfully",
                 ok: true,
-                data: feedbackItems,
+                data: processedItems,
                 meta: { page, limit, total }
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
+ * GET /:id - Fetch an individual feedback record by its unique ID
+ *
+ * Middleware: `authMiddleware`, `validate("param", feedbackParamSchema)`
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles only.
+ *
+ * Params:
+ * - id       : The unique UUID identifier of the target feedback entry
+ *
+ * Behavior:
+ * - Verifies that the client possesses required administrative privileges.
+ * - Validates the path parameter string layout via Zod.
+ * - Queries the database for a matching record, executing a 404 block if absent.
+ *
+ * Responses:
+ * - 200: Success payload returning the isolated feedback entry
+ * - 403: Forbidden if the user lacks sufficient role permissions
+ * - 404: Feedback record not found
+ * - 500: Handled by global error middleware
+ */
+feedback.get("/:id",
+    authMiddleware,
+    validate("param", feedbackParamSchema),
+    async (c) => {
+        try {
+            const user = c.get("user");
+            
+            if (!["HOST", "SUPERUSER"].includes(user.role)) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            const { id } = c.req.valid("param");
+
+            const feedbackItem = await prisma.feedback.findUnique({
+                where: { id }
+            });
+
+            if (!feedbackItem) {
+                return c.json({ error: "Feedback record not found" }, 404);
+            }
+
+            return c.json({
+                message: "Feedback record retrieved successfully",
+                ok: true,
+                data: feedbackItem
             });
         } catch {
             return c.json({ error: "Internal server error" }, 500);
@@ -172,14 +236,14 @@ feedback.get("/",
  * Behavior:
  * - Verifies that the client possesses required administrative privileges.
  * - Validates parameter formats and looks up matching records in the database.
- * - Instantly yields a 404 response if the targeted feedback row cannot be verified.
- * - Commits mutations directly against the targeted entry row structure upon validation success.
+ * - Returns a 404 status instantly if the target row entry cannot be found.
+ * - Applies specific attribute mutations to the matching record on validation success.
  *
  * Responses:
  * - 200: Success payload displaying individual row identifiers along with changed state flags
  * - 403: Forbidden if the user lacks sufficient role permissions
  * - 404: Feedback record not found
- * - 400/500: Handled by validation or global error middleware
+ * - 500: Handled by global error middleware
  */
 feedback.patch("/:id",
     authMiddleware,
@@ -219,6 +283,62 @@ feedback.patch("/:id",
                 message: `Feedback marked as ${updatedFeedback.resolved ? 'resolved' : 'unresolved'}`,
                 ok: true,
                 data: updatedFeedback
+            });
+        } catch {
+            return c.json({ error: "Internal server error" }, 500);
+        }
+    }
+);
+
+/**
+ * DELETE /:id - Remove a feedback entry permanently from the database
+ *
+ * Middleware: `authMiddleware`, `validate("param", feedbackParamSchema)`
+ * Authorization: Users with 'HOST' or 'SUPERUSER' roles only.
+ *
+ * Params:
+ * - id       : The unique UUID identifier of the target feedback entry
+ *
+ * Behavior:
+ * - Verifies that the client possesses required administrative privileges.
+ * - Looks up the targeted record first to issue an immediate 404 if missing.
+ * - Executes a delete call targeting the matched primary key record structure.
+ *
+ * Responses:
+ * - 200: Success payload confirming deletion alongside the obsolete resource identifier
+ * - 403: Forbidden if the user lacks sufficient role permissions
+ * - 404: Feedback record not found
+ * - 500: Handled by global error middleware
+ */
+feedback.delete("/:id",
+    authMiddleware,
+    validate("param", feedbackParamSchema),
+    async (c) => {
+        try {
+            const user = c.get("user");
+            
+            if (!["HOST", "SUPERUSER"].includes(user.role)) {
+                return c.json({ error: "Forbidden" }, 403);
+            }
+
+            const { id } = c.req.valid("param");
+
+            const targetFeedback = await prisma.feedback.findUnique({
+                where: { id }
+            });
+
+            if (!targetFeedback) {
+                return c.json({ error: "Feedback record not found" }, 404);
+            }
+
+            await prisma.feedback.delete({
+                where: { id }
+            });
+
+            return c.json({
+                message: "Feedback record deleted successfully",
+                ok: true,
+                id
             });
         } catch {
             return c.json({ error: "Internal server error" }, 500);
