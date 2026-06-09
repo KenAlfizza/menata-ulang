@@ -34,10 +34,10 @@ export default function RegisterPage() {
     <>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold tracking-tight text-center">
-          Create an account
+          Daftar Akun
         </CardTitle>
         <CardDescription className="text-center">
-          Enter your details below to register for Menata Ulang
+          Masukkan informasi Anda untuk daftar akun
         </CardDescription>
       </CardHeader>
 
@@ -46,7 +46,7 @@ export default function RegisterPage() {
           
           {/* Full Name Input Field */}
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Nama Profil</Label>
             <Input
               id="name"
               type="text"
@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
           {/* Email Input Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -80,7 +80,7 @@ export default function RegisterPage() {
 
           {/* Password Input Field */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input
               id="password"
               type="password"
@@ -97,7 +97,7 @@ export default function RegisterPage() {
 
           {/* Confirm Password Input Field */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Konfirmasi Kata Sandi</Label>
             <Input
               id="confirmPassword"
               type="password"

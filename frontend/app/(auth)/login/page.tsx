@@ -32,10 +32,10 @@ export default function LoginPage() {
     <>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold tracking-tight text-center">
-          Welcome back
+          Selamat Datang
         </CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your account
+          Masukkan email dan kata sandi untuk mengakses akun Anda
         </CardDescription>
       </CardHeader>
       
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
           {/* Password Input Field Block */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input
               id="password"
               type="password"
@@ -78,16 +78,16 @@ export default function LoginPage() {
           </div>
 
           <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
-            {isSubmitting ? "Signing In..." : "Sign In"}
+            {isSubmitting ? "Memasukkan Anda..." : "Masuk"}
           </Button>
         </form>
       </CardContent>
 
       <CardFooter>
         <p className="text-sm text-zinc-500 text-center w-full">
-          Don&apos;t have an account?{" "}
+          Belum punya akun?{" "}
           <Link href="/register" className="text-primary underline-offset-4 hover:underline">
-            Sign up
+            Daftar
           </Link>
         </p>
       </CardFooter>
