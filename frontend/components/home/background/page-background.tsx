@@ -18,8 +18,12 @@ export function PageBackground({ children }: PageBackgroundProps) {
             <DecorativeRope src={"/rope/green1.svg"} width={1500} height={150} />
         </div>
 
-        <div className="absolute top-[10%] sm:top-[36%] left-0 w-full flex justify-center">
+        <div className="absolute top-[10%] top-[30%] xl:top-[38%]  lg:left-0 w-full flex justify-center">
             <DecorativeRope src={"/rope/green2.svg"} width={1500} height={150} />
+        </div>
+
+        <div className="absolute top-[10%] top-[70%] xl:top-[70%]  lg:left-0 w-full flex justify-center">
+            <DecorativeRope src={"/rope/green3.svg"} width={1500} height={150} />
         </div>
         
       </div>

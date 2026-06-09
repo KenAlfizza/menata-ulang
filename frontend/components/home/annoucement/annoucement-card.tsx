@@ -6,7 +6,7 @@ export function AnnouncementCard() {
     return (
         <Button 
             asChild
-            className="w-full sm:w-lg h-auto p-6 bg-white/60 hover:bg-white/80 active:bg-white/90 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl text-left border-0 block cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="w-lg h-auto p-6 bg-white/60 hover:bg-white/80 active:bg-white/90 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl text-left border-0 block cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-zinc-400"
             >
             <div>
                 {/* Title */}
@@ -19,15 +19,15 @@ export function AnnouncementCard() {
                 <Image
                     src="/globe.svg"
                     alt="Announcement Image"
-                    width={128}
-                    height={128}
+                    width={96}
+                    height={96}
                     className="shrink-0"
                 />
                 
                 {/* Text Section */}
                 <div className="flex flex-col text-center items-center justify-center flex-1 text-zinc-500 whitespace-normal">
-                    <p className="text-xl font-medium text-zinc-800">Kaset yang Sudah Usang</p>
-                    <p className="text-md italic mt-1">
+                    <p className="text-lg font-medium text-zinc-800">Kaset yang Sudah Usang</p>
+                    <p className="italic mt-1">
                     “Mungkin trauma itu adalah kaset memori usang yang harus diperbaiki karena tak lagi sejalan.”
                     </p>
                 </div>

@@ -11,7 +11,7 @@ interface DecorativeRopeProps {
 
 export function DecorativeRope({ src, width = 1500, height = 200 }: DecorativeRopeProps) {
   return (
-    <div className="flex justify-center w-full overflow-hidden relative select-none pointer-events-none">
+    <div className="flex justify-center w-full relative select-none pointer-events-none">
       {/* 🌟 The outer fixed wrapper handles the constant sizing rule */}
       <div 
         className="flex-shrink-0"
