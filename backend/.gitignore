@@ -4,3 +4,7 @@ node_modules
 .env
 # Keep generated/prisma out of version control
 /generated/prisma
+# Keep prisma seeding out of version control
+/prisma/seed.ts
+# Keep storage directory out of version control
+storage
