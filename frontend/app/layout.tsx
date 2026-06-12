@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { REM } from "next/font/google";
 import "./globals.css";
 
+import { AuthProvider } from "../context/auth-context.tsx";
+
 const sansFont = REM({
   subsets: ["latin"],
   variable: "--font-rem", // ← use --font-rem, not --font-sans
@@ -20,7 +22,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sansFont.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+            {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

@@ -1,18 +1,18 @@
 import * as z from "zod";
 
 export const loginSchema = z.object({
-  email: z.email({ message: "Please enter a valid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
+  email: z.email({ message: "Silakan masukkan alamat email yang valid." }),
+  password: z.string().min(8, { message: "Kata sandi harus minimal 8 karakter." }),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters long." }),
-  email: z.email({ message: "Please enter a valid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
-  confirmPassword: z.string()
+  name: z.string().min(2, { message: "Nama harus minimal 2 karakter." }),
+  email: z.email({ message: "Silakan masukkan alamat email yang valid." }),
+  password: z.string().min(8, { message: "Kata sandi harus minimal 8 karakter." }),
+  confirmPassword: z.string({ error: "Konfirmasi kata sandi wajib diisi." })
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match.",
+  message: "Kata sandi tidak cocok.",
   path: ["confirmPassword"],
 });
 
