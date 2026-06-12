@@ -14,36 +14,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 
-// Interface mapping your Hono error shapes directly to our frontend inputs
-interface BackendLoginErrors {
-  email?: string;
-  password?: string;
-  global?: string;
-}
-
 export default function LoginPage() {
   const router = useRouter();
-
   const { setToken } = useAuth();
 
   const [apiSuccess, setApiSuccess] = useState<boolean>(false);
-  const [apiErrors, setApiErrors] = useState<BackendLoginErrors>({});
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
+    mode: "onTouched", // Validates on blur/touch to give instant registration-style feedback
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-const onSubmit = async (data: LoginInput) => {
-    console.log("Form data parsed via v4 setup:", data);
-    setApiErrors({}); // Clear previous states
+  const onSubmit = async (data: LoginInput) => {
+    console.log("Form data verified on client side:", data);
+    setGlobalError(null);
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -59,43 +53,53 @@ const onSubmit = async (data: LoginInput) => {
         }),
       });
 
+      if (response.status === 500) {
+        setGlobalError("Terjadi kesalahan pada server internal. Silakan coba lagi nanti.");
+        return;
+      }
+
       const result = await response.json();
 
       if (!response.ok) {
+        // Handle nested field validation map from backend (e.g., lowercase letters check)
+        if (result.error && typeof result.error === "object") {
+          Object.keys(result.error).forEach((field) => {
+            setError(field as keyof LoginInput, {
+              type: "server",
+              message: result.error[field],
+            });
+          });
+          return;
+        }
+
+        // Fallback for flat string responses
         switch (response.status) {
-          case 404: // Account not found
-            setApiErrors({ 
-              email: result.error || "Akun tidak ditemukan." 
+          case 404:
+            setError("email", {
+              type: "server",
+              message: typeof result.error === "string" ? result.error : "Akun tidak ditemukan.",
             });
             break;
             
-          case 401: // Invalid credentials / Unauthorized
-            setApiErrors({ 
-              password: result.error || "Kata sandi salah atau tidak valid." 
+          case 401:
+            setError("password", {
+              type: "server",
+              message: typeof result.error === "string" ? result.error : "Kata sandi salah atau tidak valid.",
             });
             break;
             
-          case 500: // Database crash / Prisma engine failures
-            setApiErrors({ 
-              global: "Terjadi kesalahan pada server internal. Silakan coba lagi nanti." 
-            });
-            break;
-            
-          default: // Catch-all fallback for other statuses (e.g., 400 Bad Request)
-            setApiErrors({ 
-              global: result.error || "Gagal masuk. Silakan periksa kembali data Anda." 
-            });
+          default:
+            setGlobalError(
+              typeof result.error === "string" 
+                ? result.error 
+                : "Gagal masuk. Silakan periksa kembali data Anda."
+            );
         }
         return;
       }
 
-      // SUCCESS (HTTP 200)
       setApiSuccess(true);
-
       const accessToken = result.token;
-      console.log("Access Token received:", accessToken);
-      
-      // Save token to context
       setToken(accessToken);
 
       setTimeout(() => {
@@ -104,7 +108,7 @@ const onSubmit = async (data: LoginInput) => {
 
     } catch (error: any) {
       console.error("Login request crashed:", error);
-      setApiErrors({ global: "Tidak dapat terhubung ke server backend." });
+      setGlobalError("Tidak dapat terhubung ke server backend.");
     }
   };
 
@@ -120,10 +124,9 @@ const onSubmit = async (data: LoginInput) => {
       </CardHeader>
       
       <CardContent>
-        {/* Core System / Runtime Catch-All Banners */}
-        {apiErrors.global && (
+        {globalError && (
           <div className="p-3 mb-4 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-            {apiErrors.global}
+            {globalError}
           </div>
         )}
         
@@ -143,12 +146,12 @@ const onSubmit = async (data: LoginInput) => {
               type="email"
               placeholder="name@example.com"
               disabled={isSubmitting || apiSuccess}
-              aria-invalid={!!errors.email || !!apiErrors.email}
+              aria-invalid={!!errors.email}
               {...register("email")}
             />
-            {(errors.email || apiErrors.email) && (
+            {errors.email?.message && (
               <p className="text-[0.8rem] font-medium text-destructive">
-                {errors.email?.message || apiErrors.email}
+                {errors.email.message}
               </p>
             )}
           </div>
@@ -161,12 +164,12 @@ const onSubmit = async (data: LoginInput) => {
               type="password"
               placeholder="••••••••"
               disabled={isSubmitting || apiSuccess}
-              aria-invalid={!!errors.password || !!apiErrors.password}
+              aria-invalid={!!errors.password}
               {...register("password")}
             />
-            {(errors.password || apiErrors.password) && (
+            {errors.password?.message && (
               <p className="text-[0.8rem] font-medium text-destructive">
-                {errors.password?.message || apiErrors.password}
+                {errors.password.message}
               </p>
             )}
           </div>

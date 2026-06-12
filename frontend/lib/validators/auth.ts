@@ -1,8 +1,13 @@
 import * as z from "zod";
 
 export const loginSchema = z.object({
-  email: z.email({ message: "Silakan masukkan alamat email yang valid." }),
-  password: z.string().min(8, { message: "Kata sandi harus minimal 8 karakter." }),
+  email: z.email("Format email tidak valid"),
+  password: z
+    .string()
+    .min(8, "Kata sandi minimal harus 8 karakter")
+    .regex(/[a-z]/, "Kata sandi harus mengandung setidaknya satu huruf kecil")
+    .regex(/[A-Z]/, "Kata sandi harus mengandung setidaknya satu huruf besar")
+    .regex(/[0-9]/, "Kata sandi harus mengandung setidaknya satu angka"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
