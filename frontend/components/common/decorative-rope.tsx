@@ -1,30 +1,30 @@
+"use client";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 interface DecorativeRopeProps {
-  /** Source image must be provided */
   src: string;
-  /** Optional custom width in pixels. Defaults to 1920 */
-  width?: number;
-  /** Optional custom height in pixels. Defaults to 100 */
-  height?: number;
+  className?: string;
 }
 
-export function DecorativeRope({ src, width = 1500, height = 200 }: DecorativeRopeProps) {
+export function DecorativeRope({ src, className }: DecorativeRopeProps) {
   return (
-    <div className="flex justify-center w-full relative select-none pointer-events-none">
-      {/* 🌟 The outer fixed wrapper handles the constant sizing rule */}
-      <div 
-        className="flex-shrink-0"
+    <div className={`w-full relative select-none pointer-events-none ${className}`}>
+      <motion.div
+        className="w-full"
+        initial={{ clipPath: "inset(0 100% 0 0)" }}
+        animate={{ clipPath: "inset(0 0% 0 0)" }}
+        transition={{ duration: 2, ease: "easeInOut" }}
       >
         <Image
-          src={`${src}`}
-          alt="Menata Ulang Decorative Line"
+          src={src}
+          alt=""
+          width={1920}
+          height={729}
+          className="w-full h-auto"
           priority
-          width={`${width}`}
-          height={`${height}`}
-          className="object-contain"
         />
-      </div>
+      </motion.div>
     </div>
   );
 }
