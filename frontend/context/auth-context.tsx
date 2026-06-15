@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -13,14 +13,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Public pages that don't require an active session
-const PUBLIC_ROUTES = ["/login", "/register"];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   const setToken = (token: string | null) => {
     setAccessToken(token);
@@ -30,41 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async (): Promise<string | null> => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      
-      // Hitting your POST /refresh endpoint. Browser carries the secure cookie automatically.
-      const response = await fetch(`${backendUrl}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(`${backendUrl}/auth/refresh`, { method: "POST" });
       const result = await response.json();
 
-      // HANDLE BACKEND REFUSALS (HTTP 401 / 500)
       if (!response.ok) {
-        setAccessToken(null);
-        
-        // If it's a validation/idle failure (401), boot them out to login if on a protected route
-        if (response.status === 401) {
-          console.warn("Session invalid or idle timeout reached:", result.error);
-          if (!PUBLIC_ROUTES.includes(pathname)) {
-            router.push("/login");
-          }
-        }
+        setAccessToken(null); // Simple, pure state update
         return null;
       }
 
-      // SUCCESS (HTTP 200)
       const newAccessToken = result.token;
       setAccessToken(newAccessToken);
       return newAccessToken;
-
     } catch (error) {
       console.error("Failed to silently refresh session:", error);
+      setAccessToken(null); 
       return null;
     }
-  }, [pathname, router]);
+  }, []);
 
   // LOGOUT LOGIC
   const logout = async (): Promise<{ success: boolean; error?: string }> => {
