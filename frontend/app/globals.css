@@ -129,23 +129,3 @@
   }
 }
 
-@keyframes draw-left-to-right {
-  from {
-    mask-size: 0% 100%;
-    -webkit-mask-size: 0% 100%;
-  }
-  to {
-    mask-size: 100% 100%;
-    -webkit-mask-size: 100% 100%;
-  }
-}
-
-.animate-draw-ltr {
-  mask-image: linear-gradient(to right, rgba(0,0,0,1) 100%, rgba(0,0,0,0) 100%);
-  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 100%, rgba(0,0,0,0) 100%);
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  mask-position: left center;
-  -webkit-mask-position: left center;
-  animation: draw-left-to-right 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}

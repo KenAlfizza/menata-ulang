@@ -3,9 +3,11 @@ import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { HeroSearch } from "@/components/home/home-search";
-import { PageBackground } from "@/components/home/background/page-background";
+
 import { AnnouncementCarousel } from "@/components/home/annoucement/annoucement-carousel";
 import { Card } from "@/components/ui/card";
+import { PageBackground } from "../../components/home/page-background.tsx";
+import { FadeInSection } from "../../components/common/fade-section.tsx";
 
 export default function HomePage() {
   return (
@@ -15,9 +17,9 @@ export default function HomePage() {
       {/* Background component acts as the canvas underneath the main body */}
       <PageBackground>
         {/** Hero Section */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
-          <section className="text-center space-y-6 max-w-4xl mx-auto">
-            <div className="flex justify-center mb-16">
+        <main className="space-y-72 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <section className="mt-20 text-center space-y-6 max-w-4xl mx-auto">
+            <div className="flex justify-center">
               <Link href="/">
                 <Image
                   src="/logo.svg"
@@ -30,11 +32,11 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
+            <h1 className="mt-8 text-3xl sm:text-3xl font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
               Ruang untuk melihat dan memahami diri sendiri
             </h1>
             
-            <p className="text-lg sm:text-2xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               "Kamu berhak tumbuh, walau pernah jatuh"
             </p>
             
@@ -43,35 +45,37 @@ export default function HomePage() {
             </div>
             
             <div className="pt-4 flex flex-row items-center justify-center gap-3 max-w-xl mx-auto w-full">
-              <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
                 <Link href="/login">Jelajahi</Link>
-              </Button>
-              <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+            </Button>
+            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
                 <Link href="/login">Sosial</Link>
-              </Button>
-              <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+            </Button>
+            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
                 <Link href="/login">Bantuan</Link>
-              </Button>
-              <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+            </Button>
+            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
                 <Link href="/login">Tentang Kami</Link>
-              </Button>
+            </Button>
             </div>
           </section>
 
             {/** Welcome Message */}
-            <section className="welcome text-center max-w-8xl mx-auto mt-32">
+            <section className="welcome text-center max-w-4xl min-w-full scroll-fade-in-up">
+                <FadeInSection>
                 <div className="flex flex-col items-center justify-center gap-8 xl:flex-row xl:gap-30">
                     <div className="max-w-xs flex-shrink-0">
-                        <h2 className="text-center text-3xl md:text-4xl ">Selamat Datang di Menata Ulang</h2>
+                    <h2 className="text-center text-3xl md:text-4xl">Selamat Datang di Menata Ulang</h2>
                     </div>
-                    <Card className="w-full md:max-w-3xl p-7 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl">
-                        <p className="text-lg">
+                    <Card className="w-full md:max-w-2xl py-8 px-8 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl">
+                    <p className="text-lg">
                         Menata Ulang hadir sebagai teman, yang menemani kamu untuk melihat sisi dirimu. 
                         Yang paling terang, dan yang paling gelap. Untuk dirangkul dan diterima. 
                         Untuk dilihat dan disesuaikan, dengan siapa diri kamu, sebenarnya.
-                        </p>
+                    </p>
                     </Card>
                 </div>
+                </FadeInSection>
             </section>
 
 
