@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-// Import your preferred font from next/font/google
-import { REM } from "next/font/google"; 
+import { REM } from "next/font/google";
 import "./globals.css";
 
-// Initialize the font configuration
+import { AuthProvider } from "../context/auth-context.tsx";
+
 const sansFont = REM({
   subsets: ["latin"],
-  variable: "--font-sans", // This creates a CSS variable mapping
+  variable: "--font-rem", // ← use --font-rem, not --font-sans
   weight: ["400", "500", "600", "700"],
 });
 
@@ -21,10 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      {/* Inject the font's class and variable name directly into the body tag */}
-      <body className={`${sansFont.variable} font-sans antialiased`}>
-        {children}
+    <html lang="en" className={`${sansFont.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+            {children}
+        </AuthProvider>
       </body>
     </html>
   );
