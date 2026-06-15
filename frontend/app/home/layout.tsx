@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Once authorized, cleanly render children components without race condition drops
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <main className="p-6">{children}</main>
+      <main>{children}</main>
     </div>
   );
 }

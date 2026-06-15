@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { REM } from "next/font/google";
 import "./globals.css";
-
 import { AuthProvider } from "../context/auth-context.tsx";
 
 const sansFont = REM({
@@ -12,7 +11,7 @@ const sansFont = REM({
 
 export const metadata: Metadata = {
   title: "Menata Ulang",
-  description: "Workspace Architecture",
+  description: "Ruang untuk melihat dan memahami diri sendiri",
 };
 
 export default function RootLayout({
