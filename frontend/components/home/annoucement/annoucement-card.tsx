@@ -11,7 +11,7 @@ export function AnnouncementCard() {
             <div>
                 {/* Title */}
                 <div className="text-2xl tracking-tight mb-4 text-zinc-800">
-                New Story Posted!
+                    New Story Posted!
                 </div>
 
                 {/* Content Layout */}
@@ -19,8 +19,8 @@ export function AnnouncementCard() {
                 <Image
                     src="/globe.svg"
                     alt="Announcement Image"
-                    width={96}
-                    height={96}
+                    width={128}
+                    height={128}
                     className="shrink-0"
                 />
                 

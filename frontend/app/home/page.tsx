@@ -44,7 +44,7 @@ export default function HomePage() {
                 <HeroSearch />   
             </div>
             
-            <div className="pt-4 flex flex-row items-center justify-center gap-3 max-w-xl mx-auto w-full">
+            <div className="flex flex-row items-center justify-center gap-3 max-w-xl mx-auto w-full">
             <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
                 <Link href="/login">Jelajahi</Link>
             </Button>
@@ -65,7 +65,7 @@ export default function HomePage() {
                 <FadeInSection>
                 <div className="flex flex-col items-center justify-center gap-8 xl:flex-row xl:gap-30">
                     <div className="max-w-xs flex-shrink-0">
-                    <h2 className="text-center text-3xl md:text-4xl">Selamat Datang di Menata Ulang</h2>
+                    <h2 className="text-center text-3xl md:text-4xl md:pr-8">Selamat Datang di Menata Ulang</h2>
                     </div>
                     <Card className="w-full md:max-w-2xl py-8 px-8 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl">
                     <p className="text-lg">
@@ -80,9 +80,11 @@ export default function HomePage() {
 
 
             {/* Announcement Grid */}
-            <section className="annoucement mt-42 flex flex-col items-center justify-center lg:flex-row lg:gap-16">
-                <h2 className="text-center text-3xl">Kabar Komunitas</h2>
-                <AnnouncementCarousel/>
+            <section className="annoucement flex flex-col items-center justify-center gap-8">
+                <FadeInSection>
+                    <h2 className="text-center text-3xl">Kabar Komunitas</h2>
+                    <AnnouncementCarousel/>
+                </FadeInSection>
             </section>  
         </main>
 
