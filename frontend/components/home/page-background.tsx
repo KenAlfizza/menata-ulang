@@ -11,11 +11,11 @@ export function PageBackground({ children }: PageBackgroundProps) {
   return (
     <div className="bg-[#D4E5A9] relative h-full min-h-screen overflow-x-hidden isolate">
 
-      <ViewSection className="absolute mt-28 inset-0 z-0 pointer-events-none select-none">
+      <ViewSection className="absolute mt-31 inset-0 z-0 pointer-events-none select-none">
         <DecorativeRope src="/rope/green1.svg" />
       </ViewSection>
 
-      <ViewSection className="absolute mt-188 inset-0 z-0 pointer-events-none select-none">
+      <ViewSection className="absolute mt-192 inset-0 z-0 pointer-events-none select-none">
         <DecorativeRope src="/rope/green2.svg"/>
       </ViewSection>
 

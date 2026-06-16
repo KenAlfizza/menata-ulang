@@ -3,24 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import { HeroSearch } from "@/components/home/home-search";
+import { Navbar } from "@/components/navbar.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Calendar } from "@/components/ui/calendar.tsx";
+import { HeroSearch } from "@/components/home/home-search.tsx";
 
-import { AnnouncementCarousel } from "@/components/home/annoucement/annoucement-carousel";
-import { Card } from "@/components/ui/card";
+import { AnnouncementCarousel } from "@/components/home/annoucement/annoucement-carousel.tsx";
+import { Card } from "@/components/ui/card.tsx";
 import { PageBackground } from "@/components/home/page-background.tsx";
 import { FadeInSection } from "@/components/common/fade-section.tsx";
-import { ScrollTrigger } from "@/components/home/scroll-trigger.tsx";
+import { ScrollTrigger } from "@/components/common/scroll-trigger.tsx";
+import { EventCarousel } from "../../components/home/event/event-carousel.tsx";
 
 export default function HomePage() {
-    const [navbarShowIcon, setNavbarShowIcon] = useState(true);
-    const [navbarShowNavigation, setNavbarShowNavigation] = useState(true);
+    const [navbarShowIcon, setNavbarShowIcon] = useState(false);
+    const [navbarShowNavigation, setNavbarShowNavigation] = useState(false);
 
     return (
     <div className="relative w-full min-h-screen flex flex-col bg-[#D4E5A9]">
       {/* Navbar sits out here at the absolute root layout level */}
-      <Navbar showLogo={!navbarShowIcon} showNavigation={!navbarShowNavigation} />
+      <Navbar showLogo={navbarShowIcon} showNavigation={navbarShowNavigation} />
       {/* Background component acts as the canvas underneath the main body */}
       <PageBackground>
         <main className="relative space-y-72 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
@@ -65,17 +67,22 @@ export default function HomePage() {
                         <Link href="/login">Tentang Kami</Link>
                     </Button>
                 </div>
-                <ScrollTrigger onViewportChange={(inView) => {setNavbarShowIcon(inView); setNavbarShowNavigation(inView)}} />
+                <ScrollTrigger onViewportChange={(inView) => {
+                    if (inView) {
+                        setNavbarShowIcon(false);
+                        setNavbarShowNavigation(false);
+                    }
+                }} />
             </section>
 
-        {/** Welcome Message */}
+            {/** Welcome Message */}
             <section className="welcome text-center max-w-4xl min-w-full scroll-fade-in-up">
                 <FadeInSection>
                 <div className="flex flex-col items-center justify-center gap-8 xl:flex-row xl:gap-30">
                     <div className="max-w-xs flex-shrink-0">
                     <h2 className="text-center text-3xl md:text-4xl md:pr-8">Selamat Datang di Menata Ulang</h2>
                     </div>
-                    <Card className="w-full md:max-w-2xl py-8 px-8 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl">
+                    <Card className="w-full md:max-w-2xl py-8 px-8 bg-white/50 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-xl">
                     <p className="text-lg">
                         Menata Ulang hadir sebagai teman, yang menemani kamu untuk melihat sisi dirimu. 
                         Yang paling terang, dan yang paling gelap. Untuk dirangkul dan diterima. 
@@ -84,16 +91,49 @@ export default function HomePage() {
                     </Card>
                 </div>
                 </FadeInSection>
+                <ScrollTrigger onViewportChange={(inView) => {
+                    if (inView) {
+                        navbarShowIcon === false ? setNavbarShowIcon(true) : null
+                        navbarShowNavigation === false ? setNavbarShowNavigation(true) : null
+                    }
+                }} />
             </section>
 
 
             {/* Announcement Grid */}
-            <section className="annoucement flex flex-col items-center justify-center gap-8">
-                <FadeInSection>
+            <section className="annoucements">
+                <FadeInSection className="flex flex-col items-center justify-center gap-4">
                     <h2 className="text-center text-3xl">Kabar Komunitas</h2>
                     <AnnouncementCarousel/>
                 </FadeInSection>
-            </section>  
+                <ScrollTrigger onViewportChange={(inView) => {
+                    if (inView) {
+                        navbarShowIcon === false ? setNavbarShowIcon(true) : null
+                        navbarShowNavigation === false ? setNavbarShowNavigation(true) : null
+                    }
+                }} />
+            </section>
+
+            {/* Upcoming Events */}
+            <section className="events">
+                <FadeInSection className="flex flex-col items-center justify-center gap-4">
+                    <h2 className="text-center text-3xl">Acara Mendatang</h2>
+                    <div className="flex flex-row gap-8">
+                        <EventCarousel/>
+                        <Calendar
+                            mode="single"
+                            className="rounded-lg border bg-white/60"
+                            captionLayout="dropdown"
+                        />
+                    </div>
+                </FadeInSection>
+                <ScrollTrigger onViewportChange={(inView) => {
+                    if (inView) {
+                        navbarShowIcon === false ? setNavbarShowIcon(true) : null
+                        navbarShowNavigation === false ? setNavbarShowNavigation(true) : null
+                    }
+                }} />
+            </section>    
         </main>
 
         {/** 📝 Mini Footer */}
