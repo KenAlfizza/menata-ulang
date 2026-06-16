@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/navbar";
@@ -6,61 +9,66 @@ import { HeroSearch } from "@/components/home/home-search";
 
 import { AnnouncementCarousel } from "@/components/home/annoucement/annoucement-carousel";
 import { Card } from "@/components/ui/card";
-import { PageBackground } from "../../components/home/page-background.tsx";
-import { FadeInSection } from "../../components/common/fade-section.tsx";
+import { PageBackground } from "@/components/home/page-background.tsx";
+import { FadeInSection } from "@/components/common/fade-section.tsx";
+import { ScrollTrigger } from "@/components/home/scroll-trigger.tsx";
 
 export default function HomePage() {
-  return (
+    const [navbarShowIcon, setNavbarShowIcon] = useState(true);
+    const [navbarShowNavigation, setNavbarShowNavigation] = useState(true);
+
+    return (
     <div className="relative w-full min-h-screen flex flex-col bg-[#D4E5A9]">
       {/* Navbar sits out here at the absolute root layout level */}
-      <Navbar showLogo={false} />
+      <Navbar showLogo={!navbarShowIcon} showNavigation={!navbarShowNavigation} />
       {/* Background component acts as the canvas underneath the main body */}
       <PageBackground>
-        {/** Hero Section */}
-        <main className="space-y-72 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <section className="mt-20 text-center space-y-6 max-w-4xl mx-auto">
-            <div className="flex justify-center">
-              <Link href="/">
-                <Image
-                  src="/logo.svg"
-                  alt="Menata Ulang Logo"
-                  width={64}
-                  height={64}
-                  priority
-                  className="h-64 w-auto"
-                />
-              </Link>
-            </div>
+        <main className="relative space-y-72 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            {/** Hero Section */}
+            <section className="hero mt-20 text-center space-y-6 max-w-4xl mx-auto">
+                <div className="flex justify-center">
+                    <Link href="/">
+                        <Image
+                        src="/logo.svg"
+                        alt="Menata Ulang Logo"
+                        width={64}
+                        height={64}
+                        priority
+                        className="h-64 w-auto"
+                        />
+                    </Link>
+                </div>
 
-            <h1 className="mt-8 text-3xl sm:text-3xl font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
-              Ruang untuk melihat dan memahami diri sendiri
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              "Kamu berhak tumbuh, walau pernah jatuh"
-            </p>
-            
-            <div className="flex justify-center">
-                <HeroSearch />   
-            </div>
-            
-            <div className="flex flex-row items-center justify-center gap-3 max-w-xl mx-auto w-full">
-            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
-                <Link href="/login">Jelajahi</Link>
-            </Button>
-            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
-                <Link href="/login">Sosial</Link>
-            </Button>
-            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
-                <Link href="/login">Bantuan</Link>
-            </Button>
-            <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
-                <Link href="/login">Tentang Kami</Link>
-            </Button>
-            </div>
-          </section>
+                <h1 className="mt-8 text-3xl sm:text-3xl font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
+                    Ruang untuk melihat dan memahami diri sendiri
+                </h1>
+                
+                <p className="text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                    "Kamu berhak tumbuh, walau pernah jatuh"
+                </p>
+                
+                <div className="flex justify-center">
+                    <HeroSearch />   
+                </div>
+                
+                <div className="flex flex-row items-center justify-center gap-3 max-w-xl mx-auto w-full">
+                    <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+                        <Link href="/login">Jelajahi</Link>
+                    </Button>
+                    <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+                        <Link href="/login">Sosial</Link>
+                    </Button>
+                    <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+                        <Link href="/login">Bantuan</Link>
+                    </Button>
+                    <Button size="lg" variant="secondary" className="w-auto px-6 bg-white/60 hover:bg-white/80 backdrop-blur-sm text-zinc-800 shadow-sm rounded-full" asChild>
+                        <Link href="/login">Tentang Kami</Link>
+                    </Button>
+                </div>
+                <ScrollTrigger onViewportChange={(inView) => {setNavbarShowIcon(inView); setNavbarShowNavigation(inView)}} />
+            </section>
 
-            {/** Welcome Message */}
+        {/** Welcome Message */}
             <section className="welcome text-center max-w-4xl min-w-full scroll-fade-in-up">
                 <FadeInSection>
                 <div className="flex flex-col items-center justify-center gap-8 xl:flex-row xl:gap-30">
