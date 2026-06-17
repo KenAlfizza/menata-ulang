@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 
-import { Navbar } from "@/components/navbar.tsx";
+import { Navbar } from "@/components/common/navbar.tsx";
 import { PageBackground } from "@/components/story/page-background.tsx"
 import { FadeInSection } from "../../components/common/fade-section.tsx";
 import { Card, CardContent } from "../../components/ui/card.tsx";
