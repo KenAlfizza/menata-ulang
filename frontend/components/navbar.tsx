@@ -20,15 +20,21 @@ interface NavbarProps {
     show?: boolean;
     showLogo?: boolean;
     showNavigation?: boolean;
+    color?: string;
 }
 
-export function Navbar({show = true, showLogo = true, showNavigation = true}: NavbarProps) {
+export function Navbar({show = true, showLogo = true, showNavigation = true, color = "#B2CC71"}: NavbarProps) {
     const [logoAnimationDone, setLogoAnimationDone] = useState(false);
 
     return (show && (
-        <header className="sticky top-0 z-50 w-full">
-            <div className="w-full bg-gradient-to-b from-[#B2CC71] from-25% to-transparent mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                
+        <header className="fixed top-0 z-50 w-full">
+            <div 
+                className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+                style={{
+                    // 🎯 The safest way to handle dynamic hex colors in Tailwind projects
+                    background: `linear-gradient(to bottom, ${color} 25%, transparent)`
+                }}
+            >
                 {/* Animated Logo & Navigation Target Area */}
                 <div className="flex items-center gap-2 min-w-[128px]">
                     <AnimatePresence
