@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/navbar.tsx";
+import { Navbar } from "@/components/common/navbar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { HeroSearch } from "@/components/home/home-search.tsx";

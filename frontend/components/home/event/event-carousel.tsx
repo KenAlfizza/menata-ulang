@@ -84,6 +84,7 @@ export function EventCarousel() {
                         const actualIndex = scrollSnaps.length - 1 - index;
                         return (
                             <button
+                                type="button"
                                 key={actualIndex}
                                 onClick={() => scrollTo(actualIndex)}
                                 className={`h-2 rounded-full transition-all duration-300 ${

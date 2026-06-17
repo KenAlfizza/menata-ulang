@@ -82,6 +82,7 @@ export function AnnouncementCarousel() {
                 <div className="flex gap-2 items-center">
                     {scrollSnaps.map((_, index) => (
                         <button
+                            type="button"
                             key={index}
                             onClick={() => scrollTo(index)}
                             className={`h-2 rounded-full transition-all duration-300 ${
