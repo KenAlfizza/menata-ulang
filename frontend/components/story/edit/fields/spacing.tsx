@@ -1,6 +1,6 @@
 // Import Puck
 import { FieldLabel } from "@puckeditor/core";
-import { Spacing, SpacingCustomField } from "./types.tsx";
+import { Spacing, SpacingCustomField } from "./types";
 
 // Import Icons
 import { 
