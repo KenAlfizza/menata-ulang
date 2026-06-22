@@ -151,11 +151,12 @@ const config: EditStoryConfig = {
   },
 }
 
-const initialData = { content: [], root: {} };
+const initialData = { content: [], root: { props: {title: "New Page"}} };
 const save = (_data: unknown) => {};
 
 export default function StoryEditPage() {
-  return (
+
+    return (
     <div className="relative w-full h-screen flex flex-col overflow-hidden bg-[#1A1A2E]">
         <Puck config={config} data={initialData} onPublish={save} 
             overrides={{
