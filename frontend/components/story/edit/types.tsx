@@ -1,5 +1,6 @@
 import { ReactNode, ComponentType } from "react";
-import { Typography, Spacing } from "./fields/types";
+import { Typography, Spacing, Size, Crop } from "./fields/types";
+import { Slot } from "@puckeditor/core";
 
 export interface TitleProps {
     title: string;
@@ -22,13 +23,16 @@ export interface SlotProps {
     content?: React.ComponentType<{ collisionAxis?: string }>;
 }
 
-export interface ImageComponentProps {
+export interface ImageProps {
     src: string;
     alt: string;
-    width: string;       // Resize width (%)
-    height: string;      // Resize height ratio (%)
-    zoom: string;        // Crop zoom
-    cropX: string;       // Crop X
-    cropY: string;       // Crop Y
+    resize: Size;        // Size interface
+    crop: Crop;
     spacing: Spacing;
+}
+
+export interface FlexContainerProps {
+    direction: "row" | "column";
+    spacing: Spacing;
+    slot: React.ElementType;
 }

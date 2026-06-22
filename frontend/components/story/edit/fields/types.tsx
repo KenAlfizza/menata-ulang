@@ -16,9 +16,27 @@ export interface Typography {
     bold: boolean;
     italic: boolean;
     underline: boolean;
+}
 
+export interface Size {
+    height: string;
+    width: string;
+    borderRadius: {
+        tl: string;
+        tr: string;
+        br: string;
+        bl: string;
+    }
+}
+
+export interface Crop {
+    zoom: string;   
+    cropX: string;  
+    cropY: string;  
 }
 
 // Strictly-typed Puck Custom Field interface
 export type SpacingCustomField = CustomField<Spacing>;
 export type TypographyCustomField = CustomField<Typography>;
+export type SizeCustomField = CustomField<Size>;
+export type CropCustomField = CustomField<Crop>;
