@@ -1,4 +1,4 @@
-import { createMiddleware } from 'hono/factory';
+import { createMiddleware } from "hono/factory";
 import { verifyToken } from "../lib/jwt.ts";
 import type { AppVariables } from "../types.ts";
 
