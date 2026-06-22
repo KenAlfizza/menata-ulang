@@ -1,52 +1,29 @@
 import { FlexContainerProps } from "../types";
-import { useRef } from "react";
 
-export function FlexComponent({ direction, slot: Slot }: FlexContainerProps) {
-    const clickTimer = useRef<NodeJS.Timeout | null>(null);
+export const justifyOptions = [
+    { label: "Start", value: "flex-start" },
+    { label: "Center", value: "center" },
+    { label: "End", value: "flex-end" },
+    { label: "Space Between", value: "space-between" },
+    { label: "Space Around", value: "space-around" },
+    { label: "Space Evenly", value: "space-evenly" },
+] as const;
 
-    const handleClick = (e: React.MouseEvent) => {
-        if (clickTimer.current) {
-            clearTimeout(clickTimer.current);
-            clickTimer.current = null;
-            return;
-        }
 
-        clickTimer.current = setTimeout(() => {
-            // Single click:
-            // allow Puck to select this FlexContainer
-            clickTimer.current = null;
-        }, 200);
-    };
-
-    const handleDoubleClick = (e: React.MouseEvent) => {
-        // Let the child component receive the selection
-        e.stopPropagation();
-
-        const target = e.target as HTMLElement;
-        const child = target.closest("[data-puck-component]");
-
-        if (child) {
-            child.dispatchEvent(
-                new MouseEvent("click", {
-                    bubbles: true,
-                })
-            );
-        }
-    };
-
+export function FlexComponent({ direction, justify, slot: Slot }: FlexContainerProps) {
     return (
-        <div
-            onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
+        <Slot
             style={{
                 display: "flex",
                 flexWrap: "wrap",
                 flexDirection: direction,
+
+                justifyContent: justify,
+
                 width: "100%",
+                minWidth: "64px",
                 minHeight: "100px",
             }}
-        >
-            <Slot />
-        </div>
+        />
     );
 }

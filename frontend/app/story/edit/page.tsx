@@ -20,7 +20,7 @@ import { cropField, defaultCrop } from "@/components/story/edit/fields/crop";
 
 // Import Components
 import { ImageComponent } from "@/components/story/edit/components/imageComponent";
-import { FlexComponent } from "@/components/story/edit/components/flexComponent";
+import { FlexComponent, justifyOptions } from "@/components/story/edit/components/flexComponent";
 
 // Configuration 
 type EditStoryConfig = Config<{
@@ -138,7 +138,13 @@ const config: EditStoryConfig = {
             spacing: spacingField,
             slot: {
                 type: "slot",
-            }
+            },
+            justify: {
+                label: "Justify",
+                type: "select",
+                options: justifyOptions,
+            },
+
         },
         render: (props) => <FlexComponent {...props} />
     },

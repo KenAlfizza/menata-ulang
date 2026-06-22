@@ -33,6 +33,7 @@ export interface ImageProps {
 
 export interface FlexContainerProps {
     direction: "row" | "column";
+    justify: string;
     spacing: Spacing;
     slot: React.ElementType;
 }
