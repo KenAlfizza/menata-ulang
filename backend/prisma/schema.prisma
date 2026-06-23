@@ -28,6 +28,8 @@ model User {
   stories     Story[]
   podcasts    Podcast[]
   reflections Reflection[]
+
+  storypages  StoryPage[]
   
   /// Hearts given by this user across different content types.
   hearts      Heart[]
@@ -211,4 +213,16 @@ model Feedback {
   content     String   @db.Text
   resolved    Boolean  @default(false) // Added resolved flag
   createdAt   DateTime @default(now())
+}
+
+model StoryPage {
+  id          String   @id @default(cuid(2)) // Backend-generated CUID
+  title       String
+  slug        String   @unique
+  puckData    Json     // Saves the flexible layout schema from Puck editor
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
 }
