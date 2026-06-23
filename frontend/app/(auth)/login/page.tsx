@@ -44,6 +44,7 @@ export default function LoginPage() {
 
       const response = await fetch(`${backendUrl}/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
