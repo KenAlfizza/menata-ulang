@@ -7,12 +7,10 @@ import Link from "next/link";
 import { Loader2, Layout, Sparkles } from "lucide-react";
 
 // Import dynamic config factory and ViewMode type
-import { createPuckConfig, ViewMode } from "./puck.config";
+import { createPuckConfig } from "./puck.config";
 import { useAuth } from "@/context/auth-context";
 import { createStoryPage, saveStoryPageData, loadStoryPageData } from "@/services/story";
 
-// Import shadcn tabs primitives
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface StoryEditContentProps {
   params: Promise<{ id: string }>;
@@ -24,11 +22,8 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
 
   const { accessToken } = useAuth();
 
-  // Manage active workspace view
-  const [viewMode, setViewMode] = useState<ViewMode>("content");
-
   // Dynamically compute the Puck configuration when viewMode toggles
-  const dynamicConfig = useMemo(() => createPuckConfig(viewMode), [viewMode]);
+  const dynamicConfig = createPuckConfig();
 
 
   const [data, setData] = useState<Data | null>(null);
@@ -45,7 +40,7 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
         if (pageId === "new") {
           const fallbackSlug = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
           const newPageRecord = await createStoryPage("Untitled Story Draft", fallbackSlug, accessToken);
-          window.history.replaceState(null, "", `/story/edit/${newPageRecord.id}`);
+          window.history.replaceState(null, "", `/author/edit/${newPageRecord.id}`);
           setData(newPageRecord.puckData);
           return;
         }
@@ -130,32 +125,6 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
                 <span className="text-zinc-300 select-none text-xs">|</span>
                 <span className="text-xs font-semibold text-zinc-900/50 uppercase">Story Editor</span>
               </div>
-              
-              {/* Center: Clean Text-Only Tabs */}
-              {/** 
-              <div className="flex justify-center w-2/4">
-                <Tabs 
-                    value={viewMode} 
-                    onValueChange={(val) => setViewMode(val as ViewMode)}>
-                    <TabsList className="bg-zinc-100 p-0.5 h-8">
-                        <TabsTrigger 
-                            value="content" 
-                            className="text-xs font-medium h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
-                        >
-                            <Layout size={13} />
-                            Content
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="animation" 
-                            className="text-xs font-medium h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
-                        >
-                            <Sparkles size={13} />
-                            Animation
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
-              </div>
-              */}
 
               {/* Right: Solid Minimal Utility Button */}
               <div className="flex items-center justify-end w-1/4">
