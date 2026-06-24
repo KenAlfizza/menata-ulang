@@ -71,8 +71,8 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
             },
             Slot: {
                 fields: (viewMode === "content" 
-                ? contentFields.Text 
-                : animationFields.Text) as Fields<SlotProps>,
+                ? contentFields.Slot 
+                : animationFields.Slot) as Fields<SlotProps>,
                 defaultProps: {
                     columns: "1",
                     spacing: defaultSpacing,
@@ -81,8 +81,8 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
             },
             Image: {
                 fields: (viewMode === "content" 
-                ? contentFields.Text 
-                : animationFields.Text) as Fields<ImageProps>,
+                ? contentFields.Image 
+                : animationFields.Image) as Fields<ImageProps>,
                 defaultProps: {
                     src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000",
                     alt: "Story Image",
@@ -94,8 +94,8 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
             },
             Container: {
                 fields: (viewMode === "content" 
-                ? contentFields.Text 
-                : animationFields.Text) as Fields<FlexContainerProps>,
+                ? contentFields.Container 
+                : animationFields.Container) as Fields<FlexContainerProps>,
                 render: (props) => <FlexComponent {...props} />,
             },
         },
