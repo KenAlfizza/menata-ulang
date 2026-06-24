@@ -1,116 +1,156 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    ReactNode,
+    useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
-  accessToken: string | null;
-  isLoading: boolean; // Added to prevent flashing protected pages on boot
-  setToken: (token: string | null) => void;
-  refreshSession: () => Promise<string | null>;
-  logout: () => Promise<{ success: boolean; error?: string }>;
+    accessToken: string | null;
+    isLoading: boolean;
+    setToken: (token: string | null) => void;
+    refreshSession: () => Promise<string | null>;
+    logout: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+
+/**
+ * AuthProvider
+ *
+ * Manages the application's authentication state. Provides an in-memory
+ * access token derived from an httpOnly refresh token cookie, so the token
+ * survives neither page reloads nor XSS — the cookie is invisible to JS and
+ * the access token is never written to localStorage or sessionStorage.
+ *
+ * On every mount (including URL-bar reloads), silently exchanges the cookie
+ * for a fresh access token. While that exchange is in flight, `isLoading` is
+ * true so protected pages can show a loading state instead of flashing or
+ * redirecting prematurely.
+ *
+ * Also runs a proactive renewal loop every 10 minutes while a session is
+ * active, staying safely ahead of the backend's 15-minute expiry window.
+ *
+ * Place this once at the root of your app (e.g. `app/layout.tsx`):
+ * ```tsx
+ * <AuthProvider>
+ *   {children}
+ * </AuthProvider>
+ * ```
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const router = useRouter();
+    const [accessToken, setAccessToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const router = useRouter();
 
-  const setToken = (token: string | null) => {
-    setAccessToken(token);
-  };
+    /**
+     * Sends the httpOnly refresh token cookie to the backend and stores the
+     * returned access token in memory. Returns the new token on success, or
+     * null if the cookie is absent or invalid (i.e. the session has expired).
+     */
+    const refreshSession = useCallback(async (): Promise<string | null> => {
+        try {
+        const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+        });
 
-  // REFRESH TOKEN LOGIC
-  const refreshSession = useCallback(async (): Promise<string | null> => {
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/auth/refresh`, { method: "POST" });
-      const result = await response.json();
+        if (!response.ok) {
+            setAccessToken(null);
+            return null;
+        }
 
-      if (!response.ok) {
-        setAccessToken(null); // Simple, pure state update
+        const { token: newAccessToken } = await response.json();
+        setAccessToken(newAccessToken);
+        return newAccessToken;
+        } catch (error) {
+        console.error("Silent refresh failed:", error);
+        setAccessToken(null);
         return null;
-      }
+        }
+    }, []);
 
-      const newAccessToken = result.token;
-      setAccessToken(newAccessToken);
-      return newAccessToken;
-    } catch (error) {
-      console.error("Failed to silently refresh session:", error);
-      setAccessToken(null); 
-      return null;
-    }
-  }, []);
+    /**
+     * Invalidates the session on the backend, then clears the in-memory access
+     * token and redirects to /login. The backend call is made first so the
+     * refresh token cookie is revoked server-side before local state is cleared.
+     * Also passes the current access token in the Authorization header so the
+     * backend can blacklist it immediately.
+     *
+     * Returns `{ success: true }` on success, or `{ success: false, error }` if
+     * the backend call fails — in which case local state is intentionally left
+     * intact so the user is not silently logged out on a transient network error.
+     */
+    const logout = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                "Content-Type": "application/json",
+                ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+                },
+            });
 
-  // LOGOUT LOGIC
-  const logout = async (): Promise<{ success: boolean; error?: string }> => {
-    setAccessToken(null);
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/auth/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+            if (!response.ok) {
+                return {
+                success: false,
+                error:
+                    response.status === 500
+                    ? "Gagal keluar. Terjadi kesalahan pada server internal."
+                    : "Gagal keluar. Terjadi kesalahan pada sistem.",
+                };
+            }
 
-      if (!response.ok) {
-        return { 
-          success: false, 
-          error: response.status === 500 
-            ? "Gagal keluar. Terjadi kesalahan pada server internal." 
-            : "Gagal keluar. Terjadi kesalahan pada sistem." 
-        };
-      }
+            setAccessToken(null);
+            router.push("/login");
+            return { success: true };
+        } catch {
+            return { success: false, error: "Tidak dapat terhubung ke server backend." };
+        }
+    }, [accessToken, router]);
 
-      router.push("/login");
-      return { success: true };
-    } catch {
-      return { success: false, error: "Tidak dapat terhubung ke server backend." };
-    }
-  };
+    useEffect(() => {
+        refreshSession().finally(() => setIsLoading(false));
+    }, [refreshSession]);
 
-  // SILENT REFRESH ON MOUNT
-  // Runs once when the application boots up to check if an HttpOnly session cookie exists
-  useEffect(() => {
-    const initializeAuth = async () => {
-      if (accessToken) {
-        setIsLoading(false);
-        return;
-      }
-        await refreshSession();
-        setIsLoading(false);
-    };
+    useEffect(() => {
+        if (!accessToken) return;
+        const interval = setInterval(() => refreshSession(), REFRESH_INTERVAL_MS);
+        return () => clearInterval(interval);
+    }, [accessToken, refreshSession]);
 
-    initializeAuth();
-  }, [refreshSession]);
-
-  // 15-MINUTE IDLE WINDOW / TOKEN EXPIRY LOOP
-  // Proactively asks the server for a fresh access token every 10 minutes 
-  // to stay safely ahead of your backend's 15-minute idle limit.
-  useEffect(() => {
-    if (!accessToken) return;
-
-    const intervalTime = 10 * 60 * 1000; // 10 minutes
-    const interval = setInterval(() => {
-      console.log("Proactively renewing access token session...");
-      refreshSession();
-    }, intervalTime);
-
-    return () => clearInterval(interval);
-  }, [accessToken, refreshSession]);
-
-  return (
-    <AuthContext.Provider value={{ accessToken, isLoading, setToken, refreshSession, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider
+            value={{ accessToken, isLoading, setToken: setAccessToken, refreshSession, logout }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
+/**
+ * useAuth
+ *
+ * Returns the current auth context. Must be called inside a component that is
+ * a descendant of `AuthProvider`.
+ *
+ * ```tsx
+ * const { accessToken, isLoading, logout } = useAuth();
+ * ```
+ *
+ * @throws If called outside of an `AuthProvider` tree.
+ */
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an Auth Provider");
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuth must be used within an AuthProvider");
+    return context;
 }
