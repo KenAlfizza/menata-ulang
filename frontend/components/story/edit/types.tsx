@@ -1,6 +1,5 @@
 import { ReactNode, ComponentType } from "react";
 import { Typography, Spacing, Size, Crop } from "./fields/types";
-import { Slot } from "@puckeditor/core";
 
 export interface TitleProps {
     // Content Fields
