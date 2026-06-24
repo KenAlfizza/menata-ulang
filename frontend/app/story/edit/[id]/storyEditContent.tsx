@@ -132,6 +132,7 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
               </div>
               
               {/* Center: Clean Text-Only Tabs */}
+              {/** 
               <div className="flex justify-center w-2/4">
                 <Tabs 
                     value={viewMode} 
@@ -154,6 +155,7 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
                     </TabsList>
                 </Tabs>
               </div>
+              */}
 
               {/* Right: Solid Minimal Utility Button */}
               <div className="flex items-center justify-end w-1/4">

@@ -1,4 +1,4 @@
-import { Config } from "@puckeditor/core";
+import { Config, Fields } from "@puckeditor/core";
 import { BookType, Text } from "lucide-react";
 
 // Import components props
@@ -30,11 +30,12 @@ export type EditStoryConfig = Config<{
 export type ViewMode = "content" | "animation"
 
 export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
-    const activeFields = viewMode === "content" ? contentFields : contentFields;
     return {
         components: {
             Title: {
-                fields: activeFields.Title,
+                fields: (viewMode === "content" 
+                ? contentFields.Title 
+                : animationFields.Title) as Fields<TitleProps>,
                 defaultProps: {
                     title: "My Story",
                     typography: { ...defaultTypographyHeader },
@@ -53,7 +54,9 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
                 ),
             },
             Text: {
-                fields: activeFields.Text,
+                fields: (viewMode === "content" 
+                ? contentFields.Text 
+                : animationFields.Text) as Fields<TextProps>,
                 defaultProps: {
                     text: "This is a paragraph of text.",
                     typography: defaultTypography,
@@ -67,7 +70,9 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
                 ),
             },
             Slot: {
-                fields: activeFields.Slot,
+                fields: (viewMode === "content" 
+                ? contentFields.Text 
+                : animationFields.Text) as Fields<SlotProps>,
                 defaultProps: {
                     columns: "1",
                     spacing: defaultSpacing,
@@ -75,7 +80,9 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
                 render: (props) => <SlotComponent {...props} />,
             },
             Image: {
-                fields: activeFields.Image,
+                fields: (viewMode === "content" 
+                ? contentFields.Text 
+                : animationFields.Text) as Fields<ImageProps>,
                 defaultProps: {
                     src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000",
                     alt: "Story Image",
@@ -86,7 +93,9 @@ export const createPuckConfig = (viewMode: ViewMode) : EditStoryConfig => {
                 render: (props) => <ImageComponent {...props} />,
             },
             Container: {
-                fields: activeFields.Container,
+                fields: (viewMode === "content" 
+                ? contentFields.Text 
+                : animationFields.Text) as Fields<FlexContainerProps>,
                 render: (props) => <FlexComponent {...props} />,
             },
         },

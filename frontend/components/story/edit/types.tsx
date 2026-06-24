@@ -3,9 +3,14 @@ import { Typography, Spacing, Size, Crop } from "./fields/types";
 import { Slot } from "@puckeditor/core";
 
 export interface TitleProps {
+    // Content Fields
     title: string;
     spacing: Spacing;
     typography: Typography;
+
+    // Animation Fields
+    clickAction?: string;
+    hoverAction?: string;
 }
 
 export interface TextProps {
