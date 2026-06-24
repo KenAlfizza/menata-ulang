@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState, useTransition, use } from "react";
+import { useEffect, useState, useTransition, use, useMemo } from "react";
 import { Puck, Data } from "@puckeditor/core";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Layout, Sparkles } from "lucide-react";
 
-import { createPuckConfig } from "./puck.config";
+// Import dynamic config factory and ViewMode type
+import { createPuckConfig, ViewMode } from "./puck.config";
 import { useAuth } from "@/context/auth-context";
 import { createStoryPage, saveStoryPageData, loadStoryPageData } from "@/services/story";
+
+// Import shadcn tabs primitives
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface StoryEditContentProps {
   params: Promise<{ id: string }>;
@@ -19,6 +23,13 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
   const pageId = resolvedParams.id;
 
   const { accessToken } = useAuth();
+
+  // Manage active workspace view
+  const [viewMode, setViewMode] = useState<ViewMode>("content");
+
+  // Dynamically compute the Puck configuration when viewMode toggles
+  const dynamicConfig = useMemo(() => createPuckConfig(viewMode), [viewMode]);
+
 
   const [data, setData] = useState<Data | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,21 +97,26 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
   }
 
   return (
-    <div className="relative w-full h-screen flex flex-col overflow-hidden bg-[#1A1A2E]">
-      <Puck
-        config={createPuckConfig("content")}
+    <div className="relative w-full h-screen flex flex-col overflow-hidden bg-background select-none">
+        <Puck
+        config={dynamicConfig}
         data={data}
         onChange={(newData) => setData(newData)}
         onPublish={handleSaveWorkspace}
         overrides={{
-          puck: ({ children }) => (
-            <div style={{ height: "100%", maxHeight: "100%", display: "flex", flexDirection: "column", overflow: "hidden", background: "#FFB7C3" }}>
-              {children}
+            // 1. Unified Background: Match Puck's native sidebar/canvas tones instead of using pink
+            puck: ({ children }) => (
+            <div className="h-full max-h-full flex flex-col overflow-hidden bg-zinc-50/50">
+                {children}
             </div>
-          ),
-          header: () => (
-            <div className="bg-[#FFB7C3] p-3 flex justify-between items-center text-slate-800 border-b border-slate-200/20">
-              <div className="w-full flex items-center gap-4">
+            ),
+            
+            // 2. Professional Tool Header: Clean, single-row layout mimicking modern design apps
+            header: () => (
+            <div className="bg-white px-6 h-12 flex justify-between items-center text-zinc-950 border-b border-zinc-200 z-50">
+              
+              {/* Left: Brand & App Title Inline */}
+              <div className="flex items-center gap-2 w-1/4">
                 <Link href="/" className="flex items-center gap-2">
                   <Image
                     src="/logo-text.svg"
@@ -108,26 +124,53 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
                     width={128}
                     height={128}
                     priority
-                    className="w-auto h-8 brightness-0"
+                    className="w-auto h-6 brightness-0"
                   />
                 </Link>
-                <h1 className="font-bold text-lg">Story Editor</h1>
+                <span className="text-zinc-300 select-none text-xs">|</span>
+                <span className="text-xs font-semibold text-zinc-900/50 uppercase">Story Editor</span>
               </div>
-              <div className="flex items-center gap-3">
+              
+              {/* Center: Clean Text-Only Tabs */}
+              <div className="flex justify-center w-2/4">
+                <Tabs 
+                    value={viewMode} 
+                    onValueChange={(val) => setViewMode(val as ViewMode)}>
+                    <TabsList className="bg-zinc-100 p-0.5 h-8">
+                        <TabsTrigger 
+                            value="content" 
+                            className="text-xs font-medium h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+                        >
+                            <Layout size={13} />
+                            Content
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="animation" 
+                            className="text-xs font-medium h-7 px-4 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+                        >
+                            <Sparkles size={13} />
+                            Animation
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+              </div>
+
+              {/* Right: Solid Minimal Utility Button */}
+              <div className="flex items-center justify-end w-1/4">
                 <button
                   type="button"
                   disabled={isSaving}
                   onClick={() => handleSaveWorkspace(data)}
-                  className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 transition cursor-pointer shadow-sm"
+                  className="bg-zinc-950 hover:bg-zinc-800 disabled:bg-zinc-300 text-white text-xs font-medium h-8 px-4 rounded-md transition"
                 >
-                  {isSaving && <Loader2 className="animate-spin" size={14} />}
                   {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
+
             </div>
           ),
         }}
-      />
+        />
     </div>
-  );
+    );
 }
