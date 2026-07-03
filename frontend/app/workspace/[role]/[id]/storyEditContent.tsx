@@ -40,7 +40,7 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
         if (pageId === "new") {
           const fallbackSlug = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
           const newPageRecord = await createStoryPage("Untitled Story Draft", fallbackSlug, accessToken);
-          window.history.replaceState(null, "", `/workspace/author/edit/${newPageRecord.id}`);
+          window.history.replaceState(null, "", `/author/edit/${newPageRecord.id}`);
           setData(newPageRecord.puckData);
           return;
         }

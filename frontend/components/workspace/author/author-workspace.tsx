@@ -7,7 +7,7 @@ import RecentStories from "./recent-stories.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Filter } from "lucide-react";
 
-export default function AuthorWorkspace() {
+export default function AuthorWorkspace(accessToken: string) {
     return (
         <main className="px-8 space-y-8 overflow-x-hidden">
             <section>
