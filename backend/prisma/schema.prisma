@@ -38,7 +38,7 @@ model User {
 enum UserRole {
   SUPERUSER
   AUTHOR
-  MODERATOR
+  HOST
   USER
 }
 
@@ -218,6 +218,7 @@ model Feedback {
 model StoryPage {
   id          String   @id @default(cuid(2)) // Backend-generated CUID
   title       String
+  imageUrl    String   @default("")
   slug        String   @unique
   puckData    Json     // Saves the flexible layout schema from Puck editor
   published   Boolean  @default(false)

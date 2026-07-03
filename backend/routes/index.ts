@@ -5,6 +5,7 @@ import story from "./story.ts";
 import podcast from "./podcast.ts";
 import reflection from "./reflection.ts";
 import feedback from "./feedback.ts";
+import author from "./author.ts";
 
 // Router object
 const router = new Hono();
@@ -15,6 +16,7 @@ router.route("/user", user);
 router.route("/story", story);
 router.route("/podcast", podcast);
 router.route("/reflection", reflection);
-router.route("/feedback", feedback)
+router.route("/feedback", feedback);
+router.route("/author", author);
 
 export default router;
