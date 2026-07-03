@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthProvider } from "@/context/auth-context";
+import { AuthProvider } from "@/context/auth-context.tsx";
 
 export default function StoryEditLayout({ children }: { children: React.ReactNode }) {
     return (
