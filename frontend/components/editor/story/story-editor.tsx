@@ -1,30 +1,24 @@
 "use client";
 
-import { useEffect, useState, useTransition, use, useMemo } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Puck, Data } from "@puckeditor/core";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, Layout, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-// Import dynamic config factory and ViewMode type
 import { createPuckConfig } from "./puck.config";
+import "@puckeditor/core/puck.css";
+
 import { useAuth } from "@/context/auth-context";
-import { createStoryPage, saveStoryPageData, loadStoryPageData } from "@/services/story";
+import { saveStoryPageData, loadStoryPageData } from "@/services/story";
 
-
-interface StoryEditContentProps {
-  params: Promise<{ id: string }>;
+interface StoryEditorProps {
+  pageId: string;
 }
 
-export function StoryEditContent({ params }: StoryEditContentProps) {
-  const resolvedParams = use(params);
-  const pageId = resolvedParams.id;
-
+export function StoryEditor({ pageId }: StoryEditorProps) {
   const { accessToken } = useAuth();
-
-  // Dynamically compute the Puck configuration when viewMode toggles
   const dynamicConfig = createPuckConfig();
-
 
   const [data, setData] = useState<Data | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,15 +30,6 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
       if (!pageId || !accessToken) return;
       try {
         setIsLoading(true);
-
-        if (pageId === "new") {
-          const fallbackSlug = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-          const newPageRecord = await createStoryPage("Untitled Story Draft", fallbackSlug, accessToken);
-          window.history.replaceState(null, "", `/author/edit/${newPageRecord.id}`);
-          setData(newPageRecord.puckData);
-          return;
-        }
-
         const pageData = await loadStoryPageData(pageId, accessToken);
         setData(pageData || { content: [], root: { props: { title: "Untitled Page" } } });
       } catch (err: any) {
@@ -59,12 +44,11 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
   }, [pageId, accessToken]);
 
   const handleSaveWorkspace = (currentData: Data) => {
-    const actualId = window.location.pathname.split("/").pop();
-    if (!actualId || actualId === "new" || !accessToken) return;
+    if (!pageId || !accessToken) return;
 
     startSaving(async () => {
       try {
-        await saveStoryPageData(actualId, currentData, accessToken);
+        await saveStoryPageData(pageId, currentData, accessToken);
       } catch (err: any) {
         alert(`Error trying to update data record: ${err.message}`);
       }
@@ -93,29 +77,24 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
 
   return (
     <div className="relative w-full h-screen flex flex-col overflow-hidden bg-background select-none">
-        <Puck
+      <Puck
         config={dynamicConfig}
         data={data}
         onChange={(newData) => setData(newData)}
         onPublish={handleSaveWorkspace}
         overrides={{
-            // 1. Unified Background: Match Puck's native sidebar/canvas tones instead of using pink
-            puck: ({ children }) => (
+          puck: ({ children }) => (
             <div className="h-full max-h-full flex flex-col overflow-hidden bg-zinc-50/50">
-                {children}
+              {children}
             </div>
-            ),
-            
-            // 2. Professional Tool Header: Clean, single-row layout mimicking modern design apps
-            header: () => (
+          ),
+          header: () => (
             <div className="bg-white px-6 h-12 flex justify-between items-center text-zinc-950 border-b border-zinc-200 z-50">
-              
-              {/* Left: Brand & App Title Inline */}
               <div className="flex items-center gap-2 w-1/4">
                 <Link href="/" className="flex items-center gap-2">
                   <Image
                     src="/logo-text.svg"
-                    alt="Menata Ulang Logo"
+                    alt="Logo"
                     width={128}
                     height={128}
                     priority
@@ -126,7 +105,6 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
                 <span className="text-xs font-semibold text-zinc-900/50 uppercase">Story Editor</span>
               </div>
 
-              {/* Right: Solid Minimal Utility Button */}
               <div className="flex items-center justify-end w-1/4">
                 <button
                   type="button"
@@ -137,11 +115,10 @@ export function StoryEditContent({ params }: StoryEditContentProps) {
                   {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
-
             </div>
           ),
         }}
-        />
+      />
     </div>
-    );
+  );
 }

@@ -1,5 +1,4 @@
-import { Config, Fields } from "@puckeditor/core";
-import { BookType, Text } from "lucide-react";
+import { Config } from "@puckeditor/core";
 
 // Import components props
 import { TitleProps, TextProps, SlotProps, ImageProps, FlexContainerProps } from "@/components/story/edit/types";
@@ -16,7 +15,7 @@ import { defaultSize } from "@/components/story/edit/fields/size";
 import { defaultCrop } from "@/components/story/edit/fields/crop";
 
 // Import fields
-import { contentFields } from "./fields/content.fields.tsx";
+import { contentFields } from "./content.fields"
 
 export type EditStoryConfig = Config<{
   Title: TitleProps;
