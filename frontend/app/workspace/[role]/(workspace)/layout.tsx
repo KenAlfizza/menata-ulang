@@ -6,13 +6,13 @@ import { AuthProvider } from "@/context/auth-context";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { WorkspaceSidebar } from "@/components/workspace/sidebar"
 
-export default function AuthorWorkspace({ children }: { children: React.ReactNode }) {
+export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
     return (
         <AuthProvider>
-        <div className="min-h-screen">
+        <div className="bg-zinc-100 min-h-screen">
             <SidebarProvider>
                 <WorkspaceSidebar />
-                <main>
+                <main className="w-full">
                     <SidebarTrigger />
                         {children}
                 </main>
