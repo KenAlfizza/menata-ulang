@@ -10,7 +10,7 @@ app.use(
     "*", // All Routes
     cors({
     origin: "http://localhost:3000", // Allow your Next.js app
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,

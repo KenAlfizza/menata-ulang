@@ -33,7 +33,7 @@ export default function NewStoryPage() {
   }, [accessToken, router]);
 
   return (
-    <div className="w-full h-screen bg-[#1A1A2E] flex flex-col items-center justify-center text-white gap-3">
+    <div className="w-full h-screen flex flex-col items-center justify-center gap-3">
       <Loader2 className="animate-spin" size={24} />
       <span>Creating your new story draft...</span>
     </div>
