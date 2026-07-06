@@ -35,8 +35,15 @@ export interface Crop {
     cropY: string;  
 }
 
+export interface Color {
+  mode: "solid" | "gradient";
+  hex: string;
+  opacity: string;
+}
+
 // Strictly-typed Puck Custom Field interface
 export type SpacingCustomField = CustomField<Spacing>;
 export type TypographyCustomField = CustomField<Typography>;
 export type SizeCustomField = CustomField<Size>;
 export type CropCustomField = CustomField<Crop>;
+export type ColorCustomField = CustomField<Color>;

@@ -1,7 +1,28 @@
-import { resolvePixelStyles } from "@/components/story/edit/fields/spacing";
-import { SlotProps } from "../types";
+import type { SlotComponentType } from "./types.tsx";
 
-export function SlotComponent({ col1: Col1, col2: Col2, col3: Col3, spacing, columns }: SlotProps) {
+import { Fields } from "@puckeditor/core";
+import { resolvePixelStyles } from "../fields/spacing.tsx";
+import { spacingField } from "../fields/spacing.tsx";
+
+/** Slot component fields */
+export const SlotComponentFields: Fields<SlotComponentType> = {
+    columns: {
+        type: "select",
+        label: "Grid Columns",
+        options: [
+            { label: "1 Column", value: "1" },
+            { label: "2 Columns", value: "2" },
+            { label: "3 Columns", value: "3" },
+        ],
+    },
+    col1: { type: "slot" },
+    col2: { type: "slot" },
+    col3: { type: "slot" },
+    spacing: spacingField,
+}
+
+/** Slot component renders */
+export function SlotComponent({ col1: Col1, col2: Col2, col3: Col3, spacing, columns }: SlotComponentType) {
     const totalCols = parseInt(columns || "1", 10);
 
     return (

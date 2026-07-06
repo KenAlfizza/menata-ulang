@@ -1,11 +1,27 @@
-import { ImageProps } from "../types";
+import type { ImageComponentType } from "./types";
+
+// Import fields
+import { Fields } from "@puckeditor/core";
+import { resizeField } from "../fields/size.tsx";
+import { cropField } from "../fields/crop.tsx";
+import { spacingField } from "../fields/spacing.tsx";
 
 // Defaults and resolvers
 import { defaultSize } from "../fields/size";
 import { defaultCrop } from "../fields/crop";
 import { resolvePixelStyles } from "../fields/spacing";
 
-export function ImageComponent({ src, alt, resize, crop, spacing }: ImageProps) {
+/** Image component fields */
+export const ImageComponentFields: Fields<ImageComponentType> = {
+    src: { type: "text", label: "Image URL" },
+    alt: { type: "text", label: "Alt Text" },
+    resize: resizeField,
+    crop: cropField,
+    spacing: spacingField,
+}
+
+/** Image component render */
+export function ImageComponent({ src, alt, resize, crop, spacing }: ImageComponentType) {
     const currentSize = resize || defaultSize;
     const currentCrop = crop || defaultCrop;
     const r = currentSize.borderRadius || defaultSize.borderRadius;

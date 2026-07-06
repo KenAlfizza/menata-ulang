@@ -1,72 +1,72 @@
 import { Config } from "@puckeditor/core";
 
-// Import components props
-import { TitleProps, TextProps, SlotProps, ImageProps, FlexContainerProps } from "@/components/story/edit/types";
-import { SlotComponent } from "@/components/story/edit/components/slotComponent";
+/** Import components */
+// Title component
+import { TitleComponentType } from "./components/types.tsx";
+import { TitleComponent, TitleComponentFields } from "./components/title.tsx";
 
-// Import components renders
-import { ImageComponent } from "@/components/story/edit/components/imageComponent";
-import { FlexComponent } from "@/components/story/edit/components/flexComponent";
+// Text component
+import { TextComponentType } from "./components/types.tsx";
+import { TextComponent, TextComponentFields } from "./components/text.tsx";
 
-// Import fields
-import { defaultSpacing, resolvePixelStyles } from "@/components/story/edit/fields/spacing";
-import { defaultTypography, defaultTypographyHeader, resolveTypographyStyles } from "@/components/story/edit/fields/typography";
-import { defaultSize } from "@/components/story/edit/fields/size";
-import { defaultCrop } from "@/components/story/edit/fields/crop";
+// Slot component
+import { SlotComponentType } from "./components/types.tsx"
+import { SlotComponent, SlotComponentFields } from "./components/slot.tsx";
 
-// Import fields
-import { contentFields } from "./content.fields"
+// Image Component
+import { ImageComponentType } from "./components/types.tsx";
+import { ImageComponent, ImageComponentFields } from "./components/image.tsx";
+
+
+// Flex Component
+import { FlexComponentType } from "./components/types.tsx";
+import { FlexComponent, FlexComponentFields } from "./components/flex.tsx";
+import { defaultTypography, defaultTypographyHeader } from "./fields/typography.tsx";
+import { defaultSpacing } from "./fields/spacing.tsx";
+import { defaultSize } from "./fields/size.tsx";
+import { defaultCrop } from "./fields/crop.tsx";
 
 export type EditStoryConfig = Config<{
-  Title: TitleProps;
-  Text: TextProps;
-  Slot: SlotProps;
-  Image: ImageProps;
-  Container: FlexContainerProps;
+  Title: TitleComponentType;
+  Text: TextComponentType;
+  Slot: SlotComponentType;
+  Image: ImageComponentType;
+  Flex: FlexComponentType;
 }>;
 
 export const createPuckConfig = (): EditStoryConfig => {
   return {
+    root: {
+        fields: {
+            Title: {type: "text"},
+            Description: {type: "textarea"},
+        },
+        render: ({ children }) => {
+            return children
+        },
+    },
+
     components: {
       Title: {
-        fields: contentFields.Title,
+        fields: TitleComponentFields,
         defaultProps: {
           title: "My Story",
           typography: { ...defaultTypographyHeader },
           spacing: { ...defaultSpacing },
         },
-        render: ({ title, typography, spacing }) => (
-          <h2
-            className="font-bold tracking-tight text-slate-950"
-            style={{
-              ...resolveTypographyStyles(typography),
-              ...resolvePixelStyles(spacing),
-            }}
-          >
-            {title}
-          </h2>
-        ),
+        render: (props) => <TitleComponent {...props} />
       },
       Text: {
-        fields: contentFields.Text,
+        fields: TextComponentFields,
         defaultProps: {
           text: "This is a paragraph of text.",
           typography: defaultTypography,
           spacing: defaultSpacing,
         },
-        render: ({ text, typography, spacing }) => (
-          <div
-            style={{
-              ...resolveTypographyStyles(typography),
-              ...resolvePixelStyles(spacing),
-            }}
-          >
-            {text}
-          </div>
-        ),
+        render: (props) => <TextComponent {...props} />
       },
       Slot: {
-        fields: contentFields.Slot,
+        fields: SlotComponentFields,
         defaultProps: {
           columns: "1",
           spacing: defaultSpacing,
@@ -74,7 +74,7 @@ export const createPuckConfig = (): EditStoryConfig => {
         render: (props) => <SlotComponent {...props} />,
       },
       Image: {
-        fields: contentFields.Image,
+        fields: ImageComponentFields,
         defaultProps: {
           src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000",
           alt: "Story Image",
@@ -84,8 +84,8 @@ export const createPuckConfig = (): EditStoryConfig => {
         },
         render: (props) => <ImageComponent {...props} />,
       },
-      Container: {
-        fields: contentFields.Container,
+      Flex: {
+        fields: FlexComponentFields,
         render: (props) => <FlexComponent {...props} />,
       },
     },
