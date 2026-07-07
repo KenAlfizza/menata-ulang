@@ -73,6 +73,7 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
  * GET /my-stories/ - Fetch all stories into author workspace
  * * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
  * Supports filtering by title, custom limit per page, and sorting by title or update date.
+ * Also returns total record count for pagination UI.
  * * Query Parameters:
  * - filter (string): Search string for filtering story titles (case-insensitive)
  * - sort (string): Field to sort by ("title" | "updatedAt") - Default: "updatedAt"
@@ -105,29 +106,41 @@ author.get("/my-stories/", authMiddleware, async (c) => {
     const limit = Math.min(parseInt(query.limit) || 10, 50); // Cap at 50 to prevent abuse
     const skip = (page - 1) * limit;
 
+    // Reusable where clause for consistent filtering
+    const where = {
+        authorId: id,
+        title: { 
+            contains: filter, 
+            mode: 'insensitive' as const
+        },
+    };
+
     try {
-        const stories = await prisma.storyPage.findMany({
-            where: {
-                authorId: id,
-                title: { contains: filter, mode: 'insensitive' },
-            },
-            orderBy: { [sortBy]: sortOrder },
-            skip: skip,
-            take: limit,
-            select: {
-                id: true,
-                title: true,
-                imageUrl: true,
-                published: true,
-                updatedAt: true,
-            }
-        });
+        // Execute findMany and count in a transaction for consistency
+        const [stories, totalCount] = await prisma.$transaction([
+            prisma.storyPage.findMany({
+                where,
+                orderBy: { [sortBy]: sortOrder },
+                skip: skip,
+                take: limit,
+                select: {
+                    id: true,
+                    title: true,
+                    imageUrl: true,
+                    published: true,
+                    updatedAt: true,
+                }
+            }),
+            prisma.storyPage.count({ where })
+        ]);
 
         return c.json({ 
             message: "Stories retrieved successfully", 
             ok: true, 
             page,
             limit,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
             stories: stories 
         }, 200);
 
