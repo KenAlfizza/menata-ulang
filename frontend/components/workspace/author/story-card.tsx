@@ -11,9 +11,38 @@ import type { RecentStoryRecord } from "@/api/author";
 interface StoryCardProps {
     story?: RecentStoryRecord;
     isNewStory?: boolean;
+    isLoading?: boolean;
 }
 
-export function StoryCard({ story, isNewStory = false }: StoryCardProps) {
+export function StoryCard({ story, isNewStory = false, isLoading = false }: StoryCardProps) {
+    if (isLoading) {
+        return (
+            <Button 
+                asChild
+                className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
+            >
+                <div className="w-full flex flex-col h-auto gap-3">
+                    {/* Image */}
+                    <div className="w-40 h-32 bg-zinc-100 rounded-md shrink-0"/>
+
+                    {/* Title */}
+                    <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
+                        <div className="w-40 h-8 bg-zinc-100 rounded-sm shrink-0" />
+                    </div>
+
+                    {/* Date */}
+                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
+                        <div className="w-20 h-6 bg-zinc-100 rounded-sm shrink-0" />
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center text-md tracking-tight ml-auto gap-1 mt-auto">
+                        <div className="w-16 h-4 bg-zinc-100 rounded-sm shrink-0" />
+                    </div>
+                </div>
+            </Button>
+        )
+    }
     if (isNewStory) {
         return (
             <Button
