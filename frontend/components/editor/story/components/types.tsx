@@ -1,4 +1,6 @@
-import { Typography, Spacing, Size, Crop } from "../fields/types";
+import { ReactNode } from "react";
+import { Typography, Spacing, Size, Crop } from "../fields/types.tsx";
+import { Slot } from "@puckeditor/core";
 
 export interface TitleComponentType {
     // Content Fields
@@ -17,26 +19,24 @@ export interface TextComponentType {
     typography: Typography;
 }
 
-export interface SlotComponentType {
-    spacing: Spacing;
-    columns: "1" | "2" | "3" | "4";
-    col1?: React.ComponentType<{ collisionAxis?: string }>;
-    col2?: React.ComponentType<{ collisionAxis?: string }>;
-    col3?: React.ComponentType<{ collisionAxis?: string }>;
-    content?: React.ComponentType<{ collisionAxis?: string }>;
-}
-
 export interface ImageComponentType {
     src: string;
     alt: string;
-    resize: Size;        // Size interface
-    crop: Crop;
+    resize: Size;        
     spacing: Spacing;
+    crop: Crop; // Updated to match object interface
 }
 
 export interface FlexComponentType {
     direction: "row" | "column";
     justify: string;
     spacing: Spacing;
-    slot: React.ElementType;
+    slot: Slot;
+}
+
+export interface GridSlotType {
+  columns: number;
+  rows: number;
+  gap: number;
+  slot: Slot;
 }

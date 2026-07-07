@@ -42,11 +42,11 @@ export function resolvePixelStyles(spacing: Spacing): React.CSSProperties {
 
 // Default spacing option
 export const defaultSpacing: Spacing = {
-  all: "12px",
-  top: "12px",
-  bottom: "12px",
-  left: "12px",
-  right: "12px",
+  all: "0px",
+  top: "0px",
+  bottom: "0px",
+  left: "0px",
+  right: "0px",
 };
 
 // Spacing Custom Field Implementation

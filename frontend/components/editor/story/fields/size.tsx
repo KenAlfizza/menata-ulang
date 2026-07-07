@@ -1,7 +1,11 @@
+// components/size/resize-field.tsx
 import { useState, useRef } from "react";
 import { FieldLabel } from "@puckeditor/core";
-import { Size, SizeCustomField } from "./types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Ruler, Lock, Unlock, Scan } from "lucide-react";
+import { Size, SizeCustomField } from "./types";
 
 export const defaultSize: Size = {
   width: "",
@@ -10,169 +14,220 @@ export const defaultSize: Size = {
 };
 
 type Corner = "tl" | "tr" | "br" | "bl";
+type Dimension = "width" | "height";
 
 const CORNERS: { key: Corner; label: string }[] = [
-  { key: "tl", label: "Top Left" },
-  { key: "tr", label: "Top Right" },
-  { key: "br", label: "Bottom Right" },
-  { key: "bl", label: "Bottom Left" },
+  { key: "tl", label: "Top left" },
+  { key: "tr", label: "Top right" },
+  { key: "br", label: "Bottom right" },
+  { key: "bl", label: "Bottom left" },
 ];
+
+/** Splits "320px" / "100%" / "" into a numeric part + unit, so px and
+ *  % values never get silently mixed in aspect-ratio math. */
+function parseValue(val: string | undefined): { num: number | null; unit: "px" | "%" } {
+  if (!val) return { num: null, unit: "px" };
+  if (val.endsWith("%")) return { num: parseFloat(val), unit: "%" };
+  return { num: parseFloat(val.replace("px", "")), unit: "px" };
+}
+
+function formatValue(num: number, unit: "px" | "%") {
+  return `${num}${unit}`;
+}
+
+/** Width/height pair with an aspect-ratio lock. */
+function DimensionFields({
+  current,
+  natural,
+  locked,
+  onToggleLock,
+  onChange,
+}: {
+  current: Size;
+  natural: { width: string; height: string };
+  locked: boolean;
+  onToggleLock: () => void;
+  onChange: (dimension: Dimension, rawVal: string) => void;
+}) {
+  const displayValue = (dimension: Dimension) => {
+    const val = current[dimension];
+    if (!val) return "";
+    const { num, unit } = parseValue(val);
+    return num === null ? "" : unit === "%" ? `${num}%` : `${num}`;
+  };
+
+  return (
+    <div className="flex items-end gap-2">
+      {(["width", "height"] as Dimension[]).map((dimension) => (
+        <div key={dimension} className="flex flex-1 flex-col gap-1">
+          <Label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            {dimension === "width" ? "Width" : "Height"}
+          </Label>
+          <Input
+            type="text"
+            inputMode="decimal"
+            placeholder={natural[dimension] || "auto"}
+            value={displayValue(dimension)}
+            onChange={(e) => onChange(dimension, e.target.value)}
+            className="font-mono text-xs"
+          />
+        </div>
+      ))}
+
+      <Button
+        type="button"
+        size="icon"
+        variant={locked ? "default" : "outline"}
+        onClick={onToggleLock}
+        title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+        className="mb-[1px] h-8 w-8 shrink-0"
+      >
+        {locked ? <Lock size={13} /> : <Unlock size={13} />}
+      </Button>
+    </div>
+  );
+}
+
+/** Four-corner border radius editor with a link-all toggle. */
+function CornerRadiusFields({
+  radius,
+  linked,
+  onToggleLink,
+  onChange,
+}: {
+  radius: Size["borderRadius"];
+  linked: boolean;
+  onToggleLink: () => void;
+  onChange: (corner: Corner, rawVal: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded border border-slate-200 bg-white p-2">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          <Scan size={12} />
+          Corner radius
+        </span>
+        <Button
+          type="button"
+          size="icon"
+          variant={linked ? "default" : "outline"}
+          onClick={onToggleLink}
+          title={linked ? "Unlink corners" : "Link corners"}
+          className="h-6 w-6"
+        >
+          {linked ? <Lock size={11} /> : <Unlock size={11} />}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-1.5">
+        {CORNERS.map(({ key, label }) => (
+          <div key={key} className="flex items-center gap-1">
+            <Label className="shrink-0 font-mono text-[10px] text-slate-400">{label}</Label>
+            <Input
+              type="number"
+              min={0}
+              value={radius?.[key] ?? "0"}
+              onChange={(e) => onChange(key, e.target.value)}
+              className="ml-auto font-mono text-xs"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export const resizeField: SizeCustomField = {
   type: "custom",
-  label: "Resize (px)",
+  label: "Resize",
   render: ({ value, onChange }) => {
     const current: Size = value || defaultSize;
     const currentRadius = current.borderRadius || defaultSize.borderRadius;
 
-    const [naturalDimensions, setNaturalDimensions] = useState({ width: "", height: "" });
+    const [natural, setNatural] = useState({ width: "", height: "" });
     const [locked, setLocked] = useState(true);
     const [cornersLinked, setCornersLinked] = useState(true);
-    const aspectRatioRef = useRef<number | null>(null);
+    const aspectRatio = useRef<number | null>(null);
 
-    const pData = (onChange as any)._data || {};
-    const imgSrc = pData?.src || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000";
-
-    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const img = e.currentTarget;
-      const w = img.naturalWidth;
-      const h = img.naturalHeight;
-      setNaturalDimensions({ width: `${w}`, height: `${h}` });
-      aspectRatioRef.current = w / h;
-      if (!current.width && !current.height) {
-        onChange({ ...current, width: `${w}px`, height: `${h}px` });
-      }
-    };
-
-    const handleInputChange = (dimension: "width" | "height", rawVal: string) => {
+    const handleDimensionChange = (dimension: Dimension, rawVal: string) => {
       if (rawVal === "") {
         onChange({ ...current, [dimension]: "" });
         return;
       }
+
+      const isPercent = rawVal.trim().endsWith("%");
       const num = parseFloat(rawVal);
       if (isNaN(num) || num <= 0) return;
+      const unit: "px" | "%" = isPercent ? "%" : "px";
 
-      if (locked && aspectRatioRef.current) {
-        const ratio = aspectRatioRef.current;
-        if (dimension === "width") {
-          onChange({ ...current, width: `${num}px`, height: `${Math.round(num / ratio)}px` });
-        } else {
-          onChange({ ...current, width: `${Math.round(num * ratio)}px`, height: `${num}px` });
-        }
-      } else {
-        const other = dimension === "width" ? current.height : current.width;
-        const otherNum = parseFloat(other?.replace("px", "") || "0");
-        if (dimension === "width") aspectRatioRef.current = num / otherNum;
-        else aspectRatioRef.current = otherNum / num;
-        onChange({ ...current, [dimension]: `${num}px` });
+      // Aspect-ratio lock only makes sense in px — mixing % width with
+      // px height (or vice versa) doesn't have a stable ratio, so we
+      // skip the lock math entirely when either side is a percentage.
+      if (locked && aspectRatio.current && unit === "px") {
+        const other = dimension === "width"
+          ? Math.round(num / aspectRatio.current)
+          : Math.round(num * aspectRatio.current);
+
+        onChange({
+          ...current,
+          width: dimension === "width" ? formatValue(num, "px") : formatValue(other, "px"),
+          height: dimension === "height" ? formatValue(num, "px") : formatValue(other, "px"),
+        });
+        return;
       }
+
+      if (unit === "px") {
+        const otherDim = dimension === "width" ? current.height : current.width;
+        const { num: otherNum, unit: otherUnit } = parseValue(otherDim);
+        if (otherNum && otherUnit === "px") {
+          aspectRatio.current = dimension === "width" ? num / otherNum : otherNum / num;
+        }
+      }
+
+      onChange({ ...current, [dimension]: formatValue(num, unit) });
     };
 
     const handleCornerChange = (corner: Corner, rawVal: string) => {
       const num = rawVal === "" ? "0" : rawVal;
-      if (cornersLinked) {
-        onChange({
-          ...current,
-          borderRadius: { tl: num, tr: num, br: num, bl: num },
-        });
-      } else {
-        onChange({
-          ...current,
-          borderRadius: { ...currentRadius, [corner]: num },
-        });
-      }
+      onChange({
+        ...current,
+        borderRadius: cornersLinked
+          ? { tl: num, tr: num, br: num, bl: num }
+          : { ...currentRadius, [corner]: num },
+      });
     };
-
-    const getDisplayValue = (dimension: "width" | "height") =>
-      current[dimension]?.replace("px", "") ?? "";
 
     const handleLockToggle = () => {
       if (!locked) {
-        const w = parseFloat(current.width?.replace("px", "") || "0");
-        const h = parseFloat(current.height?.replace("px", "") || "0");
-        if (w > 0 && h > 0) aspectRatioRef.current = w / h;
+        const w = parseValue(current.width);
+        const h = parseValue(current.height);
+        if (w.num && h.num && w.unit === "px" && h.unit === "px") {
+          aspectRatio.current = w.num / h.num;
+        }
       }
       setLocked((prev) => !prev);
     };
 
     return (
-      <FieldLabel label="Image Dimensions" icon={<Ruler size={16} />}>
-        <img src={imgSrc} onLoad={handleImageLoad} className="hidden" aria-hidden />
-
+      <FieldLabel label="Dimensions" icon={<Ruler size={16} />}>
         <div
-          className="flex flex-col gap-3 w-full p-2.5 bg-slate-50 rounded-lg border border-slate-200 mt-1 text-slate-800"
+          className="mt-1 flex w-full flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-slate-800"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Width / Height */}
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1 bg-white p-2 rounded border border-slate-200 flex-1">
-              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">W (px)</label>
-              <input
-                type="number"
-                placeholder={naturalDimensions.width || "---"}
-                value={getDisplayValue("width")}
-                onChange={(e) => handleInputChange("width", e.target.value)}
-                className="w-full p-1 text-xs border border-slate-200 rounded focus:outline-none focus:border-blue-500 font-mono"
-                min="1"
-              />
-            </div>
+          <DimensionFields
+            current={current}
+            natural={natural}
+            locked={locked}
+            onToggleLock={handleLockToggle}
+            onChange={handleDimensionChange}
+          />
 
-            <div className="flex flex-col gap-1 bg-white p-2 rounded border border-slate-200 flex-1">
-              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">H (px)</label>
-              <input
-                type="number"
-                placeholder={naturalDimensions.height || "---"}
-                value={getDisplayValue("height")}
-                onChange={(e) => handleInputChange("height", e.target.value)}
-                className="w-full p-1 text-xs border border-slate-200 rounded focus:outline-none focus:border-blue-500 font-mono"
-                min="1"
-              />
-            </div>
-
-            <button
-              onClick={handleLockToggle}
-              title={locked ? "Unlock aspect ratio" : "Lock aspect ratio"}
-              className={`mt-4 p-1.5 rounded border transition-colors ${
-                locked ? "bg-blue-500 border-blue-600 text-white" : "bg-white border-slate-200 text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              {locked ? <Lock size={13} /> : <Unlock size={13} />}
-            </button>
-          </div>
-
-          {/* Border Radius */}
-          <div className="flex flex-col gap-2 bg-white p-2 rounded border border-slate-200">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <Scan size={12} />
-                Corners (px)
-              </span>
-              <button
-                onClick={() => setCornersLinked((prev) => !prev)}
-                title={cornersLinked ? "Unlink corners" : "Link corners"}
-                className={`p-1 rounded border transition-colors ${
-                  cornersLinked ? "bg-blue-500 border-blue-600 text-white" : "bg-white border-slate-200 text-slate-400 hover:text-slate-600"
-                }`}
-              >
-                {cornersLinked ? <Lock size={11} /> : <Unlock size={11} />}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5">
-              {CORNERS.map(({ key, label }) => (
-                <div key={key} className="flex flex-row items-center gap-0.5">
-                  <label className="text-[10px] text-slate-400 font-mono">{label}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={currentRadius[key] ?? "0"}
-                    onChange={(e) => handleCornerChange(key, e.target.value)}
-                    className="w-2/5 ml-auto p-1 text-xs border border-slate-200 rounded focus:outline-none focus:border-blue-500 font-mono"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          <CornerRadiusFields
+            radius={currentRadius}
+            linked={cornersLinked}
+            onToggleLink={() => setCornersLinked((prev) => !prev)}
+            onChange={handleCornerChange}
+          />
         </div>
       </FieldLabel>
     );

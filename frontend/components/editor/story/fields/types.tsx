@@ -30,15 +30,17 @@ export interface Size {
 }
 
 export interface Crop {
-    zoom: string;   
-    cropX: string;  
-    cropY: string;  
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    unit: "px" | "%";
 }
 
 export interface Color {
-  mode: "solid" | "gradient";
-  hex: string;
-  opacity: string;
+    mode: "solid" | "gradient";
+    hex: string;
+    opacity: string;
 }
 
 // Strictly-typed Puck Custom Field interface

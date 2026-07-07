@@ -1,7 +1,7 @@
 import { FlexComponentType } from "./types.tsx"; 
 
 // Import fields
-import { Fields } from "@puckeditor/core";
+import { ComponentConfig, Fields } from "@puckeditor/core";
 import { spacingField } from "../fields/spacing.tsx";
 
 export const justifyOptions = [
@@ -33,21 +33,24 @@ export const FlexComponentFields: Fields<FlexComponentType> = {
 }
 
 /** Flex component render */
-export function FlexComponent({ direction, justify, slot: Slot }: FlexComponentType) {
-    return (
-        <Slot
-            style={{
-                display: "flex",
-                flexWrap: "wrap",
-                flexDirection: direction,
+export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
+  direction,
+  justify,
+  slot: Slot,
+}) => {
+  return (
+    <Slot
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        flexDirection: direction,
 
-                justifyContent: justify,
+        justifyContent: justify,
 
-                width: "100%",
-                minWidth: "64px",
-                minHeight: "100px",
-            }}
-        />
-    );
-}
-    
+        width: "100%",
+        minWidth: "64px",
+        minHeight: "100px",
+      }}
+    />
+  );
+};
