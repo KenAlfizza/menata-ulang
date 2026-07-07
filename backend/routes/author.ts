@@ -2,24 +2,12 @@ import { Hono } from "hono";
 import type { AppVariables } from "../types.ts";
 
 // Library imports
-import { Prisma, prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma.ts";
 import { authMiddleware } from "../middleware/auth.ts";
-
-// Validators
-import { validate } from "../lib/validators/index.ts";
-import { paramsSchema, listQuerySchema } from "../lib/validators/story.ts";
-import { storySchema, storyPatchSchema } from "../lib/validators/story.ts";
-
-// Storage service
-import { StorageDisk } from "../services/storageDisk.ts";
-import { StorageProvider } from "../services/storageInterface.ts";
 
 const isProduction = Deno.env.get("DENO_ENV") === "production" || 
                      Deno.env.get("DENO_REGION") !== undefined;
 
-export const storage: StorageProvider = isProduction
-  ? new StorageDisk() // Change this to AWS A3 or Clouldflare R2
-  : new StorageDisk();
 
 const author = new Hono<{ Variables: AppVariables}>();
 
@@ -77,6 +65,74 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
 
     } catch (error) {
         console.error("Fetch Recent Stories Error:", error);
+        return c.json({ error: "Internal server error" }, 500);
+    }
+});
+
+/**
+ * GET /my-stories/ - Fetch all stories into author workspace
+ * * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
+ * Supports filtering by title, custom limit per page, and sorting by title or update date.
+ * * Query Parameters:
+ * - filter (string): Search string for filtering story titles (case-insensitive)
+ * - sort (string): Field to sort by ("title" | "updatedAt") - Default: "updatedAt"
+ * - order (string): Sort order ("asc" | "desc") - Default: "desc"
+ * - page (number): Page number for pagination - Default: 1
+ * - limit (number): Number of records per page - Default: 10
+ * * Responses:
+ * - 200: success
+ * - 401: unauthorized
+ * - 403: forbidden
+ * - 500: internal server error
+ */
+author.get("/my-stories/", authMiddleware, async (c) => {
+    const user = c.get("user");
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+    const { id, role } = user;
+    if (role !== "AUTHOR" && role !== "SUPERUSER") {
+        return c.json({ error: "Forbidden: Authors only" }, 403);
+    }
+
+    // Parse query parameters
+    const query = c.req.query();
+    const filter = query.filter || "";
+    const sortBy = query.sort === "title" ? "title" : "updatedAt";
+    const sortOrder = query.order === "asc" ? "asc" : "desc";
+    
+    // Pagination logic
+    const page = parseInt(query.page) || 1;
+    const limit = Math.min(parseInt(query.limit) || 10, 50); // Cap at 50 to prevent abuse
+    const skip = (page - 1) * limit;
+
+    try {
+        const stories = await prisma.storyPage.findMany({
+            where: {
+                authorId: id,
+                title: { contains: filter, mode: 'insensitive' },
+            },
+            orderBy: { [sortBy]: sortOrder },
+            skip: skip,
+            take: limit,
+            select: {
+                id: true,
+                title: true,
+                imageUrl: true,
+                published: true,
+                updatedAt: true,
+            }
+        });
+
+        return c.json({ 
+            message: "Stories retrieved successfully", 
+            ok: true, 
+            page,
+            limit,
+            stories: stories 
+        }, 200);
+
+    } catch (error) {
+        console.error("Fetch Stories Error:", error);
         return c.json({ error: "Internal server error" }, 500);
     }
 });
