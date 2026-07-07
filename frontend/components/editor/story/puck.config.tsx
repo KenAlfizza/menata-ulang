@@ -25,7 +25,6 @@ import { GridSlotComponent, GridSlotFields } from "./components/grid-slot.tsx";
 import { defaultTypography, defaultTypographyHeader } from "./fields/typography.tsx";
 import { defaultSpacing } from "./fields/spacing.tsx";
 import { defaultSize } from "./fields/size.tsx";
-import { defaultCrop } from "./fields/crop.tsx";
 
 
 export type EditStoryConfig = Config<{
@@ -70,11 +69,12 @@ export const createPuckConfig = (): EditStoryConfig => {
             Image: {
                 fields: ImageComponentFields,
                 defaultProps: {
-                    src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000",
-                    alt: "Story Image",
                     resize: defaultSize,
                     spacing: defaultSpacing,
-                    crop: defaultCrop,
+                    imageUpload: {
+                        url: "",
+                        alt: "Story Image"
+                    }
                 },
                 render: (props) => <ImageComponent {...props} />,
             },

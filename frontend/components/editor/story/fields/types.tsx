@@ -29,23 +29,21 @@ export interface Size {
     }
 }
 
-export interface Crop {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-    unit: "px" | "%";
-}
-
 export interface Color {
     mode: "solid" | "gradient";
     hex: string;
     opacity: string;
 }
 
+export interface ImageUpload {
+    url: string;
+    alt: string;
+}
+
+
 // Strictly-typed Puck Custom Field interface
 export type SpacingCustomField = CustomField<Spacing>;
 export type TypographyCustomField = CustomField<Typography>;
 export type SizeCustomField = CustomField<Size>;
-export type CropCustomField = CustomField<Crop>;
 export type ColorCustomField = CustomField<Color>;
+export type ImageUploadCustomField = CustomField<ImageUpload>;

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Typography, Spacing, Size, Crop } from "../fields/types.tsx";
+import { Typography, Spacing, Size, ImageUpload } from "../fields/types.tsx";
 import { Slot } from "@puckeditor/core";
 
 export interface TitleComponentType {
@@ -20,11 +20,9 @@ export interface TextComponentType {
 }
 
 export interface ImageComponentType {
-    src: string;
-    alt: string;
     resize: Size;        
     spacing: Spacing;
-    crop: Crop; // Updated to match object interface
+    imageUpload: ImageUpload;
 }
 
 export interface FlexComponentType {

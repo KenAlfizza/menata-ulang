@@ -6,30 +6,29 @@ import { resizeField } from "../fields/size.tsx";
 import { spacingField } from "../fields/spacing.tsx";
 import { defaultSize } from "../fields/size";
 import { resolvePixelStyles } from "../fields/spacing";
-import { cropField, resolveCropClipPath } from "../fields/crop.tsx";
+import { imageUploadField } from "../fields/upload-image.tsx";
+import { Image } from "lucide-react";
 
 /** Image component fields */
 export const ImageComponentFields: Fields<ImageComponentType> = {
-    src: { type: "text", label: "Image URL" },
-    alt: { type: "text", label: "Alt Text" },
+    imageUpload: imageUploadField,
     resize: resizeField,
     spacing: spacingField,
-    crop: cropField,
 };
 
 /** Image component render */
-export function ImageComponent({ src, alt, resize, spacing, crop }: ImageComponentType) {
+export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentType) {
     const currentSize = resize || defaultSize;
     const r = currentSize.borderRadius || defaultSize.borderRadius;
 
     const containerWidth = currentSize.width || "100%";
     const hasExplicitHeight = Boolean(currentSize.height);
-    
-    // Generate the CSS clip-path inset rule based on side inputs
-    const clipPathStyle = resolveCropClipPath(crop);
 
+    const src = imageUpload.url
+    const alt = imageUpload.alt
+    
     return (
-        <div className="w-full flex justify-center items-center">
+        <div className="w-full flex justify-center items-center min-w-8 min-h-8">
             <div
                 style={{
                     ...resolvePixelStyles(spacing),
@@ -43,13 +42,12 @@ export function ImageComponent({ src, alt, resize, spacing, crop }: ImageCompone
                 className="bg-slate-100/10 inline-block"
             >
                 {src && hasExplicitHeight && (
-                    <div 
-                        style={{ clipPath: clipPathStyle }} 
+                    <div  
                         className="absolute inset-0 flex items-center justify-center w-full h-full"
                     >
                         <img
                             src={src}
-                            alt={alt || "Story image"}
+                            alt={alt}
                             style={{
                                 width: "100%",
                                 height: "100%",
@@ -63,18 +61,23 @@ export function ImageComponent({ src, alt, resize, spacing, crop }: ImageCompone
                 
                 {src && !hasExplicitHeight && (
                     <div 
-                        style={{ clipPath: clipPathStyle }}
                         className="w-full flex items-center justify-center"
                     >
                         <img
                             src={src}
-                            alt={alt || "Story image"}
+                            alt={alt}
                             style={{ 
                                 width: "100%", 
                                 height: "auto", 
                                 display: "block"
                             }}
                         />
+                    </div>
+                )}
+
+                {!src && (
+                    <div className="flex items-center justify-center p-8 text-zinc-200">
+                        <Image size={64}/>
                     </div>
                 )}
             </div>
