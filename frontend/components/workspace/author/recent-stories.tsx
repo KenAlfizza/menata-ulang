@@ -4,7 +4,7 @@ import { StoryCard } from "./story-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
 import { WorkspaceStoryRecord } from "@/types/workspace.ts";
-import { fetchRecentStories } from "@/services/author.ts";
+import { fetchRecentStories } from "@/services/workspace/author.ts";
 
 export default function RecentStories() {
     const { accessToken } = useAuth();

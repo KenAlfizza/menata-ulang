@@ -1,6 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-import { authFetch } from "./auth.ts";
+import { WorkspaceStoryRecord } from "@/types/workspace.ts";
+import { authFetch } from "../auth.ts";
 
 /**
  * Fetch the recently edited stories
@@ -10,7 +11,7 @@ import { authFetch } from "./auth.ts";
  */
 export async function fetchRecentStories(
     accessToken: string
-): Promise<RecentStoryRecord[]> {
+): Promise<WorkspaceStoryRecord[]> {
     const response = await authFetch(
         `${API_BASE_URL}/author/my-stories/recent`, 
         accessToken, 
@@ -41,7 +42,7 @@ export async function fetchMyStories(
         filter?: string;
     } = {}
 ): Promise<{ 
-    stories: RecentStoryRecord[]; 
+    stories: WorkspaceStoryRecord[]; 
     totalCount: number; 
     totalPages: number; 
     page: number;
