@@ -8,12 +8,14 @@ import { SearchBar } from "../../searchbar.tsx";
 import { Button } from "../../ui/button.tsx";
 import { ResearchCard } from "./research-card.tsx";
 import { PageSelector } from "./page-selector.tsx";
+import { fetchMyResearches } from "@/services/workspace/researcher.ts";
+import { WorkspaceResearchRecord } from "@/types/workspace.ts";
 
 export default function MyResearches() {
     const { accessToken } = useAuth();
     
     // Core State
-    const [researches, setResearches] = useState([]);
+    const [researches, setResearches] = useState<WorkspaceResearchRecord[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     
@@ -30,15 +32,15 @@ export default function MyResearches() {
         
         setIsLoading(true);
         try {
-            const data = "";//await fetchMyStories(accessToken, { filter, page, limit: 10 });
+            const data = await fetchMyResearches(accessToken, { filter, page, limit: 10 });
             
             // We keep the loading state true for 300ms to ensure the fade-in 
             // effect is visible even if the API is extremely fast
             setTimeout(() => {
-                // setStories(data.stories);
-                // setTotalCount(data.totalCount);
-                // setTotalPages(data.totalPages);
-                // setIsLoading(false);
+                setResearches(data.researches);
+                setTotalCount(data.totalCount);
+                setTotalPages(data.totalPages);
+                setIsLoading(false);
             }, 300);
         } catch (err) {
             console.error("Fetch Error:", err);
@@ -76,7 +78,7 @@ export default function MyResearches() {
 
             {/* Transition Container: Stable height, changing opacity */}
             <div 
-                className="w-full transition-opacity duration-300 ease-in-out"
+                className="min-h-[360px] w-full transition-opacity duration-300 ease-in-out"
                 style={{ opacity: isLoading ? 0.4 : 1 }}
             >
                 <div className="grid grid-cols-2 gap-8 py-4">
