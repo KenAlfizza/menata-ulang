@@ -5,11 +5,11 @@
 import { ResearchCard } from "./research-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
-import type { ResearchRecord } from "@/api/researcher.ts";
+import type { WorkspaceResearchRecord } from "@/types/workspace.ts";
 
 export default function RecentResearches() {
     const { accessToken } = useAuth();
-    const [recentResearches, setRecentResearches] = useState<ResearchRecord[]>([]);
+    const [recentResearches, setRecentResearches] = useState<WorkspaceResearchRecord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 

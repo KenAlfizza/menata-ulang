@@ -1,16 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenBox, Plus } from "lucide-react";
 
 import { formatDate } from "@/components/workspace/format-date";
 
-import { ResearchRecord } from "@/api/researcher.ts";;
+import { WorkspaceResearchRecord } from "@/types/workspace.ts";
 
 interface ResearchCardProps {
-    research?: ResearchRecord;
+    research?: WorkspaceResearchRecord;
     isNewResearch?: boolean;
     isLoading?: boolean;
 }
