@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { PenBox, Plus } from "lucide-react";
 
 import { formatDate } from "@/components/workspace/format-date";
-import type { RecentStoryRecord } from "@/api/author";
+import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
 
 interface StoryCardProps {
-    story?: RecentStoryRecord;
+    story?: WorkspaceStoryRecord;
     isNewStory?: boolean;
     isLoading?: boolean;
 }

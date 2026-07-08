@@ -51,6 +51,7 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
             select: {
                 id: true,
                 title: true,
+                description: true,
                 imageUrl: true,
                 published: true,
                 updatedAt: true,
@@ -126,6 +127,7 @@ author.get("/my-stories/", authMiddleware, async (c) => {
                 select: {
                     id: true,
                     title: true,
+                    description: true,
                     imageUrl: true,
                     published: true,
                     updatedAt: true,

@@ -1,15 +1,14 @@
 "use client"
 
-import { fetchRecentStories } from "@/api/author";
-import type { RecentStoryRecord } from "@/api/author";
-
 import { StoryCard } from "./story-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
+import { WorkspaceStoryRecord } from "@/types/workspace.ts";
+import { fetchRecentStories } from "@/services/author.ts";
 
 export default function RecentStories() {
     const { accessToken } = useAuth();
-    const [recentStories, setRecentStories] = useState<RecentStoryRecord[]>([]);
+    const [recentStories, setRecentStories] = useState<WorkspaceStoryRecord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
