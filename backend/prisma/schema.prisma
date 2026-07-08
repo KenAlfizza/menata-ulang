@@ -30,6 +30,7 @@ model User {
   reflections Reflection[]
 
   storypages  StoryPage[]
+  researchpages ResearchPage[]
   
   /// Hearts given by this user across different content types.
   hearts      Heart[]
@@ -227,3 +228,17 @@ model StoryPage {
   authorId    Int
   author      User     @relation(fields: [authorId], references: [id])
 }
+
+model ResearchPage {
+  id          String   @id @default(cuid(2)) // Backend-generated CUID
+  title       String
+  description String
+  slug        String   @unique
+  puckData    Json     // Saves the flexible layout schema from Puck editor
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  researcherId    Int
+  researcher      User     @relation(fields: [researcherId], references: [id])
+}
+

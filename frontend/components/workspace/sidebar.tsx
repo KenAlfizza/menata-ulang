@@ -22,9 +22,9 @@ import { FileText, Pen, Podcast, UserCircle2 } from "lucide-react";
 
 export function WorkspaceSidebar() {
     const workspaceNavigation = [
-        { href: "/workspace/author", label: "Short Story", icon: Pen },
+        { href: "/workspace/author", label: "Story", icon: Pen },
         { href: "/workspace/host", label: "Podcast", icon: Podcast },
-        { href: "/workspace/research", label: "Research", icon: FileText },
+        { href: "/workspace/researcher", label: "Research", icon: FileText },
     ]
 
     const pathname = usePathname();
