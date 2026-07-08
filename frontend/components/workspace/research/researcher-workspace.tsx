@@ -1,0 +1,17 @@
+"use client";
+
+import RecentReseaches from "./recent-researches.tsx"
+import MyResearches from "./my-researches.tsx"
+
+export default function ResearcherWorkspace() {
+    return (
+        <main className="px-8 space-y-8 overflow-x-hidden mb-16">
+            <section className="w-full">
+                <RecentReseaches />
+            </section>
+            <section className="w-full">
+                <MyResearches />
+            </section>
+        </main>
+    )
+}

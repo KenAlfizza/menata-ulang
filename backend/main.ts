@@ -9,8 +9,8 @@ const app = new Hono();
 app.use(
     "*", // All Routes
     cors({
-    origin: "http://localhost:3000", // Allow your Next.js app
-    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin: "http://localhost:3000",
+    allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,

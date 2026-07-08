@@ -483,5 +483,4 @@ story.get("/page/:id", async (c) => {
   }
 });
 
-
 export default story;

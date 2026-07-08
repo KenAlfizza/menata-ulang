@@ -1,31 +1,32 @@
-import * as React from "react";
+import { useState, KeyboardEvent } from "react";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input.tsx"; // Assuming you use a standard Input component
 
 interface SearchBarProps {
-  placeholder?: string;
-  onSearch?: (value: string) => void;
+    placeholder?: string;
+    onSearch: (searchTerm: string) => void;
 }
 
 export function SearchBar({ placeholder = "Search...", onSearch }: SearchBarProps) {
-  const [query, setQuery] = React.useState("");
+    const [inputValue, setInputValue] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setQuery(val);
-    if (onSearch) onSearch(val);
-  };
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            onSearch(inputValue);
+        }
+    };
 
-  return (
-    <div className="relative w-full flex items-center">
-        <Search className="absolute left-4 z-10 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
-            type="text"
-            value={query}
-            onChange={handleChange}
-            placeholder={placeholder}
-            className="w-full h-10 pl-11 pr-4 rounded-full bg-white/60 backdrop-blur-sm border-transparent shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-300"
-        />
-    </div>
-  );
+    return (
+        <div className="relative flex items-center w-full max-w-sm">
+            <Search className="absolute left-3 h-4 w-4 text-slate-500" />
+            <Input
+                type="text"
+                placeholder={placeholder}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="pl-9 pr-4 py-2 border rounded-md"
+            />
+        </div>
+    );
 }
