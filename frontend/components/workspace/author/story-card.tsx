@@ -1,20 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenBox, Plus } from "lucide-react";
 
 import { formatDate } from "@/components/workspace/format-date";
+import type { RecentStoryRecord } from "@/api/author";
 
-import { WorkspaceResearchRecord } from "@/types/workspace.ts";
-
-interface ResearchCardProps {
-    research?: WorkspaceResearchRecord;
-    isNewResearch?: boolean;
+interface StoryCardProps {
+    story?: RecentStoryRecord;
+    isNewStory?: boolean;
     isLoading?: boolean;
 }
 
-export function ResearchCard({ research, isNewResearch = false, isLoading = false }: ResearchCardProps) {
+export function StoryCard({ story, isNewStory = false, isLoading = false }: StoryCardProps) {
     if (isLoading) {
         return (
             <Button 
@@ -22,19 +22,17 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
                 className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
             >
                 <div className="w-full flex flex-col h-auto gap-3">
-                    {/* Title */}
-                    <div className="w-full text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
-                        <div className="m-auto w-1/2 h-8 bg-zinc-100 rounded-sm shrink-0" />
-                    </div>
+                    {/* Image */}
+                    <div className="w-40 h-32 bg-zinc-100 rounded-md shrink-0"/>
 
-                    {/* Description */}
-                    <div className="w-full text-sm text-center tracking-tight text-zinc-600 whitespace-normal break-words">
-                        <div className="m-auto w-3/4 h-6 bg-zinc-100 rounded-sm shrink-0" />
+                    {/* Title */}
+                    <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
+                        <div className="w-40 h-8 bg-zinc-100 rounded-sm shrink-0" />
                     </div>
 
                     {/* Date */}
-                    <div className="w-full text-sm text-center tracking-tight text-zinc-400">
-                        <div className="m-auto w-1/4 h-6 bg-zinc-100 rounded-sm shrink-0" />
+                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
+                        <div className="w-20 h-6 bg-zinc-100 rounded-sm shrink-0" />
                     </div>
 
                     {/* Status */}
@@ -45,7 +43,7 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
             </Button>
         )
     }
-    if (isNewResearch) {
+    if (isNewStory) {
         return (
             <Button
                 asChild
@@ -57,11 +55,12 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
         );
     } else {
         // Exact fallback logic evaluation constants matching your original signature
-        const id = research?.id ?? "0";
-        const title = research?.title ?? "Untitled Research";
-        const description = research?.description ?? "A short description describing the main point of the research"
-        const date = research?.updatedAt ? formatDate(new Date(research.updatedAt)) : formatDate(new Date());
-        const isPublished = research?.published ?? false;
+        const id = story?.id ?? "0";
+        const title = story?.title ?? "Story title";
+        const image = (story?.imageUrl && story.imageUrl.trim() !== "") ? story.imageUrl : "/logo-icon.svg";
+        const alt = story?.title ? story.title : "Story Image";
+        const date = story?.updatedAt ? formatDate(new Date(story.updatedAt)) : formatDate(new Date());
+        const isPublished = story?.published ?? false;
 
         return (
             <Button 
@@ -69,14 +68,18 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
                 className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
             >
                 <div className="w-full flex flex-col h-auto">
+                    {/* Image */}
+                    <Image
+                        src={image}
+                        alt={alt}
+                        width={128}
+                        height={128}
+                        className="shrink-0"
+                    />
+
                     {/* Title */}
                     <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
                         {title}
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm text-center tracking-tight text-zinc-600 whitespace-normal break-words">
-                        {description}
                     </div>
 
                     {/* Date */}

@@ -1,15 +1,15 @@
 "use client"
 
-// import { fetchRecentStories } from "@/api/author";
+import { fetchRecentStories } from "@/api/author";
+import type { RecentStoryRecord } from "@/api/author";
 
-import { ResearchCard } from "./research-card.tsx";
+import { StoryCard } from "./story-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
-import type { WorkspaceResearchRecord } from "@/types/workspace.ts";
 
-export default function RecentResearches() {
+export default function RecentStories() {
     const { accessToken } = useAuth();
-    const [recentResearches, setRecentResearches] = useState<WorkspaceResearchRecord[]>([]);
+    const [recentStories, setRecentStories] = useState<RecentStoryRecord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,8 +20,8 @@ export default function RecentResearches() {
                 setIsLoading(true);
                 setError(null);
 
-                // const stories = await fetchRecentStories(accessToken);
-                // setRecentStories(stories);
+                const stories = await fetchRecentStories(accessToken);
+                setRecentStories(stories);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load recent stories")
@@ -40,14 +40,14 @@ export default function RecentResearches() {
 
     return (
         <div className="w-full">
-            <h2 className="text-black text-2xl font-semibold">Recent Research</h2>
+            <h2 className="text-black text-2xl font-semibold">Recent Story</h2>
             <div className="grid grid-cols-4 gap-8 py-4">
-                <ResearchCard isNewResearch/>
+                <StoryCard isNewStory/>
 
-                {recentResearches.map((research) => (
-                    <ResearchCard 
-                        key={research.id} 
-                        research={research} 
+                {recentStories.map((story) => (
+                    <StoryCard 
+                        key={story.id} 
+                        story={story} 
                     />
                 ))}
                 
