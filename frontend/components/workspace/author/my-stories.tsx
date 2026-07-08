@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Filter } from "lucide-react";
 import { useAuth } from "@/context/auth-context.tsx";
-import { fetchMyStories } from "@/api/author";
-import type { RecentStoryRecord } from "@/api/author";
+import { fetchMyStories } from "@/services/author";
+import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
 
 import { SearchBar } from "../../searchbar.tsx";
 import { Button } from "../../ui/button.tsx";
@@ -15,7 +15,7 @@ export default function MyStories() {
     const { accessToken } = useAuth();
     
     // Core State
-    const [stories, setStories] = useState<RecentStoryRecord[]>([]);
+    const [stories, setStories] = useState<WorkspaceStoryRecord[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     

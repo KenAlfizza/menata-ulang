@@ -3,11 +3,15 @@ import { Data } from "@puckeditor/core";
 /**
  * `StoryPage` model returned by the backend.
  */
-export interface StoryPageRecord {
-  id: string;
-  title: string;
-  slug: string;
-  puckData: Data;
-  authorId: string;
-  published: boolean;
+export interface StoryRecord {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    slug: string;
+    puckData: Data;
+    published: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    authorId: number;
 }

@@ -3,17 +3,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { authFetch } from "./auth.ts";
 
 /**
- * Recent Story model returned by backend
- */
-export interface RecentStoryRecord {
-    id: string,
-    title: string,
-    imageUrl: string,
-    published: boolean,
-    updatedAt: string,
-}
-
-/**
  * Fetch the recently edited stories
  * @param accessToken
  * @returns The three most recently edited stories by the user

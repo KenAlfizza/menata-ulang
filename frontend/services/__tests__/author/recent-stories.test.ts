@@ -1,4 +1,4 @@
-import { fetchRecentStories } from "@/api/author"; 
+import { fetchRecentStories } from "@/services/author"; 
 import { authFetch } from "@/api/auth";
 
 // 1. Jest mock syntax (Notice 'jest.mock' instead of 'vi.mock')
