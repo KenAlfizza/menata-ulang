@@ -40,7 +40,7 @@ researcher.get("/my-researches/recent", authMiddleware, async (c) => {
             where: { researcherId: user.id },
             orderBy: { updatedAt: "desc" },
             take: 3,
-            select: { id: true, title: true, published: true, updatedAt: true }
+            select: { id: true, title: true, description: true, published: true, updatedAt: true }
         });
         return c.json({ message: "Success", ok: true, researches: recentResearches }, 200);
     } catch (error) {
@@ -87,7 +87,13 @@ researcher.get("/my-researches/",
 
         try {
             const [researches, totalCount] = await prisma.$transaction([
-                prisma.researchPage.findMany({ where, orderBy: { [sort!]: order! }, skip, take: limit }),
+                prisma.researchPage.findMany({ 
+                    where, 
+                    orderBy: { [sort!]: order! }, 
+                    skip, 
+                    take: limit, 
+                    select: { id: true, title: true, description: true, published: true, updatedAt: true }
+                }),
                 prisma.researchPage.count({ where })
             ]);
             return c.json({
