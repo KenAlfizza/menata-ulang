@@ -45,6 +45,7 @@ export interface UpdateStoryData extends Partial<Pick<
  */
 export type MyStorySummary = Pick<
     StoryRecord, 
+    'id' |
     'title'|
     'description' |
     'updatedAt' |

@@ -1,5 +1,6 @@
 import { prisma, Prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
+import user from "../routes/user.ts";
 import { PaginatedResult } from "../types/common.ts";
 import { defaultPuckData } from "../types/puck.ts";
 import { AuthorServiceResult, CreateStoryData, MyStorySummary, UpdateStoryData } from "../types/services/author.ts";
@@ -316,6 +317,7 @@ export const authorService = {
             ]);
 
             const items: MyStorySummary[] = stories.map(s => ({
+                id: s.id,
                 title: s.title,
                 description: s.description,
                 updatedAt: s.updatedAt,
@@ -336,6 +338,44 @@ export const authorService = {
             };
         } catch (error) {
             console.error("Fetch Stories Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+
+    /**
+     * Retrieves the 3 most recently updated stories for the dashboard.
+     * Uses the MyStorySummary type to return only the necessary fields.
+     * @param {number} userId - The author's ID.
+     * @returns {Promise<AuthorServiceResult<MyStorySummary[]>>}
+     * @example const result = await authorService.getMyStories(1);
+     */
+    async getMyRecentStories(
+        userId: number,
+    ): Promise<AuthorServiceResult<MyStorySummary[]>> {
+        try {
+            const stories = await prisma.story.findMany({
+                where: { authorId: userId },
+                take: 3,
+                orderBy: {updatedAt: "desc"}
+            })
+
+            const items: MyStorySummary[] = stories.map(s => ({
+                id: s.id,
+                title: s.title,
+                description: s.description,
+                updatedAt: s.updatedAt,
+                imageUrl: s.imageUrl,
+                published: s.published,
+                heartsCount: s.heartsCount,
+            }));
+
+            return { 
+                success: true, 
+                data: items,
+            };
+        } catch (error) {
+            console.error("Fetch Recent Stories Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
     }

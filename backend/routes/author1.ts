@@ -137,6 +137,34 @@ author.delete("/story/:id", authMiddleware, validate("param", storyParamsSchema)
 });
 
 /**
+ * GET /my-stories/recent - Retrieve the authenticated author's stories
+ * * Middleware: `authMiddleware`, `validate` (query schema).
+ * Behaviour: Fetches a paginated, searchable, and sortable list of stories 
+ * created by the requesting user.
+ * * Query Params: 
+ * - page (number), limit (number), search (string), sort (string), order (string)
+ * * Responses:
+ * - 200: success (returns `items`, `total`, `page`, `limit`, `totalPages`)
+ * - 400: validation error (invalid query parameters)
+ * - 500: internal server error
+ */
+author.get("/my-stories/recent", authMiddleware, async (c) => {
+    const { id: userId } = c.get("user");
+    const result = await authorService.getMyRecentStories(userId)
+
+    if (!result.success) {
+        return c.json({ error: "Failed to fetch stories" }, 500);
+    }
+
+    // Return the paginated response directly
+    return c.json({ 
+        success: true, 
+        items: result.data 
+    }, 200);
+});
+
+
+/**
  * GET /my-stories - Retrieve the authenticated author's stories
  * * Middleware: `authMiddleware`, `validate` (query schema).
  * Behaviour: Fetches a paginated, searchable, and sortable list of stories 
