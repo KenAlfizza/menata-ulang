@@ -13,17 +13,20 @@ export type AuthorServiceResult<StoryRecord> =
 | { success: false; 
     error: 
         'SLUG_TAKEN' | 
+        'NOT_FOUND' |
+        'UNAUTHORIZED' |
         'INTERNAL_ERROR'
   }
 
 // Create story datatype
-export type CreateStoryData = Pick<
+export interface CreateStoryData extends Pick<
     StoryRecord, 
     'slug'|
     'title'|
-    'description'|
-    'image'
->
+    'description'
+> {
+    image?: File,
+};
 
 // Update story datatype
 export interface UpdateStoryData extends Partial<Pick<
@@ -31,8 +34,8 @@ export interface UpdateStoryData extends Partial<Pick<
     'slug'|
     'title'|
     'description'|
-    'image'|
     'published'
 >> {
+    image?: File,
     puckData?: PuckData,
 };

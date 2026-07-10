@@ -11,7 +11,6 @@ export type StoryRecord = {
     createdAt: Date,
     updatedAt: Date | null,
     authorId: number,
-    image: File | undefined,
     imageUrl: string,
     published: boolean,
     publishedAt: Date | null,

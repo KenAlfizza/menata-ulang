@@ -41,7 +41,7 @@ export class StorageDisk implements StorageProvider {
     const bytes = new Uint8Array(await file.arrayBuffer());
     await Deno.writeFile(filePath, bytes);
 
-    return filePath;
+    return join(subDir, fileName).replace(/\\/g, '/');;
   }
 
   /**

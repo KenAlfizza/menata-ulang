@@ -1,21 +1,32 @@
-import { success } from "zod";
 import { prisma, Prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
 import { defaultPuckData } from "../types/puck.ts";
 import { AuthorServiceResult, CreateStoryData, UpdateStoryData } from "../types/services/author.ts";
 import { StoryRecord } from "../types/story.ts";
-import { error } from "node:console";
-
 
 export const authorService = {
-    /**
-     * Creates a new story, its associated thread, and the initial story page.
-     * Throws an error immediately if the slug already exists in the database.
+   /**
+     * Creates a new story, its associated thread, and an initial story page within a single database transaction.
+     * @description
+     * 1. Validates slug uniqueness before proceeding.
+     * 2. Processes and saves the story image to storage.
+     * 3. Executes a Prisma transaction to ensure atomicity:
+     * - Creates a new thread.
+     * - Creates the story record.
+     * - Creates the initial story page.
      * 
      * @param {number} userId - The ID of the author creating the story.
-     * @param {CreateStoryData} createStoryData - The story data containing title, description, slug, image (optional), puckData.
-     * @returns {Promise<{story: any, page: any}>} The created story and story page records.
-     * @throws {Error} If the slug is already taken or the database transaction fails.
+     * @param {CreateStoryData} createStoryData - Object containing story details (slug, title, description, image, etc).
+     * @returns {Promise<AuthorServiceResult<StoryRecord>>} A promise that resolves to:
+     * - `success: true` with the created `StoryRecord` if the operation completes.
+     * - `success: false` with `SLUG_TAKEN` if the slug already exists.
+     * - `success: false` with `INTERNAL_ERROR` if the transaction fails or an unexpected error occurs.
+     * 
+     * @example
+     * const result = await authorService.createStory(userId, data);
+     * if (!result.success) {
+     *    if (result.error === 'SLUG_TAKEN') // handle conflict...
+     * }
      */
     async createStory(
         userId: number, 
@@ -67,7 +78,6 @@ export const authorService = {
                     createdAt: story.createdAt,
                     updatedAt: story.updatedAt,
                     authorId: story.authorId,
-                    image: image,
                     imageUrl: story.imageUrl,
                     published: story.published,
                     publishedAt: story.publishedAt,
@@ -91,96 +101,134 @@ export const authorService = {
     },
 
     /**
-     * Updates an existing story and its associated page content.
-     * Handles dynamic transaction scoping and file replacements without runtime redundancy.
+     * Retrieves a story record by its unique ID for a specific author.
+     * Performs an ownership check to ensure the story belongs to the requesting user.
+     * Normalizes the image path for web-accessible URLs.
      * 
-     * @param {string} storyId - The CUID unique identifier of the story to update.
-     * @param {UpdateStoryData} updateStoryData - The payload containing partial fields.
-     * @param {Object} existingState - Metadata markers extracted during authentication.
-     * @param {string} existingState.imageUrl - The active image target asset string path.
-     * @param {string} [existingState.pageId] - The unique page CUID, if parsed.
-     * @returns {Promise<{success: boolean}>} Complete event resolution callback.
-     * @throws {Error} Unique constraint updates or transaction lockouts.
+     * @param {string} storyId - The unique identifier of the story to retrieve.
+     * @param {number} userId - The ID of the author requesting the story.
+     * @returns {Promise<AuthorServiceResult<StoryRecord>>} - A promise resolving to a success object 
+     * containing the story data, or a failure object with the specific error type.
+     * 
+     * * @example
+     * const result = await authorService.getStoryById("abc-123", 1);
+     * if (result.success) {
+     *      console.log(result.data.title);
+     * }
+     */
+    async getStoryById(storyId: string, userId: number): Promise<AuthorServiceResult<StoryRecord>> {
+        try {
+            const story = await prisma.story.findUnique({
+                where: { id: storyId },
+                include: { page: true }
+            });
+
+            if (!story) return { success: false, error: 'NOT_FOUND' };
+            
+            // Authorization check: Ensure only the author can fetch this story
+            if (story.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            // Map to StoryRecord (ensure imageUrl is normalized for URLs)
+            const storyRecord: StoryRecord = {
+                ...story,
+                imageUrl: story.imageUrl.replace(/\\/g, '/'),
+                page: {
+                    id: story.page[0].id,
+                    puckData: story.page[0].puckData as Prisma.InputJsonArray
+                }
+            };
+
+            return { success: true, data: storyRecord };
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
+     * Updates an existing story and its associated data based on the provided partial update object.
+     * Performs an ownership check to ensure the story belongs to the requesting author before 
+     * proceeding with any modifications. Automatically handles file storage if a new image 
+     * is provided and normalizes the image path for web accessibility. Check if slug is already used
+     * 
+     * @param {string} storyId - The unique identifier of the story to update.
+     * @param {number} userId - The ID of the author requesting the update.
+     * @param {UpdateStoryData} data - The partial data object containing fields to be updated.
+     * 
+     * @returns {Promise<AuthorServiceResult<StoryRecord>>} A promise that resolves to:
+     * - `success: true` with the updated `StoryRecord` if the operation completes.
+     * - `success: false` with `NOT_FOUND` if the story does not exist.
+     * - `success: false` with `UNAUTHORIZED` if the user does not own the story.
+     * - `success: false` with `INTERNAL_ERROR` if the database operation fails.
+     * - `success: false` with `SLUG_USED` if the slug is already taken.
+     * 
+     * @example
+     * const updateData = { title: "New Title", published: true };
+     * const result = await authorService.updateStory("abc-123", 1, updateData);
+     * if (result.success) {
+     *      console.log("Story updated:", result.data.id);
+     * }
      */
     async updateStory(
         storyId: string,
-        updateStoryData: UpdateStoryData,
-        existingState: { imageUrl: string; pageId?: string } 
-    ) {
-        const { slug, title, description, image, published, puckData } = updateStoryData;
+        userId: number,
+        data: UpdateStoryData
+    ): Promise<AuthorServiceResult<StoryRecord>> {
+        try {
+            // 1. Verify ownership and existence
+            const existing = await prisma.story.findUnique({ 
+                where: { id: storyId },
+                include: { page: true }
+            });
+            if (!existing) return { success: false, error: 'NOT_FOUND' };
+            if (existing.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
 
-        // 1. Defend against Unique Constraint errors before opening transaction loops
-        if (slug !== undefined) {
-            const slugConflict = await prisma.story.findFirst({
-                where: {
-                    slug: slug,
-                    NOT: { id: storyId } // Ensure we don't trip over our own active record
+            // Check for slug existence outside the transaction to prevent database locks
+            if (data.slug) {
+                const existingSlug = await prisma.story.findUnique({
+                    where: { slug: data.slug },
+                    select: { id: true }
+                });
+                if (existingSlug) return { success: false, error: 'SLUG_TAKEN'};
+            }
+
+            // 2. Handle image update (if provided)
+            let imageUrl = existing.imageUrl;
+            if (data.image) {
+                imageUrl = await storage.save(data.image, "stories");
+                imageUrl = imageUrl.replace(/\\/g, '/');
+            }
+
+            // 3. Update in database
+            const updated = await prisma.story.update({
+                where: { id: storyId },
+                data: {
+                    title: data.title ?? existing.title,
+                    description: data.description ?? existing.description,
+                    slug: data.slug ?? existing.slug,
+                    published: data.published ?? existing.published,
+                    imageUrl: imageUrl,
+                    // Update page puckData if provided
+                    page: data.puckData ? {
+                        update: { where: { id: existing.page[0].id }, data: { puckData: data.puckData } }
+                    } : undefined
                 },
-                select: { id: true }
+                include: { page: true }
             });
 
-            if (slugConflict) {
-                throw new Error(`The slug "${slug}" is already taken by another story.`);
-            }
+            // 4. Map back to StoryRecord
+            const storyRecord: StoryRecord = {
+                ...updated,
+                page: {
+                    id: updated.page[0].id,
+                    puckData: updated.page[0].puckData as Prisma.InputJsonArray
+                }
+            };
+
+            return { success: true, data: storyRecord };
+        } catch (error) {
+            console.error("Update Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
         }
-
-        // 2. Evaluate storage alterations cleanly outside the database runtime context
-        let newImageUrl = existingState.imageUrl;
-        let fileUploaded = false;
-
-        if (image instanceof File) {
-            newImageUrl = await storage.save(image, "stories");
-            fileUploaded = true;
-        }
-
-        // 3. Assemble dynamic batch actions array to strip redundancy
-        const operations = [];
-
-        const hasStoryChanges = 
-            title !== undefined || 
-            description !== undefined || 
-            slug !== undefined || 
-            published !== undefined || 
-            fileUploaded;
-
-        if (hasStoryChanges) {
-            operations.push(
-                prisma.story.update({
-                    where: { id: storyId },
-                    data: {
-                        title: title ?? undefined,
-                        description: description ?? undefined,
-                        slug: slug ?? undefined,
-                        imageUrl: newImageUrl,
-                        published: published ?? undefined,
-                        publishedAt: published === true ? new Date() : undefined // Auto-stamps updates
-                    }
-                })
-            );
-        }
-
-        // 4. Update the layout table only if requested and structural targets exist
-        if (puckData !== undefined && existingState.pageId) {
-            operations.push(
-                prisma.storyPage.update({
-                    where: { id: existingState.pageId }, 
-                    data: { 
-                        puckData: puckData as unknown as Prisma.InputJsonValue, 
-                    }
-                })
-            );
-        }
-
-        // 5. Fire sequential queries concurrently under atomic transaction coverage
-        if (operations.length > 0) {
-            await prisma.$transaction(operations);
-        }
-
-        // 6. Clean up abandoned cloud image assets asynchronously if replaced
-        if (fileUploaded && existingState.imageUrl) {
-            await storage.delete(existingState.imageUrl).catch(console.error);
-        }
-
-        return { success: true };
-    },
+    }
 };

@@ -1,17 +1,13 @@
-// --- File: author.ts ---
 import { Hono } from "hono";
 import type { AppVariables } from "../types.ts";
 
 // Library imports
-import { prisma } from "../lib/prisma.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 
 import { validate } from "../lib/validators/index.ts";
 import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema } from "../lib/validators/author.ts";
 import { authorService } from "../services/authorService.ts";
-import { CreateStoryData, UpdateStoryData } from "../types/story.ts";
-import { defaultPuckData } from "../types/puck.ts";
-import story from "./story.ts";
+import { CreateStoryData, UpdateStoryData } from "../types/services/author.ts";
 
 const author = new Hono<{ Variables: AppVariables }>();
 
@@ -43,10 +39,8 @@ author.post("/story", authMiddleware, validate("form", storyCreateSchema), async
         slug: formData.slug,
         title: formData.title,
         description: formData.description,
-        image: formData.image || undefined,
-        puckData: defaultPuckData(formData.title),
+        image: formData.image,
     };
-
 
     const result = await authorService.createStory(userId, createStoryData);
     if (!result.success) {
@@ -58,89 +52,65 @@ author.post("/story", authMiddleware, validate("form", storyCreateSchema), async
     return c.json({ message: "Story created successfully", ok: true, story: result.data}, 201);
 });
 
-
 /**
- * PATCH /story/:id - Save workspace updates to a story and its layout
- * Supports multipart/form-data for file uploads
+ * GET /story/:id
+ * Retrieves a single story record by its unique identifier.
+ * Description: Fetches the story and its associated page data. Validates that the requesting user owns the story before returning it.
+ * Authentication: Required (authMiddleware).
  * 
- * Middleware: `authMiddleware`, `validate("param", storyParamsSchema)`, `validate("form", storyPatchSchema)`.
- * Behaviour: Updates an existing story entry. Supports conditional layout adjustments and replacing cover images. Verifies ownership.
- * 
- * Path Parameters:
- * - id (string, required) - The CUID storyId
+ * Parameters:
+ * - id (string): The UUID of the story to retrieve.
  * 
  * Responses:
- * - 200: success
- * - 400: bad request (e.g., duplicate slug)
- * - 401: unauthorized
- * - 403: forbidden
- * - 404: not found
+ * - 200 OK: Returns the requested story object.
+ * - 403 Forbidden: Returned if the authenticated user is not the owner of the story.
+ * - 404 Not Found: The requested story does not exist.
+ * - 500 Internal Server Error: Unexpected database or system error.
+ */
+author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.valid("param").id;
+
+    const result = await authorService.getStoryById(storyId, userId);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, story: result.data }, 200);
+});
+
+/**
+ * PATCH /story/:id - Update story details
+ * * Middleware: `authMiddleware`, `validate("form", storyPatchSchema)`.
+ * Behaviour: Performs a partial update on the story and its page content.
+ * * Responses:
+ * - 200: success (returns updated story)
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
  * - 500: internal server error
  */
-author.patch("/story/:id", 
-    authMiddleware, 
-    validate("param", storyParamsSchema), 
-    validate("form", storyPatchSchema),
-    async (c) => 
-{
-    // 1. Authenticate user roles at the gateway perimeter
-    const { id: userId, role } = c.get("user");
-    if (role !== "AUTHOR" && role !== "SUPERUSER") return c.json({ error: "Forbidden" }, 403);
-
-    // 2. Extract CUID parameter safely as a string
-    const storyId = c.req.valid("param").id;
+author.patch("/story/:id", authMiddleware, validate("form", storyPatchSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.param("id");
     
-    const formData = c.req.valid("form");
-    const updateStoryData: UpdateStoryData = {
-        slug: formData.slug,
-        title: formData.title,
-        description: formData.description,
-        image: formData.image,
-        published: formData.published,
-        puckData: formData.puckData,
-    };
+    // Zod guarantees this data is valid based on your schema
+    const updateData = c.req.valid("form") as UpdateStoryData;
 
-    try {
-        // OPTIMIZATION: Only request a relation join if puckData exists in the payload
-        const needsPageContext = updateStoryData.puckData !== undefined;
+    const result = await authorService.updateStory(storyId, userId, updateData);
 
-        const existingStory = await prisma.story.findUnique({ 
-            where: { id: storyId },
-            include: { 
-                page: needsPageContext ? { select: { id: true } } : false 
-            }
-        });
-
-        // 3. Prevent structural timing leaks by throwing early
-        if (!existingStory) {
-            return c.json({ error: "Story not found" }, 404);
-        }
-
-        // 4. Enforce security sandbox constraints (SUPERUSERS bypass ownership)
-        if (existingStory.authorId !== userId && role !== "SUPERUSER") {
-            return c.json({ error: "Forbidden" }, 403);
-        }
-
-        // 5. Package pre-fetched details securely down to the execution worker
-        const updatedPage = await authorService.updateStory(
-            storyId, 
-            updateStoryData, 
-            { 
-                imageUrl: existingStory.imageUrl,
-                pageId: existingStory.page?.[0]?.id // Maps safely to schema array structure
-            }
-        );
-        
-        return c.json({ message: "Story saved successfully", ok: true, page: updatedPage }, 200);
-    } catch (error) {
-        // Catch duplicate slug validation failures thrown by the transaction
-        if (error instanceof Error && error.message.includes("already taken")) {
-            return c.json({ error: error.message }, 400);
-        }
-        console.error("Story Save Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        if (result.error === 'SLUG_TAKEN') return c.json({ error: "Slug is already taken" }, 409);
+        return c.json({ error: "Internal Server Error" }, 500);
     }
+
+    return c.json({ success: true, story: result.data }, 200);
 });
+
 
 
 /**
