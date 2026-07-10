@@ -26,3 +26,16 @@ export type StoryPageRecord = {
     id: string,
     puckData: PuckData,
 }
+
+/**
+ * Defines the criteria for filtering and paginating stories.
+ * All fields are optional to allow for flexible, partial filtering.
+ */
+export interface StoryFilter {
+    published?: boolean;
+    search?: string;
+    limit: number;
+    page: number;
+    sort?: "title" | "updatedAt";
+    order?: "asc" | "desc";
+}

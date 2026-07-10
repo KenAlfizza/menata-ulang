@@ -1,6 +1,5 @@
 import { StoryRecord } from "../story.ts";
 import { PuckData } from "../puck.ts";
-import { StatusCode } from 'hono/utils/http-status';
 
 /** 
  * Author Services data type
@@ -39,3 +38,17 @@ export interface UpdateStoryData extends Partial<Pick<
     image?: File,
     puckData?: PuckData,
 };
+
+/**
+ * MyStorySummary: My story items
+ * Use this for the "My Stories" list/search endpoints.
+ */
+export type MyStorySummary = Pick<
+    StoryRecord, 
+    'title'|
+    'description' |
+    'updatedAt' |
+    'imageUrl' |
+    'published' |
+    'heartsCount'
+>;

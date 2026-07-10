@@ -136,75 +136,35 @@ author.delete("/story/:id", authMiddleware, validate("param", storyParamsSchema)
     return c.json({ success: true, message: "Story deleted successfully" }, 200);
 });
 
-
 /**
- * GET /my-stories/recent - Fetch recent stories for author workspace
- * 
- * Middleware: `authMiddleware`.
- * Behaviour: Returns the most recently created stories associated with the authenticated user's workspace.
- * 
- * Query Parameters (Validated):
- * - None
- * 
- * Responses:
- * - 200: success
- * - 401: unauthorized
- * - 403: forbidden
+ * GET /my-stories - Retrieve the authenticated author's stories
+ * * Middleware: `authMiddleware`, `validate` (query schema).
+ * Behaviour: Fetches a paginated, searchable, and sortable list of stories 
+ * created by the requesting user.
+ * * Query Params: 
+ * - page (number), limit (number), search (string), sort (string), order (string)
+ * * Responses:
+ * - 200: success (returns `items`, `total`, `page`, `limit`, `totalPages`)
+ * - 400: validation error (invalid query parameters)
  * - 500: internal server error
  */
-author.get("/my-stories/recent", authMiddleware, async (c) => {
-    const user = c.get("user");
-    if (!user || (user.role !== "AUTHOR" && user.role !== "SUPERUSER")) {
-        return c.json({ error: "Forbidden" }, 403);
+author.get("/my-stories", authMiddleware, validate("json", storyListQuerySchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const { page, limit, search, sort, order } = c.req.valid("json");
+    const result = await authorService.getMyStories(userId, {
+        search,
+        limit: limit ?? 10,
+        page: page ?? 1,
+        sort,
+        order
+    });
+
+    if (!result.success) {
+        return c.json({ error: "Failed to fetch stories" }, 500);
     }
 
-    try {
-        const stories = await authorService.getRecentStories(user.id);
-        return c.json({ ok: true, stories }, 200);
-    } catch (e) {
-        return c.json({ error: "Internal server error" }, 500);
-    }
-});
-
-/**
- * GET /my-stories/ - Fetch all stories into author workspace
- * 
- * Middleware: `authMiddleware`, `validate("query", storyListQuerySchema)`.
- * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
- * Supports filtering by title, custom limit per page, and sorting by title or update date.
- * 
- * Query Parameters (Validated):
- * - filter (string, optional)
- * - sort ("title" | "updatedAt", default: "updatedAt")
- * - order ("asc" | "desc", default: "desc")
- * - page (number, default: 1)
- * - limit (number, default: 10, max: 50)
- * 
- * Responses:
- * - 200: success
- * - 401: unauthorized
- * - 403: forbidden
- * - 500: internal server error
- */
-author.get("/my-stories/", authMiddleware, validate("query", storyListQuerySchema), async (c) => {
-    const user = c.get("user");
-    if (!user || (user.role !== "AUTHOR" && user.role !== "SUPERUSER")) {
-        return c.json({ error: "Forbidden" }, 403);
-    }
-
-    try {
-        const { stories, totalCount } = await authorService.getStories(user.id, c.req.valid("query"));
-        const limit = c.req.valid("query").limit!;
-        
-        return c.json({
-            ok: true,
-            stories,
-            totalCount,
-            totalPages: Math.ceil(totalCount / limit)
-        }, 200);
-    } catch (e) {
-        return c.json({ error: "Internal server error" }, 500);
-    }
+    // Return the paginated response directly
+    return c.json({ success: true, ...result.data }, 200);
 });
 
 export default author;

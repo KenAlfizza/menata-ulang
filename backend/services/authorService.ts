@@ -1,8 +1,9 @@
 import { prisma, Prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
+import { PaginatedResult } from "../types/common.ts";
 import { defaultPuckData } from "../types/puck.ts";
-import { AuthorServiceResult, CreateStoryData, UpdateStoryData } from "../types/services/author.ts";
-import { StoryRecord } from "../types/story.ts";
+import { AuthorServiceResult, CreateStoryData, MyStorySummary, UpdateStoryData } from "../types/services/author.ts";
+import { StoryRecord, StoryFilter } from "../types/story.ts";
 
 export const authorService = {
    /**
@@ -274,6 +275,67 @@ export const authorService = {
             return { success: true, data: true };
         } catch (error) {
             console.error("Delete Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
+     * Retrieves a paginated list of stories authored by a specific user.
+     * 
+     * @param {number} userId - The ID of the author.
+     * @param {StoryFilter} filter - Pagination, search, and sorting criteria.
+     * @returns {Promise<AuthorServiceResult<PaginatedResult<StoryRecord>>>} 
+     * A result object containing the paginated data or an error state.
+     * 
+     * @example
+     * const result = await authorService.getMyStories(1, { page: 1, limit: 10, sort: 'updatedAt' });
+     * if (result.success) console.log(result.data.items);
+     */
+    async getMyStories(
+        userId: number,
+        filter: StoryFilter
+    ): Promise<AuthorServiceResult<PaginatedResult<MyStorySummary>>> {
+        try {
+            const { search, limit, page, sort = 'updatedAt', order = 'desc' } = filter;
+            const skip = (page - 1) * limit;
+
+            const where = {
+                authorId: userId,
+                ...(search && { title: { contains: search, mode: 'insensitive' as const } })
+            };
+
+            const [stories, total] = await prisma.$transaction([
+                prisma.story.findMany({
+                    where,
+                    include: { page: true },
+                    take: limit,
+                    skip,
+                    orderBy: { [sort]: order }
+                }),
+                prisma.story.count({ where })
+            ]);
+
+            const items: MyStorySummary[] = stories.map(s => ({
+                title: s.title,
+                description: s.description,
+                updatedAt: s.updatedAt,
+                imageUrl: s.imageUrl,
+                published: s.published,
+                heartsCount: s.heartsCount,
+            }));
+
+            return { 
+                success: true, 
+                data: { 
+                    items, 
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                } 
+            };
+        } catch (error) {
+            console.error("Fetch Stories Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
     }

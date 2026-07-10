@@ -82,7 +82,7 @@ export const storyPatchSchema = z.object({
  * Validates pagination and filtering for /my-stories/
  */
 export const storyListQuerySchema = z.object({
-    filter: z.string().max(100).optional(),
+    search: z.string().max(100).optional(),
     sort: z.enum(["title", "updatedAt"]).default("updatedAt").optional(),
     order: z.enum(["asc", "desc"]).default("desc").optional(),
     page: z.coerce.number().int().min(1).default(1).optional(),
