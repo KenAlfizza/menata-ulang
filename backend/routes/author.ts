@@ -5,9 +5,8 @@ import type { AppVariables } from "../types.ts";
 import { prisma } from "../lib/prisma.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 
-const isProduction = Deno.env.get("DENO_ENV") === "production" ||
-    Deno.env.get("DENO_REGION") !== undefined;
-
+import { validate } from "../lib/validators/index.ts";
+import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema } from "../lib/validators/author.ts";
 
 const author = new Hono<{ Variables: AppVariables }>();
 
@@ -40,8 +39,6 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
         // Fetch the three most recent stories for this specific author
         const recentStories = await prisma.storyPage.findMany({
             where: {
-                // Ensure authors only fetch their own stories; superusers might see all or their own depending on requirement
-                // Using 'id' link dynamically based on the current logged-in session profile context
                 authorId: id,
             },
             orderBy: {
@@ -72,22 +69,25 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
 
 /**
  * GET /my-stories/ - Fetch all stories into author workspace
- * * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
+ * 
+ * Middleware: `authMiddleware`, `validate("query", storyListQuerySchema)`.
+ * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
  * Supports filtering by title, custom limit per page, and sorting by title or update date.
- * Also returns total record count for pagination UI.
- * * Query Parameters:
- * - filter (string): Search string for filtering story titles (case-insensitive)
- * - sort (string): Field to sort by ("title" | "updatedAt") - Default: "updatedAt"
- * - order (string): Sort order ("asc" | "desc") - Default: "desc"
- * - page (number): Page number for pagination - Default: 1
- * - limit (number): Number of records per page - Default: 10
- * * Responses:
+ * 
+ * Query Parameters (Validated):
+ * - filter (string, optional)
+ * - sort ("title" | "updatedAt", default: "updatedAt")
+ * - order ("asc" | "desc", default: "desc")
+ * - page (number, default: 1)
+ * - limit (number, default: 10, max: 50)
+ * 
+ * Responses:
  * - 200: success
  * - 401: unauthorized
  * - 403: forbidden
  * - 500: internal server error
  */
-author.get("/my-stories/", authMiddleware, async (c) => {
+author.get("/my-stories/", authMiddleware, validate("query", storyListQuerySchema), async (c) => {
     const user = c.get("user");
     if (!user) return c.json({ error: "Unauthorized" }, 401);
 
@@ -96,18 +96,10 @@ author.get("/my-stories/", authMiddleware, async (c) => {
         return c.json({ error: "Forbidden: Authors only" }, 403);
     }
 
-    // Parse query parameters
-    const query = c.req.query();
-    const filter = query.filter || "";
-    const sortBy = query.sort === "title" ? "title" : "updatedAt";
-    const sortOrder = query.order === "asc" ? "asc" : "desc";
+    // Validate and get query parameters
+    const { filter, sort, order, page, limit } = c.req.valid("query");
 
-    // Pagination logic
-    const page = parseInt(query.page) || 1;
-    const limit = Math.min(parseInt(query.limit) || 10, 50); // Cap at 50 to prevent abuse
-    const skip = (page - 1) * limit;
-
-    // Reusable where clause for consistent filtering
+    const skip = (page! - 1) * limit!;
     const where = {
         authorId: id,
         title: {
@@ -121,7 +113,7 @@ author.get("/my-stories/", authMiddleware, async (c) => {
         const [stories, totalCount] = await prisma.$transaction([
             prisma.storyPage.findMany({
                 where,
-                orderBy: { [sortBy]: sortOrder },
+                orderBy: { [sort!]: order! },
                 skip: skip,
                 take: limit,
                 select: {
@@ -142,7 +134,7 @@ author.get("/my-stories/", authMiddleware, async (c) => {
             page,
             limit,
             totalCount,
-            totalPages: Math.ceil(totalCount / limit),
+            totalPages: Math.ceil(totalCount / limit!),
             stories: stories
         }, 200);
 
@@ -153,13 +145,12 @@ author.get("/my-stories/", authMiddleware, async (c) => {
 });
 
 /**
- * POST / - Create a new story page entry
+ * POST /story - Create a new story page entry
  *
- * Middleware: `authMiddleware`
+ * Middleware: `authMiddleware`, `validate("json", storyCreateSchema)`.
  * Authorization: users with role `AUTHOR` or `SUPERUSER` may create pages.
  *
- * Accepted JSON fields: 
- * `title`, `slug`.
+ * Accepted JSON fields: `title`, `slug`, `description`.
  * Behavior: sets up a default empty layout template structure for Puck. 
  * Prisma automatically handles generating the unique CUID2 string id.
  *
@@ -169,8 +160,7 @@ author.get("/my-stories/", authMiddleware, async (c) => {
  * - 403: forbidden (insufficient role)
  * - 500: internal server error
  */
-
-author.post("/story", authMiddleware, async (c) => {
+author.post("/story", authMiddleware, validate("json", storyCreateSchema), async (c) => {
     try {
         // Validate the role of current user (allow AUTHORS and SUPERUSER)
         const { id: userId, role } = c.get("user");
@@ -178,12 +168,9 @@ author.post("/story", authMiddleware, async (c) => {
             return c.json({ error: "Forbidden: Elevated access required" }, 403);
         }
 
-        // Get the page parameters
-        const { title, description, slug } = await c.req.json();
-        if (!title || description || !slug) {
-            return c.json({ error: "Missing required title, description or slug fields" }, 400);
-        }
-
+        // Get the page parameters from validated JSON
+        const { title, description, slug } = c.req.valid("json");
+        
         // Define standard baseline parameters for Puck content schemas
         const defaultPuckSchema = {
             content: [],
@@ -194,6 +181,7 @@ author.post("/story", authMiddleware, async (c) => {
         const newPage = await prisma.storyPage.create({
             data: {
                 title,
+                description,
                 slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, ""), // Sanitize url strings
                 puckData: defaultPuckSchema,
                 authorId: userId,
@@ -207,17 +195,21 @@ author.post("/story", authMiddleware, async (c) => {
     }
 });
 
+
 /**
- * PATCH /:id - Save workspace updates to a page layout
+ * PATCH /story/:id - Save workspace updates to a page layout
  *
- * Validates the `id` path parameter. Requires authentication.
- *
+ * Middleware: `authMiddleware`, `validate("param", storyParamsSchema)`,
+ * `validate("json", storyPatchSchema)`.
  * Authorization: the page author or users with role `SUPERUSER` may
  * perform updates.
  *
  * Accepted JSON fields (all optional):
  * - `data` — the Puck canvas structure schema object to update when present
  * - `published` — boolean visibility toggle state to update when present
+ * - `title` — string (1-100 chars)
+ * - `description` — string (1-500 chars)
+ * - `imageUrl` — string (optional)
  *
  * Responses:
  * - 200: page layout saved successfully
@@ -225,16 +217,16 @@ author.post("/story", authMiddleware, async (c) => {
  * - 404: page not found
  * - 500: internal server error
  */
-author.patch("/story/:id", authMiddleware, async (c) => {
+author.patch("/story/:id", authMiddleware, validate("param", storyParamsSchema), validate("json", storyPatchSchema), async (c) => {
     try {
         // Get the current user details
         const { id: userId, role } = c.get("user");
 
-        // Get the target page id parameter
-        const pageId = c.req.param("id");
+        // Get the target page id parameter from validated params
+        const pageId = c.req.valid("param").id;
 
-        // Get the data payload adjustments
-        const { data, published } = await c.req.json();
+        // Get the data payload adjustments from validated JSON
+        const updateData = c.req.valid("json");
 
         // Fetch page details from database to check ownership permissions
         const existingPage = await prisma.storyPage.findUnique({ where: { id: pageId } });
@@ -250,8 +242,11 @@ author.patch("/story/:id", authMiddleware, async (c) => {
         const updatedPage = await prisma.storyPage.update({
             where: { id: pageId },
             data: {
-                ...(data && { puckData: data }),
-                ...(typeof published === "boolean" && { published }),
+                ...(updateData.data && { puckData: updateData.data }),
+                ...(updateData.published !== undefined && { published: updateData.published }),
+                ...(updateData.title && { title: updateData.title }),
+                ...(updateData.description && { description: updateData.description }),
+                ...(updateData.imageUrl && { imageUrl: updateData.imageUrl }), // Added: Map imageUrl to Prisma update
             },
         });
 
@@ -263,8 +258,9 @@ author.patch("/story/:id", authMiddleware, async (c) => {
 });
 
 /**
- * GET /:id - Fetch page details to load into the workspace editor
+ * GET /story/:id - Fetch page details to load into the workspace editor
  *
+ * Middleware: `authMiddleware`, `validate("param", storyParamsSchema)`.
  * Behavior: returns the full page details matching the provided ID payload.
  *
  * Responses:
@@ -272,9 +268,9 @@ author.patch("/story/:id", authMiddleware, async (c) => {
  * - 404: page not found
  * - 500: internal server error
  */
-author.get("/story/:id", async (c) => {
+author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
     try {
-        const pageId = c.req.param("id");
+        const pageId = c.req.valid("param").id;
         const page = await prisma.storyPage.findUnique({ where: { id: pageId } });
 
         if (!page) {
@@ -287,6 +283,5 @@ author.get("/story/:id", async (c) => {
         return c.json({ error: "Internal server error" }, 500);
     }
 });
-
 
 export default author;
