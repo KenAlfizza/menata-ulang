@@ -10,7 +10,8 @@ import { validate } from "../lib/validators/index.ts";
 import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema } from "../lib/validators/author.ts";
 import { authorService } from "../services/authorService.ts";
 import { CreateStoryData, UpdateStoryData } from "../types/story.ts";
-import { defaultPuckData } from "../types/storyPage.ts";
+import { defaultPuckData } from "../types/puck.ts";
+import story from "./story.ts";
 
 const author = new Hono<{ Variables: AppVariables }>();
 
@@ -46,18 +47,15 @@ author.post("/story", authMiddleware, validate("form", storyCreateSchema), async
         puckData: defaultPuckData(formData.title),
     };
 
-    try {
-        const newPage = await authorService.createStory(userId, createStoryData);
-        return c.json({ message: "Page created successfully", ok: true, page: newPage }, 201);
-    } catch (error) {
-        // Intercept the custom slug error and return a descriptive 400 response
-        if (error instanceof Error && error.message.includes("already taken")) {
-            return c.json({ error: error.message }, 400);
-        }
 
-        console.error("Page Creation Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
+    const result = await authorService.createStory(userId, createStoryData);
+    if (!result.success) {
+        if (result.error == 'SLUG_TAKEN') {
+            return c.json({error: "The provided slug is already taken"}, 409)
+        }
+        return c.json({ error: "Internal Server Error"}, 500)
     }
+    return c.json({ message: "Story created successfully", ok: true, story: result.data}, 201);
 });
 
 

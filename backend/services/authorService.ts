@@ -1,6 +1,11 @@
+import { success } from "zod";
 import { prisma, Prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
-import { CreateStoryData, UpdateStoryData } from "../types/story.ts";
+import { defaultPuckData } from "../types/puck.ts";
+import { AuthorServiceResult, CreateStoryData, UpdateStoryData } from "../types/services/author.ts";
+import { StoryRecord } from "../types/story.ts";
+import { error } from "node:console";
+
 
 export const authorService = {
     /**
@@ -15,47 +20,74 @@ export const authorService = {
     async createStory(
         userId: number, 
         createStoryData: CreateStoryData,
-    ) {
-        const { slug, title, description, image, puckData } = createStoryData;
+    ) : Promise<AuthorServiceResult<StoryRecord>> 
+    {
+        const { slug, title, description, image } = createStoryData;
 
-        // Check for slug existence outside the transaction to prevent database locks
-        const existingStory = await prisma.story.findUnique({
-            where: { slug },
-            select: { id: true }
-        });
+        try {
+            // Check for slug existence outside the transaction to prevent database locks
+            const existingStory = await prisma.story.findUnique({
+                where: { slug },
+                select: { id: true }
+            });
 
-        if (existingStory) {
-            throw new Error(`The slug ${slug} is already taken.`);
+            if (existingStory) return { success: false, error: 'SLUG_TAKEN'};
+
+            // Process image asset storage safely if slug is clear
+            let imageUrl: string | undefined;
+            if (image) imageUrl = await storage.save(image, "stories");
+            
+            // Open transaction and write records
+            return await prisma.$transaction(async (tx) => {
+                const thread = await tx.thread.create({ data: {} });
+
+                const story = await tx.story.create({
+                    data: {
+                        title: title,
+                        description: description,
+                        slug: slug,
+                        authorId: userId,
+                        imageUrl: imageUrl || "",
+                        threadId: thread.id,
+                    }
+                });
+
+                const page = await tx.storyPage.create({
+                    data: {
+                        storyId: story.id,
+                        puckData: defaultPuckData(title),
+                    }
+                });
+
+                const storyRecord: StoryRecord = {
+                    id: story.id,
+                    slug: story.slug,
+                    title: story.title,
+                    description: story.description,
+                    createdAt: story.createdAt,
+                    updatedAt: story.updatedAt,
+                    authorId: story.authorId,
+                    image: image,
+                    imageUrl: story.imageUrl,
+                    published: story.published,
+                    publishedAt: story.publishedAt,
+                    heartsCount: story.heartsCount,
+                    threadId: story.threadId,
+                    page: {
+                        id: page.id,
+                        puckData: page.puckData as Prisma.InputJsonArray,
+                    }
+                }
+
+                return {
+                    success: true,
+                    data: storyRecord,
+                };
+            });
+        } catch (error) {
+            console.error("Database Transaction Failed:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
         }
-
-        // Process image asset storage safely if slug is clear
-        let imageUrl: string | undefined;
-        if (image) imageUrl = await storage.save(image, "stories");
-        
-        // Open transaction and write records
-        return await prisma.$transaction(async (tx) => {
-            const thread = await tx.thread.create({ data: {} });
-
-            const story = await tx.story.create({
-                data: {
-                    title: title,
-                    description: description,
-                    slug: slug,
-                    authorId: userId,
-                    imageUrl: imageUrl || "",
-                    threadId: thread.id,
-                }
-            });
-
-            const page = await tx.storyPage.create({
-                data: {
-                    storyId: story.id,
-                    puckData: puckData,
-                }
-            });
-
-            return { story, page };
-        });
     },
 
     /**

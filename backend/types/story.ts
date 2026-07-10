@@ -1,38 +1,29 @@
-import { PuckData, StoryPageRecord } from "./storyPage.ts";
+import { PuckData } from "./puck.ts";
 
+/**
+ * The story record data type
+ */
 export type StoryRecord = {
     id: string,
     slug: string,
     title: string,
     description: string,
     createdAt: Date,
-    updatedAt: Date,
+    updatedAt: Date | null,
     authorId: number,
     image: File | undefined,
+    imageUrl: string,
     published: boolean,
-    publishedAt: Date,
+    publishedAt: Date | null,
     heartsCount: number,
     threadId: string,
     page: StoryPageRecord
 }
 
-export interface CreateStoryData extends Pick<
-    StoryRecord, 
-    'slug'|
-    'title'|
-    'description'|
-    'image'
->{
+/**
+ * The story page data type
+ */
+export type StoryPageRecord = {
+    id: string,
     puckData: PuckData,
-};
-
-export interface UpdateStoryData extends Partial<Pick<
-    StoryRecord,
-    'slug'|
-    'title'|
-    'description'|
-    'image'|
-    'published'
->> {
-    puckData?: PuckData,
-};
+}
