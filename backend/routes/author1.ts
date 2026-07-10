@@ -111,6 +111,30 @@ author.patch("/story/:id", authMiddleware, validate("form", storyPatchSchema), a
     return c.json({ success: true, story: result.data }, 200);
 });
 
+/**
+ * DELETE /story/:id - Remove a story
+ * * Middleware: `authMiddleware`.
+ * Behaviour: Validates ownership and permanently removes the story and dependent records.
+ * * Responses:
+ * - 200: success
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.delete("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.param("id");
+
+    const result = await authorService.deleteStory(storyId, userId);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, message: "Story deleted successfully" }, 200);
+});
 
 
 /**

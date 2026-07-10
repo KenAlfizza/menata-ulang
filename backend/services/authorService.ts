@@ -230,5 +230,51 @@ export const authorService = {
             console.error("Update Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
+    },
+
+    /**
+     * Deletes a story and its associated records by its unique ID.
+     * Performs an ownership check to ensure the story belongs to the requesting author.
+     * 
+     * @param {string} storyId - The unique identifier of the story to delete.
+     * @param {number} userId - The ID of the author requesting the deletion.
+     * @returns {Promise<AuthorServiceResult<boolean>>} A promise resolving to `success: true` 
+     * if the deletion was successful, or an error object if it failed or is unauthorized.
+     * 
+     * @example
+     * const result = await authorService.deleteStory("abc-123", 1);
+     *      if (result.success) console.log("Story deleted successfully");
+     */
+    async deleteStory(
+        storyId: string,
+        userId: number
+    ): Promise<AuthorServiceResult<boolean>> {
+        try {
+            // 1. Fetch record to verify ownership and retrieve the image key
+            const existing = await prisma.story.findUnique({
+                where: { id: storyId },
+                select: { authorId: true, imageUrl: true }
+            });
+
+            if (!existing) return { success: false, error: 'NOT_FOUND' };
+            if (existing.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            // Perform deletion within a transaction
+            // We use a transaction to ensure that the database and file system
+            // operations are synchronized as closely as possible.
+            await prisma.$transaction(async (tx) => {
+                await tx.story.delete({ where: { id: storyId } });
+                
+                // 3. Delete the file if an imageUrl exists
+                if (existing.imageUrl) {
+                    await storage.delete(existing.imageUrl);
+                }
+            });
+
+            return { success: true, data: true };
+        } catch (error) {
+            console.error("Delete Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
     }
 };
