@@ -4,7 +4,7 @@ import { StoryCard } from "./story-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
 import { WorkspaceStoryRecord } from "@/types/workspace.ts";
-import { fetchRecentStories } from "@/services/author.ts";
+import { fetchRecentStories } from "@/services/workspace/author.ts";
 
 export default function RecentStories() {
     const { accessToken } = useAuth();
@@ -19,8 +19,8 @@ export default function RecentStories() {
                 setIsLoading(true);
                 setError(null);
 
-                const stories = await fetchRecentStories(accessToken);
-                setRecentStories(stories);
+                const items = await fetchRecentStories(accessToken);
+                setRecentStories(items);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load recent stories")
