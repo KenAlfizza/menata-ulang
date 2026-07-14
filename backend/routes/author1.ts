@@ -32,24 +32,23 @@ const author = new Hono<{ Variables: AppVariables }>();
  */
 author.post("/story", authMiddleware, validate("form", storyCreateSchema), async (c) => {
     const { id: userId, role } = c.get("user");
-    if (role !== "AUTHOR" && role !== "SUPERUSER") return c.json({ error: "Forbidden" }, 403);
+    if (role !== "AUTHOR" && role !== "SUPERUSER") 
+        return c.json({ success: false, error: { message: "Forbidden", code: "FORBIDDEN" } }, 403);
 
-    const formData = c.req.valid("form");
-    const createStoryData: CreateStoryData = {
-        slug: formData.slug,
-        title: formData.title,
-        description: formData.description,
-        image: formData.image,
-    };
-
-    const result = await authorService.createStory(userId, createStoryData);
+    const result = await authorService.createStory(userId, c.req.valid("form"));
+    
     if (!result.success) {
-        if (result.error == 'SLUG_TAKEN') {
-            return c.json({error: "The provided slug is already taken"}, 409)
-        }
-        return c.json({ error: "Internal Server Error"}, 500)
+        const status = result.error === 'SLUG_TAKEN' ? 409 : 500;
+        return c.json({ 
+        success: false, 
+        error: { 
+            message: result.error === 'SLUG_TAKEN' ? "Slug is taken" : "Internal error",
+            code: result.error 
+        } 
+        }, status);
     }
-    return c.json({ message: "Story created successfully", ok: true, story: result.data}, 201);
+    
+    return c.json({ success: true, story: result.data }, 201);
 });
 
 /**
@@ -176,9 +175,9 @@ author.get("/my-stories/recent", authMiddleware, async (c) => {
  * - 400: validation error (invalid query parameters)
  * - 500: internal server error
  */
-author.get("/my-stories", authMiddleware, validate("json", storyListQuerySchema), async (c) => {
+author.get("/my-stories", authMiddleware, validate("query", storyListQuerySchema), async (c) => {
     const { id: userId } = c.get("user");
-    const { page, limit, search, sort, order } = c.req.valid("json");
+    const { page, limit, search, sort, order } = c.req.valid("query");
     const result = await authorService.getMyStories(userId, {
         search,
         limit: limit ?? 10,

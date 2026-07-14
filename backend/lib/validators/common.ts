@@ -57,9 +57,9 @@ export const maxWordRule = (max: number, message?: string) =>
  * Note: Runtime must provide `File` (Deno/file API environment compatibility).
  */
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 export const imageRule = z
     .instanceof(File)
     .refine((f) => f.size > 0, "File is empty")
-    .refine((f) => f.size <= MAX_SIZE, "Max 5MB")
+    .refine((f) => f.size <= MAX_SIZE, "Image size is maximum 10MB")
     .refine((f) => ACCEPTED_TYPES.includes(f.type), "Only JPEG, PNG, WebP");
