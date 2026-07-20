@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { StatusCode } from 'hono/utils/http-status';
 import type { AppVariables } from "../types.ts";
 
 // Library imports
@@ -73,9 +74,25 @@ author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), a
     const result = await authorService.getStoryById(storyId, userId);
 
     if (!result.success) {
-        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
-        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
-        return c.json({ error: "Internal Server Error" }, 500);
+        // Map service errors to appropriate status codes and error objects
+        let status: StatusCode = 500;
+        let message = "Internal Server Error";
+        let code = "INTERNAL_SERVER_ERROR";
+
+        if (result.error === 'NOT_FOUND') {
+            status = 404;
+            message = "Story not found";
+            code = "NOT_FOUND";
+        } else if (result.error === 'UNAUTHORIZED') {
+            status = 403;
+            message = "You do not have permission to access this story";
+            code = "FORBIDDEN";
+        }
+
+        return c.json({ 
+            success: false, 
+            error: { message, code } 
+        }, status);
     }
 
     return c.json({ success: true, story: result.data }, 200);
