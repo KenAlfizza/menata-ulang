@@ -3,6 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { WorkspaceStoryRecord } from "@/types/workspace.ts";
 import { authFetch } from "../auth.ts";
 import { PaginatedResult } from "../../types/common.ts";
+import { getFullImageUrl } from "../../utils/url.ts";
 
 /**
  * Fetch the recently edited stories
@@ -23,7 +24,15 @@ export async function fetchRecentStories(
         throw new Error(`Failed to fetch recent stories: ${response.status} ${response.statusText}`);
     }
     const data = await response.json();
-    return data.items;
+
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+
+    console.log("Image URL being sent to next/image:", transformedItems[0].imageUrl);
+    return transformedItems;
 }
 
 /**
@@ -60,15 +69,21 @@ export async function fetchMyStories(
     );
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch stories aaaa: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch stories: ${response.status} ${response.statusText}`);
     }
 
     // Capture the full response object
     const data = await response.json();
     
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+    
     // Return the data to be used by the UI (e.g., Shadcn Pagination)
     return {
-        items: data.items,
+        items: transformedItems,
         total: data.total,
         totalPages: data.totalPages,
         page: data.page,

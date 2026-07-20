@@ -2,16 +2,16 @@
 
 import AuthGuard from "@/components/auth-guard";
 import { use } from "react";
-import NewStory from "@/components/new/new-story.tsx";
+import NewStory from "@/components/workspace/new/new-story.tsx";
 
 
 type Role = "author" | "host" | "researcher" ;
 
-interface NewPageProps {
+interface WorkspaceNewPageProps {
   params: Promise<{ role: Role }>;
 }
 
-export default function NewPage({ params }: NewPageProps) {
+export default function WorkspaceNewPage({ params }: WorkspaceNewPageProps) {
     const { role } = use(params);
 
     const renderWorkspace = () => {

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "../ui/card.tsx";
-import { Label } from "../ui/label.tsx";
-import { Input } from "../ui/input.tsx";
-import { Button } from "../ui/button.tsx";
+import { Card, CardContent } from "../../ui/card.tsx";
+import { Label } from "../../ui/label.tsx";
+import { Input } from "../../ui/input.tsx";
+import { Button } from "../../ui/button.tsx";
 import { ArrowLeft, ImageIcon } from "lucide-react";
 import { createStory } from "@/services/author.ts";
 import { useAuth } from "@/context/auth-context.tsx"; // Ensure this points to your auth provider

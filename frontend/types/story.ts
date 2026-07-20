@@ -1,7 +1,7 @@
-import { Data } from "@puckeditor/core";
+import { StoryPageRecord } from "./page.ts";
 
 /**
- * `StoryPage` model returned by the backend.
+ * `StoryRecord` model returned by the backend.
  */
 export interface StoryRecord {
     id: string;
@@ -9,9 +9,9 @@ export interface StoryRecord {
     description: string;
     imageUrl: string;
     slug: string;
-    puckData: Data;
     published: boolean;
     createdAt: Date | string;
     updatedAt: Date | string;
     authorId: number;
+    page: StoryPageRecord;
 }

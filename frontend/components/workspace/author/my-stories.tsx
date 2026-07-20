@@ -78,7 +78,7 @@ export default function MyStories() {
 
             {/* Transition Container: Stable height, changing opacity */}
             <div 
-                className="min-h-[400px] transition-opacity duration-300 ease-in-out"
+                className="transition-opacity duration-300 ease-in-out"
                 style={{ opacity: isLoading ? 0.4 : 1 }}
             >
                 <div className="grid grid-cols-5 gap-8 py-4">

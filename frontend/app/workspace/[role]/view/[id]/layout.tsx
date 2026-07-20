@@ -1,6 +1,6 @@
 import { AuthProvider } from "@/context/auth-context.tsx";
 
-export default function WorkspaceNewPageLayout({ children }: { children: React.ReactNode }) {
+export default function WorkspaceViewPageLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen">
             <main>
