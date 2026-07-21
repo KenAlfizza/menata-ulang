@@ -14,6 +14,7 @@ export type AuthorServiceResult<StoryRecord> =
         'SLUG_TAKEN' | 
         'NOT_FOUND' |
         'UNAUTHORIZED' |
+        'BAD_REQUEST' |
         'INTERNAL_ERROR'
   }
 

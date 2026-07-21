@@ -101,6 +101,7 @@ export const authorService = {
         }
     },
 
+
     /**
      * Retrieves a story record by its unique ID for a specific author.
      * Performs an ownership check to ensure the story belongs to the requesting user.
