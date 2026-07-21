@@ -82,11 +82,7 @@ export async function updateStory(
     }
 ): Promise<StoryRecord> {
     const formData = new FormData();
-    Object.entries(updateData).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
-            formData.append(key, val);
-        }
-    });
+    Object.entries(updateData).forEach(([key, val]) => val && formData.append(key, val));
 
     const response = await authFetch(
         `${API_BASE_URL}/author/story/${storyId}`,

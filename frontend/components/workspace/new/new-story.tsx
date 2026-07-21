@@ -53,13 +53,13 @@ export default function NewStory() {
         setIsSubmitting(true);
 
         try {
-            await createStory(accessToken, {
+            const data = await createStory(accessToken, {
                 title,
                 slug,
                 description,
                 image: image || undefined,
             });
-            router.push("/dashboard"); // Adjust path as needed
+            router.push(`/workspace/author/view/${data.id}`); // Adjust path as needed
         } catch (err: any) {
             const errorData = JSON.parse(err.message);
             
