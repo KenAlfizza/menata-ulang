@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-import { StoryRecord } from "../types/story.ts";
+import { StoryRecord, UpdateStoryData } from "../types/story.ts";
 import { getFullImageUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
 
@@ -64,4 +64,48 @@ export async function retrieveStory(
     return body.story;
 }
 
+/**
+ * Updates a story by ID via the API
+ * @param accessToken - The user's authentication token
+ * @param storyId - The UUID of the story
+ * @param updateData - The partial fields to update
+ * @returns The updated story object
+ */
+export async function updateStory(
+    accessToken: string,
+    storyId: string,
+    updateData: {
+        title?: string;
+        description?: string,
+        slug?: string;
+        image?: File;
+    }
+): Promise<StoryRecord> {
+    const formData = new FormData();
+    Object.entries(updateData).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+            formData.append(key, val);
+        }
+    });
 
+    const response = await authFetch(
+        `${API_BASE_URL}/author/story/${storyId}`,
+        accessToken,
+        {
+            method: "PATCH",
+            body: formData,
+        }
+    );
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+    }
+
+    if (body.story?.imageUrl) {
+        body.story.imageUrl = getFullImageUrl(body.story.imageUrl);
+    }
+
+    return body.story;
+}

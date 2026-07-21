@@ -6,15 +6,15 @@ import { resizeField } from "../fields/size.tsx";
 import { spacingField } from "../fields/spacing.tsx";
 import { defaultSize } from "../fields/size";
 import { resolvePixelStyles } from "../fields/spacing";
-import { imageUploadField } from "../fields/upload-image.tsx";
+import { createImageUploadField } from "../fields/upload-image.tsx";
 import { Image } from "lucide-react";
 
 /** Image component fields */
-export const ImageComponentFields: Fields<ImageComponentType> = {
-    imageUpload: imageUploadField,
+export const createImageComponentFields = (accessToken: string): Fields<ImageComponentType> => ({
+    imageUpload: createImageUploadField(accessToken),
     resize: resizeField,
     spacing: spacingField,
-};
+})
 
 /** Image component render */
 export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentType) {
@@ -24,8 +24,8 @@ export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentT
     const containerWidth = currentSize.width || "100%";
     const hasExplicitHeight = Boolean(currentSize.height);
 
-    const src = imageUpload.url
-    const alt = imageUpload.alt
+    const src = imageUpload.url;
+    const alt = imageUpload.alt;
     
     return (
         <div className="flex justify-center items-center min-w-8 min-h-8">

@@ -15,3 +15,15 @@ export interface StoryRecord {
     authorId: number;
     page: StoryPageRecord;
 }
+
+/**
+ * Update story data similar to the backend update data
+ */
+export interface UpdateStoryData {
+    title?: string;
+    description?: string;
+    slug?: string;
+    image?: File;
+    published?: boolean;
+
+}

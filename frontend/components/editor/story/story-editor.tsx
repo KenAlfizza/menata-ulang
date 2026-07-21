@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Puck, Data, createUsePuck } from "@puckeditor/core";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, Undo2, Redo2, Save, ArrowUpRight, ArrowLeft } from "lucide-react";
+import { Loader2, Undo2, Redo2, Save, ArrowLeft } from "lucide-react";
 
 import { createPuckConfig } from "./puck.config";
 import "@puckeditor/core/puck.css";
@@ -15,11 +15,7 @@ import { useAuth } from "@/context/auth-context";
 import { Button } from "../../ui/button.tsx";
 import { retrieveStoryPage, updateStoryPage } from "@/services/editor/author.ts";
 
-const puckConfig = createPuckConfig();
 const usePuck = createUsePuck();
-
-// Two independent contexts — saving and publishing are separate actions
-// with separate loading states, so one shouldn't disable the other's button.
 const SavingContext = createContext(false);
 
 interface StoryEditorProps {
@@ -116,6 +112,11 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
 
     const dataRef = useRef<Data | null>(null);
     dataRef.current = data;
+
+    // Dynamically generate the config once the access token is loaded
+    const puckConfig = useMemo(() => {
+        return createPuckConfig(accessToken || "");
+    }, [accessToken]);
 
     useEffect(() => {
         async function initPageWorkspace() {

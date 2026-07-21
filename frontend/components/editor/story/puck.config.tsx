@@ -11,7 +11,7 @@ import { TextComponent, TextComponentFields } from "./components/text.tsx";
 
 // Image Component
 import { ImageComponentType } from "./components/types.tsx";
-import { ImageComponent, ImageComponentFields } from "./components/image.tsx";
+import { ImageComponent, createImageComponentFields } from "./components/image.tsx";
 
 // Flex Component
 import { FlexComponentType } from "./components/types.tsx";
@@ -35,7 +35,7 @@ export type EditStoryConfig = Config<{
     Grid: GridSlotType;
 }>;
 
-export const createPuckConfig = (): EditStoryConfig => {
+export const createPuckConfig = (accessToken: string): EditStoryConfig => {
     return {
         root: {
             fields: {
@@ -67,7 +67,7 @@ export const createPuckConfig = (): EditStoryConfig => {
                 render: (props) => <TextComponent {...props} />
             },
             Image: {
-                fields: ImageComponentFields,
+                fields: createImageComponentFields(accessToken),
                 defaultProps: {
                     resize: defaultSize,
                     spacing: defaultSpacing,
