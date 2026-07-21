@@ -224,26 +224,34 @@ export const authorService = {
             if (!existing) return { success: false, error: 'NOT_FOUND' };
             if (existing.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
 
+            const updatePayload: Parameters<typeof prisma.story.update>[0]['data'] = {};
+
+            if (data.title !== undefined) updatePayload.title = data.title;
+            if (data.description !== undefined) updatePayload.description = data.description;
+            if (data.slug !== undefined) updatePayload.slug = data.slug;
+
             // Check for slug existence outside the transaction to prevent database locks
-            if (data.slug) {
-                const existingSlug = await prisma.story.findUnique({
-                    where: { slug: data.slug },
+            if (updatePayload.slug) {
+                const existingSlug = await prisma.story.findFirst({
+                    where: { 
+                        slug: data.slug,
+                        NOT: { id: storyId } // Ignore the current story being updated
+                    },
                     select: { id: true }
                 });
                 if (existingSlug) return { success: false, error: 'SLUG_TAKEN'};
             }
 
-            // 2. Handle image update (if provided)
-            let imageUrl = existing.imageUrl;
+            // If a new image was uploaded and saved, update the imageUrl field
             if (data.image) {
-                imageUrl = await storage.save(data.image, "stories");
-                imageUrl = imageUrl.replace(/\\/g, '/');
+                const imageUrl = await storage.save(data.image, "stories");
+                updatePayload.imageUrl = imageUrl.replace(/\\/g, '/');
             }
 
-            // 3. Update in database
+            // Update in database using only the provided fields
             const updated = await prisma.story.update({
                 where: { id: storyId },
-                data,
+                data: updatePayload,
                 include: { 
                     page: {
                         select: { id: true, puckData: true }
