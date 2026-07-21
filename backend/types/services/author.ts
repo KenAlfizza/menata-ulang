@@ -1,5 +1,5 @@
 import { StoryRecord } from "../story.ts";
-import { PuckData } from "../puck.ts";
+import { PuckInputData } from "../puck.ts";
 
 /** 
  * Author Services data type
@@ -36,8 +36,13 @@ export interface UpdateStoryData extends Partial<Pick<
     'published'
 >> {
     image?: File,
-    puckData?: PuckData,
 };
+
+// Update story page datatype
+export interface UpdateStoryPageData {
+    puckData: PuckInputData;
+}
+
 
 /**
  * MyStorySummary: My story items

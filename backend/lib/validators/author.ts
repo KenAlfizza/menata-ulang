@@ -53,7 +53,21 @@ export const storyPatchSchema = z.object({
     description: z.string().min(1).max(500).optional(),
     
     image: imageRule.optional(),
-    
+        
+    published: z
+        .preprocess((val) => {
+            if (val === "true" || val === true) return true;
+            if (val === "false" || val === false) return false;
+            return val;
+        }, z.boolean())
+        .optional(),
+});
+
+/**
+ * Story page patch schema
+ * Partial version allowing optional updates
+ */
+export const storyPagePatchSchema = z.object({    
     puckData: z
         .preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
@@ -65,14 +79,6 @@ export const storyPatchSchema = z.object({
             }
             return val;
         }, z.any())
-        .optional(),
-        
-    published: z
-        .preprocess((val) => {
-            if (val === "true" || val === true) return true;
-            if (val === "false" || val === false) return false;
-            return val;
-        }, z.boolean())
         .optional(),
 });
 

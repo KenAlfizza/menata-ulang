@@ -1,10 +1,9 @@
-import { prisma, Prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
-import user from "../routes/user.ts";
 import { PaginatedResult } from "../types/common.ts";
-import { defaultPuckData } from "../types/puck.ts";
-import { AuthorServiceResult, CreateStoryData, MyStorySummary, UpdateStoryData } from "../types/services/author.ts";
-import { StoryRecord, StoryFilter } from "../types/story.ts";
+import { defaultPuckData, PuckOutputData } from "../types/puck.ts";
+import { AuthorServiceResult, CreateStoryData, MyStorySummary, UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
+import { StoryRecord, StoryFilter, StoryPageRecord } from "../types/story.ts";
 
 export const authorService = {
    /**
@@ -87,7 +86,7 @@ export const authorService = {
                     threadId: story.threadId,
                     page: {
                         id: page.id,
-                        puckData: page.puckData as Prisma.InputJsonArray,
+                        puckData: page.puckData as PuckOutputData,
                     }
                 }
 
@@ -136,11 +135,50 @@ export const authorService = {
                 imageUrl: story.imageUrl.replace(/\\/g, '/'),
                 page: {
                     id: story.page[0].id,
-                    puckData: story.page[0].puckData as Prisma.InputJsonArray
+                    puckData: story.page[0].puckData as PuckOutputData
                 }
             };
 
             return { success: true, data: storyRecord };
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
+     * Retrieves a story page data by its unique ID for a specific author.
+     * Performs an ownership check to ensure the story belongs to the requesting user.
+     * 
+     * @param {string} pageId - The unique identifier of the page to retrieve.
+     * @param {number} userId - The ID of the author requesting the story.
+     * @returns {Promise<AuthorServiceResult<StoryRecord>>} - A promise resolving to a success object 
+     * containing the story page data, or a failure object with the specific error type.
+     * 
+     * * @example
+     * const result = await authorService.getStoryPageById("abc-123", 1);
+     * if (result.success) {
+     *      console.log(result.data.id);
+     * }
+     */
+    async getStoryPageById(pageId: string, userId: number): Promise<AuthorServiceResult<StoryPageRecord>> {
+        try {
+            const storyPageRecord = await prisma.storyPage.findUnique({
+                where: { id: pageId },
+                include: {story: true}
+            });
+
+            if (!storyPageRecord) return { success: false, error: 'NOT_FOUND' };
+            
+            // Authorization check: Ensure only the author can fetch this story
+            if (storyPageRecord.story.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            const storyPageRecordPrepared = {
+                id: storyPageRecord.id,
+                puckData: storyPageRecord.puckData,
+            }
+            
+            return { success: true, data: storyPageRecordPrepared };
         } catch (error) {
             console.error("Database Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
@@ -204,35 +242,81 @@ export const authorService = {
             // 3. Update in database
             const updated = await prisma.story.update({
                 where: { id: storyId },
-                data: {
-                    title: data.title ?? existing.title,
-                    description: data.description ?? existing.description,
-                    slug: data.slug ?? existing.slug,
-                    published: data.published ?? existing.published,
-                    imageUrl: imageUrl,
-                    // Update page puckData if provided
-                    page: data.puckData ? {
-                        update: { where: { id: existing.page[0].id }, data: { puckData: data.puckData } }
-                    } : undefined
-                },
-                include: { page: true }
+                data,
+                include: { 
+                    page: {
+                        select: { id: true, puckData: true }
+                    } 
+                }
             });
 
-            // 4. Map back to StoryRecord
+            // 4. Create a record object
             const storyRecord: StoryRecord = {
                 ...updated,
                 page: {
                     id: updated.page[0].id,
-                    puckData: updated.page[0].puckData as Prisma.InputJsonArray
+                    puckData: updated.page[0].puckData as PuckOutputData,
                 }
             };
 
-            return { success: true, data: storyRecord };
+            return { success: true, data: storyRecord}
+
         } catch (error) {
-            console.error("Update Error:", error);
+            console.error("Database Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
     },
+
+    /**
+     * Updates an existing story page data.
+     * Performs an ownership check to ensure the story page belongs to the requesting author before 
+     * proceeding with any modifications.
+     * 
+     * @param {string} pageId - The unique identifier of the story to update.
+     * @param {number} userId - The ID of the author requesting the update.
+     * @param {UpdateStoryData} data - The page data object containing fields to be updated.
+     * 
+     * @returns {Promise<AuthorServiceResult<StoryPageRecord>>} A promise that resolves to:
+     * - `success: true` with the updated `StoryPageRecord` if the operation completes.
+     * - `success: false` with `NOT_FOUND` if the story does not exist.
+     * - `success: false` with `UNAUTHORIZED` if the user does not own the story.
+     * - `success: false` with `INTERNAL_ERROR` if the database operation fails.
+     * 
+     * @example
+     * const updateData = { puckData };
+     * const result = await authorService.updateStoryPage("abc-123", 1, updateData);
+     * if (result.success) {
+     *      console.log("Story page updated:", result.data.id);
+     * }
+     */
+    async updateStoryPage(
+        pageId: string,
+        userId: number,
+        data: UpdateStoryPageData
+    ): Promise<AuthorServiceResult<StoryPageRecord>> {
+        try {
+            // 1. Verify ownership and existence
+            const existing = await prisma.storyPage.findUnique({ 
+                where: { id: pageId },
+                include: { story: true }
+            });
+            if (!existing) return { success: false, error: 'NOT_FOUND' };
+            if (existing.story.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            // 2. Update in database
+            const updatedStoryPage = await prisma.storyPage.update({
+                where: { id: pageId },
+                data: data,
+            });
+
+            return { success: true, data: updatedStoryPage}
+
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
 
     /**
      * Deletes a story and its associated records by its unique ID.

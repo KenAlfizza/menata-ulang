@@ -1,4 +1,4 @@
-import { PuckData } from "./puck.ts";
+import { PuckOutputData } from "./puck.ts";
 
 /**
  * The story record data type
@@ -24,7 +24,7 @@ export type StoryRecord = {
  */
 export type StoryPageRecord = {
     id: string,
-    puckData: PuckData,
+    puckData: PuckOutputData,
 }
 
 /**

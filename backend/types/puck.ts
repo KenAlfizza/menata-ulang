@@ -1,8 +1,9 @@
 import { Prisma } from "../lib/prisma.ts";
 
-export type PuckData = Prisma.InputJsonValue;
+export type PuckInputData = Prisma.InputJsonValue;
+export type PuckOutputData = Prisma.JsonValue;
 
-export function defaultPuckData(title: string): PuckData {
+export function defaultPuckData(title: string): PuckInputData {
     return {
         content: [],
         root: { props: { title: title } }

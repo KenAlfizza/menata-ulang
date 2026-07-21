@@ -6,14 +6,14 @@ import type { AppVariables } from "../types.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 
 import { validate } from "../lib/validators/index.ts";
-import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema } from "../lib/validators/author.ts";
+import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema, storyPagePatchSchema } from "../lib/validators/author.ts";
 import { authorService } from "../services/authorService.ts";
-import { CreateStoryData, UpdateStoryData } from "../types/services/author.ts";
+import { UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
 
 const author = new Hono<{ Variables: AppVariables }>();
 
 /**
- * POST /story - Create a new story page entry
+ * POST /story - Create a new story record entry
  * 
  * Middleware: `authMiddleware`, `validate("form", storyCreateSchema)`.
  * Behaviour: Creates a new story page entry for the authenticated author workspace. Verifies user role (AUTHOR/SUPERUSER) before creation.
@@ -50,6 +50,51 @@ author.post("/story", authMiddleware, validate("form", storyCreateSchema), async
     }
     
     return c.json({ success: true, story: result.data }, 201);
+});
+
+/**
+ * GET /story/page/:id
+ * Retrieves a single story page record by its unique identifier.
+ * Description: Fetches the story page. Validates that the requesting user owns the story before returning it.
+ * Authentication: Required (authMiddleware).
+ * 
+ * Parameters:
+ * - id (string): The UUID of the story page to retrieve.
+ * 
+ * Responses:
+ * - 200 OK: Returns the requested story page object.
+ * - 403 Forbidden: Returned if the authenticated user is not the owner of the story page.
+ * - 404 Not Found: The requested story does not exist.
+ * - 500 Internal Server Error: Unexpected database or system error.
+ */
+author.get("/story/page/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get('user');
+    const pageId = c.req.valid("param").id;
+
+    const result = await authorService.getStoryPageById(pageId, userId);
+    if (!result.success) {
+        // Map service errors to appropriate status codes and error objects
+        let status: StatusCode = 500;
+        let message = "Internal Server Error";
+        let code = "INTERNAL_SERVER_ERROR";
+
+        if (result.error === 'NOT_FOUND') {
+            status = 404;
+            message = "Story page not found";
+            code = "NOT_FOUND";
+        } else if (result.error === 'UNAUTHORIZED') {
+            status = 403;
+            message = "You do not have permission to access this story page";
+            code = "FORBIDDEN";
+        }
+
+        return c.json({ 
+            success: false, 
+            error: { message, code } 
+        }, status);
+    }
+
+    return c.json({ success: true, storyPage: result.data }, 200);
 });
 
 /**
@@ -96,6 +141,35 @@ author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), a
     }
 
     return c.json({ success: true, story: result.data }, 200);
+});
+
+
+/**
+ * PATCH /story/page/:id - Update story page
+ * * Middleware: `authMiddleware`, `validate("form", storyPatchSchema)`.
+ * Behaviour: Performs a partial update on the story and its page content.
+ * * Responses:
+ * - 200: success (returns updated story)
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.patch("/story/page/:id", authMiddleware, validate("json", storyPagePatchSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const pageId = c.req.param("id");
+    
+    // Zod guarantees this data is valid based on your schema
+    const updateData = c.req.valid("json") as UpdateStoryPageData;
+
+    const result = await authorService.updateStoryPage(pageId, userId, updateData);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story page not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, storyPage: result.data }, 200);
 });
 
 /**
