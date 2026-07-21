@@ -1,6 +1,7 @@
 // app/workspace/author/edit/[id]/page.tsx
 import { use } from "react";
 import { StoryEditor } from "@/components/editor/story/story-editor.tsx";
+import AuthGuard from "@/components/auth-guard.tsx";
 
 interface EditorPageProps {
   params: Promise<{ id: string }>;
@@ -9,5 +10,8 @@ interface EditorPageProps {
 export default function EditorPage({ params }: EditorPageProps) {
   const resolvedParams = use(params);
   
-  return <StoryEditor pageId={resolvedParams.id} />;
+  return (
+    <AuthGuard>
+        <StoryEditor pageId={resolvedParams.id} />
+    </AuthGuard>);
 }

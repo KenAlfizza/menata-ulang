@@ -21,7 +21,8 @@ export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
                 gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${rows}, minmax(80px, auto))`,
                 gap: `${gap}px`,
-                width: "100%",
+                minBlockSize: "128px",
+                minInlineSize: "128px",
             }}
             minEmptyHeight={80}
         />

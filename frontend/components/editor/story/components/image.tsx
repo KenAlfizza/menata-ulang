@@ -28,7 +28,7 @@ export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentT
     const alt = imageUpload.alt
     
     return (
-        <div className="w-full flex justify-center items-center min-w-8 min-h-8">
+        <div className="flex justify-center items-center min-w-8 min-h-8">
             <div
                 style={{
                     ...resolvePixelStyles(spacing),
@@ -43,7 +43,7 @@ export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentT
             >
                 {src && hasExplicitHeight && (
                     <div  
-                        className="absolute inset-0 flex items-center justify-center w-full h-full"
+                        className="absolute inset-0 flex items-center justify-center h-full"
                     >
                         <img
                             src={src}
@@ -61,7 +61,7 @@ export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentT
                 
                 {src && !hasExplicitHeight && (
                     <div 
-                        className="w-full flex items-center justify-center"
+                        className="flex items-center justify-center"
                     >
                         <img
                             src={src}

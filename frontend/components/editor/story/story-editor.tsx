@@ -12,8 +12,8 @@ import { createPuckConfig } from "./puck.config";
 import "@puckeditor/core/puck.css";
 
 import { useAuth } from "@/context/auth-context";
-import { saveStoryPageData, loadStoryPageData} from "@/services/story";
 import { Button } from "../../ui/button.tsx";
+import { retrieveStoryPage, updateStoryPage } from "@/services/editor/author.ts";
 
 const puckConfig = createPuckConfig();
 const usePuck = createUsePuck();
@@ -21,7 +21,6 @@ const usePuck = createUsePuck();
 // Two independent contexts — saving and publishing are separate actions
 // with separate loading states, so one shouldn't disable the other's button.
 const SavingContext = createContext(false);
-const PublishingContext = createContext(false);
 
 interface StoryEditorProps {
     pageId: string;
@@ -69,34 +68,20 @@ function SaveButton({ onSave }: { onSave: () => void }) {
     );
 }
 
-function PublishButton({ onPublish }: { onPublish: () => void }) {
-    const isPublishing = useContext(PublishingContext);
-    return (
-        <Button
-            disabled={isPublishing}
-            onClick={onPublish}
-            aria-label="Publish"
-            className="text-green-500 bg-zinc-100 h-8 w-8 flex items-center justify-center rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-200"
-        >
-            {isPublishing ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
-        </Button>
-    );
-}
-
 function BackButton() {
     const router = useRouter();
     return (
         <Button
             onClick={() => router.back()}
             aria-label="Back"
-            className="text-zinc-200 bg-zinc-100 h-8 w-8 flex items-center justify-center rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-200"
+            className="text-zinc-600 bg-zinc-100 h-8 w-8 flex items-center justify-center rounded-md transition hover:bg-zinc-200"
         >
             <ArrowLeft size={16} />
         </Button>
     );
 }
 
-function EditorHeader({ onSave, onPublish }: { onSave: () => void; onPublish: () => void }) {
+function EditorHeader({ onSave }: { onSave: () => void; }) {
     return (
         <div className="bg-white px-2 h-12 flex justify-between items-center border-b border-zinc-200 z-50">
             <div className="flex items-center gap-2 w-1/4">
@@ -116,7 +101,6 @@ function EditorHeader({ onSave, onPublish }: { onSave: () => void; onPublish: ()
             <div className="flex items-center justify-end gap-1">
                 <HistoryControls />
                 <SaveButton onSave={onSave} />
-                <PublishButton onPublish={onPublish} />
             </div>
         </div>
     );
@@ -128,7 +112,6 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
     const [data, setData] = useState<Data | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, startSaving] = useTransition();
-    const [isPublishing, startPublishing] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
     const dataRef = useRef<Data | null>(null);
@@ -139,8 +122,9 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
             if (!pageId || !accessToken) return;
             try {
                 setIsLoading(true);
-                const pageData = await loadStoryPageData(pageId, accessToken);
-                setData(pageData || { content: [], root: { props: { title: "Untitled Page" } } });
+                const storyPage = await retrieveStoryPage(accessToken, pageId);
+                console.log("Story page data: ", storyPage);
+                setData(storyPage.puckData);
             } catch (err: any) {
                 console.error(err);
                 setError(err.message || "Failed to properly initialize editor data");
@@ -157,21 +141,9 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
 
         startSaving(async () => {
             try {
-                await saveStoryPageData(pageId, currentData, accessToken);
+                await updateStoryPage(accessToken, pageId, currentData);
             } catch (err: any) {
                 alert(`Error trying to update data record: ${err.message}`);
-            }
-        });
-    }, [pageId, accessToken]);
-
-    const handlePublishWorkspace = useCallback((currentData: Data) => {
-        if (!pageId || !accessToken) return;
-
-        startPublishing(async () => {
-            try {
-                // await publishStoryPage(pageId, currentData, accessToken);
-            } catch (err: any) {
-                alert(`Error trying to publish page: ${err.message}`);
             }
         });
     }, [pageId, accessToken]);
@@ -180,19 +152,15 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
         if (dataRef.current) handleSaveWorkspace(dataRef.current);
     }, [handleSaveWorkspace]);
 
-    const onPublish = useCallback(() => {
-        if (dataRef.current) handlePublishWorkspace(dataRef.current);
-    }, [handlePublishWorkspace]);
-
     // Only `header` is overridden — outline, drawer, fields panel stay default.
-    // Both onSave/onPublish are stable callbacks, so this never changes
-    // identity on a keystroke; isSaving/isPublishing reach their buttons
+    // Both onSave are stable callbacks, so this never changes
+    // identity on a keystroke; isSaving reach their buttons
     // via Context instead of being dependencies here.
     const overrides = useMemo(
         () => ({
-            header: () => <EditorHeader onSave={onSave} onPublish={onPublish} />,
+            header: () => <EditorHeader onSave={onSave} />,
         }),
-        [onSave, onPublish]
+        [onSave]
     );
 
     if (isLoading) {
@@ -217,18 +185,15 @@ export function StoryEditor({ pageId }: StoryEditorProps) {
 
     return (
         <SavingContext.Provider value={isSaving}>
-            <PublishingContext.Provider value={isPublishing}>
-                <div className="relative w-full h-screen flex flex-col overflow-hidden bg-background select-none">
-                    <Puck
-                        config={puckConfig}
-                        data={data}
-                        onChange={(newData) => setData(newData)}
-                        onPublish={handlePublishWorkspace}
-                        ui={{ leftSideBarVisible: false }}
-                        overrides={overrides}
-                    />
-                </div>
-            </PublishingContext.Provider>
+            <div className="relative w-full h-screen flex flex-col overflow-hidden bg-background select-none">
+                <Puck
+                    config={puckConfig}
+                    data={data}
+                    onChange={(newData) => setData(newData)}
+                    ui={{ leftSideBarVisible: false }}
+                    overrides={overrides}
+                />
+            </div>
         </SavingContext.Provider>
     );
 }

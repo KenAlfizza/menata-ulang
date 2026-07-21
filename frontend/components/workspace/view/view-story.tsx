@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "../../ui/card.tsx";
+import { Card, CardContent, CardFooter, CardHeader } from "../../ui/card.tsx";
 import { Label } from "../../ui/label.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Textarea } from "../../ui/textarea.tsx"
-import { ArrowLeft, ImageIcon } from "lucide-react";
+import { ArrowLeft, Edit, ImageIcon } from "lucide-react";
 import { retrieveStory } from "@/services/author.ts";
 import { StoryRecord } from "../../../types/story.ts";
 import { useAuth } from "@/context/auth-context.tsx";
@@ -108,8 +108,8 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
     if (isLoading) return <main className="m-8">Loading...</main>;
 
     return (
-        <main className="m-8 space-y-8">
-            <div className="flex gap-2">
+        <main className="p-2">
+            <div className="flex items-center gap-2">
                 <Button
                     type="button"
                     onClick={() => router.back()}
@@ -117,10 +117,14 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
                 >
                     <ArrowLeft className="text-black" />
                 </Button>
-                <h1 className="text-2xl">View Story</h1>
+                <h1 className="text-xl">View Story</h1>
             </div>
 
+            <div className="px-8 py-4 space-y-8">
             <Card>
+                <CardHeader>
+                    <Label className="text-lg">About Story</Label>
+                </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         {error && (
@@ -202,25 +206,38 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
                     </form>
                 </CardContent>
             </Card>
+
+            {storyPagePreview ? (
             <Card>
-                <CardHeader>
-                    <Label className="whitespace-nowrap" htmlFor="title">Page Preview</Label>
+                <CardHeader className="flex items-center">
+                    <Label className="text-lg">Story Page</Label>
+                    <Link
+                        className="ml-auto"
+                        href={`/workspace/author/edit/${storyPagePreview.id}`}>
+                        <Button
+                            className="bg-green-400/60 hover:bg-green-400/100"
+                        >
+                            <Edit size={16}/>Edit
+                        </Button>
+                    </Link>
                 </CardHeader>
-                <CardContent>
-                        {storyPagePreview ? (
-                            <Link
-                                href={`/workspace/author/edit/${storyPagePreview.id}`}>
-                                <div className="min-h-64 bg-zinc-100/50 hover:bg-zinc-100/70">           
-                                    <Render config={createPuckConfig()} data={storyPagePreview.puckData} />
-                                </div>
-                            </Link>
-                        ) : (
-                            <div className="p-4 text-center text-zinc-500">
-                                Loading page preview...
-                            </div>
-                        )}
+                <CardContent className="max-h-128 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)]">
+                    <Link
+                        href={`/workspace/author/edit/${storyPagePreview.id}`}>
+                        <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg">           
+                            <Render config={createPuckConfig()} data={storyPagePreview.puckData} />
+                        </div>
+                    </Link>
                 </CardContent>
-            </Card>
+            </Card> 
+            ) : (
+             <Card>
+                <div className="p-4 text-center text-zinc-500">
+                    Loading page preview...
+                </div>
+            </Card>  
+            )}
+            </div>
         </main>
-    );
+    )
 }

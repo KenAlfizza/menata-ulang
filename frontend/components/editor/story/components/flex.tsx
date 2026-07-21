@@ -34,8 +34,8 @@ export const FlexComponentFields: Fields<FlexComponentType> = {
 
 /** Flex component render */
 export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
-  direction,
-  justify,
+  direction = "row",
+  justify = "flex-start",
   slot: Slot,
 }) => {
   return (
@@ -44,9 +44,7 @@ export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
         display: "flex",
         flexWrap: "wrap",
         flexDirection: direction,
-
         justifyContent: justify,
-
         width: "100%",
         minWidth: "64px",
         minHeight: "100px",

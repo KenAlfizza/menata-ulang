@@ -80,6 +80,12 @@ export const createPuckConfig = (): EditStoryConfig => {
             },
             Flex: {
                 fields: FlexComponentFields,
+                defaultProps: {
+                    direction: "row",
+                    justify: "flex-start",
+                    spacing: { ...defaultSpacing },
+                    slot: [],
+                },
                 render: (props) => <FlexComponent {...props} />,
             },
             Grid: {
