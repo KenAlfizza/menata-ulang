@@ -161,7 +161,7 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
     const hasChanges = isDirty || isImageDirty;
 
     return (
-        <main>
+        <main className="min-h-screen bg-zinc-100/50">
             <div className="bg-white px-2 h-12 flex justify-between items-center border-b border-zinc-200">
                 <div className="flex items-center gap-2">
                     <Button onClick={() => router.back()} variant="ghost" className="h-8 w-8 p-0 bg-zinc-100 hover:bg-zinc-200"><ArrowLeft size={16} /></Button>
