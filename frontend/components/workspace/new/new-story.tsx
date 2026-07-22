@@ -89,7 +89,7 @@ export default function NewStory() {
             </div>
 
             <div className="p-8 space-y-8">
-                <Card>
+                <Card className="shadow-sm">
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {error && (

@@ -172,7 +172,7 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
             </div>
 
             <div className="p-8 space-y-8">
-                <Card>
+                <Card className="shadow-sm">
                     <CardHeader>
                         <Label className="text-lg">About Story</Label>
                     </CardHeader>
@@ -258,7 +258,7 @@ export default function WorkspaceViewStory({ storyId }: { storyId: string }) {
                 </Card>
 
                 {storyPagePreview ? (
-                <Card>
+                <Card className="shadow-sm">
                     <CardHeader className="flex items-center">
                         <Label className="text-lg">Story Page</Label>
                         <Link
