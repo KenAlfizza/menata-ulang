@@ -24,6 +24,6 @@ router.route("/author", author);
 router.route("/feedback", feedback)
 router.route("/researcher", researcher);
 router.route("/files", files);
-router.route("/editor", editor)
+router.route("/editor", editor);
 
 export default router;
