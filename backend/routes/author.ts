@@ -1,287 +1,290 @@
 import { Hono } from "hono";
+import { StatusCode } from 'hono/utils/http-status';
 import type { AppVariables } from "../types.ts";
 
 // Library imports
-import { prisma } from "../lib/prisma.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 
 import { validate } from "../lib/validators/index.ts";
-import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema } from "../lib/validators/author.ts";
+
+import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema, storyPagePatchSchema } from "../lib/validators/author.ts";
+
+import { authorService } from "../services/authorService.ts";
+import { UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
 
 const author = new Hono<{ Variables: AppVariables }>();
 
 /**
- * GET /my-stories/recent - Fetch recently edited stories into author workspace
+ * POST /story - Create a new story record entry
  * 
- * Behaviour: returns three most recent page for author workspace view
+ * Middleware: `authMiddleware`, `validate("form", storyCreateSchema)`.
+ * Behaviour: Creates a new story page entry for the authenticated author workspace. Verifies user role (AUTHOR/SUPERUSER) before creation.
+ * 
+ * Request Body (Validated):
+ * - title (string, required)
+ * - slug (string, required)
+ * - description (string, optional)
+ * - image (File, optional)
  * 
  * Responses:
- * - 200: success
+ * - 201: success
+ * - 400: bad request (e.g., duplicate slug)
  * - 401: unauthorized
  * - 403: forbidden
+ * - 500: internal server error
+ */
+author.post("/story", authMiddleware, validate("form", storyCreateSchema), async (c) => {
+    const { id: userId, role } = c.get("user");
+    if (role !== "AUTHOR" && role !== "SUPERUSER") 
+        return c.json({ success: false, error: { message: "Forbidden", code: "FORBIDDEN" } }, 403);
+
+    const result = await authorService.createStory(userId, c.req.valid("form"));
+    
+    if (!result.success) {
+        const status = result.error === 'SLUG_TAKEN' ? 409 : 500;
+        return c.json({ 
+        success: false, 
+        error: { 
+            message: result.error === 'SLUG_TAKEN' ? "Slug is taken" : "Internal error",
+            code: result.error 
+        } 
+        }, status);
+    }
+    
+    return c.json({ success: true, story: result.data }, 201);
+});
+
+/**
+ * GET /story/page/:id
+ * Retrieves a single story page record by its unique identifier.
+ * Description: Fetches the story page. Validates that the requesting user owns the story before returning it.
+ * Authentication: Required (authMiddleware).
+ * 
+ * Parameters:
+ * - id (string): The UUID of the story page to retrieve.
+ * 
+ * Responses:
+ * - 200 OK: Returns the requested story page object.
+ * - 403 Forbidden: Returned if the authenticated user is not the owner of the story page.
+ * - 404 Not Found: The requested story does not exist.
+ * - 500 Internal Server Error: Unexpected database or system error.
+ */
+author.get("/story/page/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get('user');
+    const pageId = c.req.valid("param").id;
+
+    const result = await authorService.getStoryPageById(pageId, userId);
+    if (!result.success) {
+        // Map service errors to appropriate status codes and error objects
+        let status: StatusCode = 500;
+        let message = "Internal Server Error";
+        let code = "INTERNAL_SERVER_ERROR";
+
+        if (result.error === 'NOT_FOUND') {
+            status = 404;
+            message = "Story page not found";
+            code = "NOT_FOUND";
+        } else if (result.error === 'UNAUTHORIZED') {
+            status = 403;
+            message = "You do not have permission to access this story page";
+            code = "FORBIDDEN";
+        }
+
+        return c.json({ 
+            success: false, 
+            error: { message, code } 
+        }, status);
+    }
+
+    return c.json({ success: true, storyPage: result.data }, 200);
+});
+
+/**
+ * GET /story/:id
+ * Retrieves a single story record by its unique identifier.
+ * Description: Fetches the story and its associated page data. Validates that the requesting user owns the story before returning it.
+ * Authentication: Required (authMiddleware).
+ * 
+ * Parameters:
+ * - id (string): The UUID of the story to retrieve.
+ * 
+ * Responses:
+ * - 200 OK: Returns the requested story object.
+ * - 403 Forbidden: Returned if the authenticated user is not the owner of the story.
+ * - 404 Not Found: The requested story does not exist.
+ * - 500 Internal Server Error: Unexpected database or system error.
+ */
+author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.valid("param").id;
+
+    const result = await authorService.getStoryById(storyId, userId);
+
+    if (!result.success) {
+        // Map service errors to appropriate status codes and error objects
+        let status: StatusCode = 500;
+        let message = "Internal Server Error";
+        let code = "INTERNAL_SERVER_ERROR";
+
+        if (result.error === 'NOT_FOUND') {
+            status = 404;
+            message = "Story not found";
+            code = "NOT_FOUND";
+        } else if (result.error === 'UNAUTHORIZED') {
+            status = 403;
+            message = "You do not have permission to access this story";
+            code = "FORBIDDEN";
+        }
+
+        return c.json({ 
+            success: false, 
+            error: { message, code } 
+        }, status);
+    }
+
+    return c.json({ success: true, story: result.data }, 200);
+});
+
+
+/**
+ * PATCH /story/page/:id - Update story page
+ * * Middleware: `authMiddleware`, `validate("form", storyPatchSchema)`.
+ * Behaviour: Performs a partial update on the story and its page content.
+ * * Responses:
+ * - 200: success (returns updated story)
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.patch("/story/page/:id", authMiddleware, validate("json", storyPagePatchSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const pageId = c.req.param("id");
+    
+    // Zod guarantees this data is valid based on your schema
+    const updateData = c.req.valid("json") as UpdateStoryPageData;
+
+    const result = await authorService.updateStoryPage(pageId, userId, updateData);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story page not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, storyPage: result.data }, 200);
+});
+
+/**
+ * PATCH /story/:id - Update story details
+ * * Middleware: `authMiddleware`, `validate("form", storyPatchSchema)`.
+ * Behaviour: Performs a partial update on the story and its page content.
+ * * Responses:
+ * - 200: success (returns updated story)
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.patch("/story/:id", authMiddleware, validate("form", storyPatchSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.param("id");
+    
+    // Zod guarantees this data is valid based on your schema
+    const updateData = c.req.valid("form") as UpdateStoryData;
+
+    const result = await authorService.updateStory(storyId, userId, updateData);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        if (result.error === 'SLUG_TAKEN') return c.json({ error: "Slug is already taken" }, 409);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, story: result.data }, 200);
+});
+
+/**
+ * DELETE /story/:id - Remove a story
+ * * Middleware: `authMiddleware`.
+ * Behaviour: Validates ownership and permanently removes the story and dependent records.
+ * * Responses:
+ * - 200: success
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.delete("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.param("id");
+
+    const result = await authorService.deleteStory(storyId, userId);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, message: "Story deleted successfully" }, 200);
+});
+
+/**
+ * GET /my-stories/recent - Retrieve the authenticated author's stories
+ * * Middleware: `authMiddleware`, `validate` (query schema).
+ * Behaviour: Fetches a paginated, searchable, and sortable list of stories 
+ * created by the requesting user.
+ * * Query Params: 
+ * - page (number), limit (number), search (string), sort (string), order (string)
+ * * Responses:
+ * - 200: success (returns `items`, `total`, `page`, `limit`, `totalPages`)
+ * - 400: validation error (invalid query parameters)
  * - 500: internal server error
  */
 author.get("/my-stories/recent", authMiddleware, async (c) => {
-    // Validate user context from authMiddleware
-    const user = c.get("user");
-    if (!user) {
-        return c.json({ error: "Unauthorized" }, 401);
+    const { id: userId } = c.get("user");
+    const result = await authorService.getMyRecentStories(userId)
+
+    if (!result.success) {
+        return c.json({ error: "Failed to fetch stories" }, 500);
     }
 
-    const { id, role } = user;
-
-    // Validate the role of current user (allow AUTHORS and SUPERUSER)
-    if (role !== "AUTHOR" && role !== "SUPERUSER") {
-        return c.json({ error: "Forbidden: Authors only" }, 403);
-    }
-
-    try {
-        // Fetch the three most recent stories for this specific author
-        const recentStories = await prisma.storyPage.findMany({
-            where: {
-                authorId: id,
-            },
-            orderBy: {
-                updatedAt: "desc", // Sorts by recently edited/updated first
-            },
-            take: 3, // Limits the payload response block to exactly 3 items
-            select: {
-                id: true,
-                title: true,
-                description: true,
-                imageUrl: true,
-                published: true,
-                updatedAt: true,
-            }
-        });
-
-        return c.json({
-            message: "Recent stories retrieved successfully",
-            ok: true,
-            stories: recentStories
-        }, 200);
-
-    } catch (error) {
-        console.error("Fetch Recent Stories Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
-    }
-});
-
-/**
- * GET /my-stories/ - Fetch all stories into author workspace
- * 
- * Middleware: `authMiddleware`, `validate("query", storyListQuerySchema)`.
- * Behaviour: Returns a paginated list of up to 10 stories (default) for the author workspace view. 
- * Supports filtering by title, custom limit per page, and sorting by title or update date.
- * 
- * Query Parameters (Validated):
- * - filter (string, optional)
- * - sort ("title" | "updatedAt", default: "updatedAt")
- * - order ("asc" | "desc", default: "desc")
- * - page (number, default: 1)
- * - limit (number, default: 10, max: 50)
- * 
- * Responses:
- * - 200: success
- * - 401: unauthorized
- * - 403: forbidden
- * - 500: internal server error
- */
-author.get("/my-stories/", authMiddleware, validate("query", storyListQuerySchema), async (c) => {
-    const user = c.get("user");
-    if (!user) return c.json({ error: "Unauthorized" }, 401);
-
-    const { id, role } = user;
-    if (role !== "AUTHOR" && role !== "SUPERUSER") {
-        return c.json({ error: "Forbidden: Authors only" }, 403);
-    }
-
-    // Validate and get query parameters
-    const { filter, sort, order, page, limit } = c.req.valid("query");
-
-    const skip = (page! - 1) * limit!;
-    const where = {
-        authorId: id,
-        title: {
-            contains: filter,
-            mode: 'insensitive' as const
-        },
-    };
-
-    try {
-        // Execute findMany and count in a transaction for consistency
-        const [stories, totalCount] = await prisma.$transaction([
-            prisma.storyPage.findMany({
-                where,
-                orderBy: { [sort!]: order! },
-                skip: skip,
-                take: limit,
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    imageUrl: true,
-                    published: true,
-                    updatedAt: true,
-                }
-            }),
-            prisma.storyPage.count({ where })
-        ]);
-
-        return c.json({
-            message: "Stories retrieved successfully",
-            ok: true,
-            page,
-            limit,
-            totalCount,
-            totalPages: Math.ceil(totalCount / limit!),
-            stories: stories
-        }, 200);
-
-    } catch (error) {
-        console.error("Fetch Stories Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
-    }
-});
-
-/**
- * POST /story - Create a new story page entry
- *
- * Middleware: `authMiddleware`, `validate("json", storyCreateSchema)`.
- * Authorization: users with role `AUTHOR` or `SUPERUSER` may create pages.
- *
- * Accepted JSON fields: `title`, `slug`, `description`.
- * Behavior: sets up a default empty layout template structure for Puck. 
- * Prisma automatically handles generating the unique CUID2 string id.
- *
- * Responses:
- * - 201: page record created successfully
- * - 400: missing required title or slug fields
- * - 403: forbidden (insufficient role)
- * - 500: internal server error
- */
-author.post("/story", authMiddleware, validate("json", storyCreateSchema), async (c) => {
-    try {
-        // Validate the role of current user (allow AUTHORS and SUPERUSER)
-        const { id: userId, role } = c.get("user");
-        if (role !== "AUTHOR" && role !== "SUPERUSER") {
-            return c.json({ error: "Forbidden: Elevated access required" }, 403);
-        }
-
-        // Get the page parameters from validated JSON
-        const { title, description, slug } = c.req.valid("json");
-        
-        // Define standard baseline parameters for Puck content schemas
-        const defaultPuckSchema = {
-            content: [],
-            root: { props: { title: title } },
-        };
-
-        // Create the page record in database (Prisma automatically sets the CUID2)
-        const newPage = await prisma.storyPage.create({
-            data: {
-                title,
-                description,
-                slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, ""), // Sanitize url strings
-                puckData: defaultPuckSchema,
-                authorId: userId,
-            },
-        });
-
-        return c.json({ message: "Page created successfully", ok: true, page: newPage }, 201);
-    } catch (error) {
-        console.error("Page Creation Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
-    }
+    // Return the paginated response directly
+    return c.json({ 
+        success: true, 
+        items: result.data 
+    }, 200);
 });
 
 
 /**
- * PATCH /story/:id - Save workspace updates to a page layout
- *
- * Middleware: `authMiddleware`, `validate("param", storyParamsSchema)`,
- * `validate("json", storyPatchSchema)`.
- * Authorization: the page author or users with role `SUPERUSER` may
- * perform updates.
- *
- * Accepted JSON fields (all optional):
- * - `data` — the Puck canvas structure schema object to update when present
- * - `published` — boolean visibility toggle state to update when present
- * - `title` — string (1-100 chars)
- * - `description` — string (1-500 chars)
- * - `imageUrl` — string (optional)
- *
- * Responses:
- * - 200: page layout saved successfully
- * - 403: forbidden (not author and not SUPERUSER)
- * - 404: page not found
+ * GET /my-stories - Retrieve the authenticated author's stories
+ * * Middleware: `authMiddleware`, `validate` (query schema).
+ * Behaviour: Fetches a paginated, searchable, and sortable list of stories 
+ * created by the requesting user.
+ * * Query Params: 
+ * - page (number), limit (number), search (string), sort (string), order (string)
+ * * Responses:
+ * - 200: success (returns `items`, `total`, `page`, `limit`, `totalPages`)
+ * - 400: validation error (invalid query parameters)
  * - 500: internal server error
  */
-author.patch("/story/:id", authMiddleware, validate("param", storyParamsSchema), validate("json", storyPatchSchema), async (c) => {
-    try {
-        // Get the current user details
-        const { id: userId, role } = c.get("user");
+author.get("/my-stories", authMiddleware, validate("query", storyListQuerySchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const { page, limit, search, sort, order } = c.req.valid("query");
+    const result = await authorService.getMyStories(userId, {
+        search,
+        limit: limit ?? 10,
+        page: page ?? 1,
+        sort,
+        order
+    });
 
-        // Get the target page id parameter from validated params
-        const pageId = c.req.valid("param").id;
-
-        // Get the data payload adjustments from validated JSON
-        const updateData = c.req.valid("json");
-
-        // Fetch page details from database to check ownership permissions
-        const existingPage = await prisma.storyPage.findUnique({ where: { id: pageId } });
-        if (!existingPage) {
-            return c.json({ error: "Page not found" }, 404);
-        }
-
-        if (existingPage.authorId !== userId && role !== "SUPERUSER") {
-            return c.json({ error: "Forbidden: You do not own this page asset" }, 403);
-        }
-
-        // Execute database update mutations safely
-        const updatedPage = await prisma.storyPage.update({
-            where: { id: pageId },
-            data: {
-                ...(updateData.data && { puckData: updateData.data }),
-                ...(updateData.published !== undefined && { published: updateData.published }),
-                ...(updateData.title && { title: updateData.title }),
-                ...(updateData.description && { description: updateData.description }),
-                ...(updateData.imageUrl && { imageUrl: updateData.imageUrl }), // Added: Map imageUrl to Prisma update
-            },
-        });
-
-        return c.json({ message: "Page saved successfully", ok: true, page: updatedPage }, 200);
-    } catch (error) {
-        console.error("Page Save Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
+    if (!result.success) {
+        return c.json({ error: "Failed to fetch stories" }, 500);
     }
-});
 
-/**
- * GET /story/:id - Fetch page details to load into the workspace editor
- *
- * Middleware: `authMiddleware`, `validate("param", storyParamsSchema)`.
- * Behavior: returns the full page details matching the provided ID payload.
- *
- * Responses:
- * - 200: page record object payload
- * - 404: page not found
- * - 500: internal server error
- */
-author.get("/story/:id", authMiddleware, validate("param", storyParamsSchema), async (c) => {
-    try {
-        const pageId = c.req.valid("param").id;
-        const page = await prisma.storyPage.findUnique({ where: { id: pageId } });
-
-        if (!page) {
-            return c.json({ error: "Page not found" }, 404);
-        }
-
-        return c.json({ ok: true, page });
-    } catch (error) {
-        console.error("Page Fetch Error:", error);
-        return c.json({ error: "Internal server error" }, 500);
-    }
+    // Return the paginated response directly
+    return c.json({ success: true, ...result.data }, 200);
 });
 
 export default author;

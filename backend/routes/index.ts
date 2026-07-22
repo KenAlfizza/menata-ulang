@@ -5,7 +5,7 @@ import story from "./story.ts";
 import podcast from "./podcast.ts";
 import reflection from "./reflection.ts";
 import feedback from "./feedback.ts";
-import author from "./author1.ts";
+import author from "./author.ts";
 import researcher from "./researcher.ts";
 import files from "./files.ts";
 import editor from "./editor.ts";
