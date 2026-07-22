@@ -19,8 +19,8 @@ export default function RecentStories() {
                 setIsLoading(true);
                 setError(null);
 
-                const stories = await fetchRecentStories(accessToken);
-                setRecentStories(stories);
+                const items = await fetchRecentStories(accessToken);
+                setRecentStories(items);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load recent stories")

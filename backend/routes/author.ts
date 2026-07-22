@@ -12,7 +12,7 @@ import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchS
 import { authorService } from "../services/authorService.ts";
 import { UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
 
-const author = new Hono<{ Variables: AppVariables}>();
+const author = new Hono<{ Variables: AppVariables }>();
 
 /**
  * POST /story - Create a new story record entry

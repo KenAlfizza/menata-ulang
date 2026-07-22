@@ -2,6 +2,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 import { WorkspaceStoryRecord } from "@/types/workspace.ts";
 import { authFetch } from "../auth.ts";
+import { PaginatedResult } from "../../types/common.ts";
+import { getFullImageUrl } from "../../utils/url.ts";
 
 /**
  * Fetch the recently edited stories
@@ -21,8 +23,16 @@ export async function fetchRecentStories(
     if (!response.ok) {
         throw new Error(`Failed to fetch recent stories: ${response.status} ${response.statusText}`);
     }
-    const { stories } = await response.json();
-    return stories;
+    const data = await response.json();
+
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+
+    console.log("Image URL being sent to next/image:", transformedItems[0].imageUrl);
+    return transformedItems;
 }
 
 /**
@@ -35,29 +45,25 @@ export async function fetchRecentStories(
 export async function fetchMyStories(
     accessToken: string,
     params: {
-        page?: number;
-        limit?: number;
-        sort?: "title" | "updatedAt";
-        order?: "asc" | "desc";
-        filter?: string;
+        page?: number,
+        limit?: number,
+        sort?: "title" | "updatedAt",
+        order?: "asc" | "desc",
+        search?: string,
     } = {}
-): Promise<{ 
-    stories: WorkspaceStoryRecord[]; 
-    totalCount: number; 
-    totalPages: number; 
-    page: number;
-    limit: number 
-}> {
+): Promise<PaginatedResult<WorkspaceStoryRecord>> {
     // Construct query parameters
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.sort) queryParams.append("sort", params.sort);
     if (params.order) queryParams.append("order", params.order);
-    if (params.filter) queryParams.append("filter", params.filter);
+    if (params.search) queryParams.append("filter", params.search);
+
+    console.log("Params: ", queryParams.toString());
 
     const response = await authFetch(
-        `${API_BASE_URL}/author/my-stories/?${queryParams.toString()}`,
+        `${API_BASE_URL}/author/my-stories?${queryParams.toString()}`,
         accessToken,
         { method: "GET" }
     );
@@ -69,10 +75,16 @@ export async function fetchMyStories(
     // Capture the full response object
     const data = await response.json();
     
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+    
     // Return the data to be used by the UI (e.g., Shadcn Pagination)
     return {
-        stories: data.stories,
-        totalCount: data.totalCount,
+        items: transformedItems,
+        total: data.total,
         totalPages: data.totalPages,
         page: data.page,
         limit: data.limit
