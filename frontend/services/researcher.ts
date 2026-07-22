@@ -1,54 +1,102 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-import { Data } from "@puckeditor/core";
+import { ResearchRecord, UpdateResearchData } from "../types/research.ts";
+import { getFullImageUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
-import { ResearchRecord } from "../types/research.ts";
 
 /**
- * Creates a new research page record.
+ * Creates a new research via the API
+ * @param accessToken - The user's authentication token
+ * @param researchData - The research details including title, slug, description, and optional image
+ * @returns The created research object or throws an error
  */
-export async function createResearch(
-  title: string,
-  slug: string,
-  description: string,
-  accessToken: string
-): Promise<ResearchRecord> {
-  // Slug sanitized on backend, but following your established pattern 
-  // of client-side consistency:
-  const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-_]/g, "");
+export async function createResearch(accessToken: string, researchData: {
+    title: string;
+    slug: string;
+    description?: string;
+    image?: File;
+}): Promise<ResearchRecord> {
+    const formData = new FormData();
+    Object.entries(researchData).forEach(([key, val]) => val && formData.append(key, val));
 
-  const response = await authFetch(`${API_BASE_URL}/researcher/`, accessToken, {
-    method: "POST",
-    body: JSON.stringify({ title, slug: sanitizedSlug, description }),
-  });
+    const response = await authFetch(`${API_BASE_URL}/researcher/research`, accessToken, {
+        method: "POST",
+        body: formData,
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || "Failed to create research page");
-  }
+    const body = await response.json();
 
-  const json = await response.json();
-  return json.research;
+    if (!response.ok) {
+        throw new Error(JSON.stringify(body.error));
+    }
+
+    return body.research;
 }
 
 /**
- * Updates an existing research page (Puck data, metadata, or publish status).
+ * Retrieves a research by ID via the API
+ * @param accessToken - The user's authentication token
+ * @param researchId - The UUID of the research
+ * @returns The research object
+ */
+export async function retrieveResearch(
+    accessToken: string,
+    researchId: string
+): Promise<ResearchRecord> {
+
+    const response = await authFetch(
+        `${API_BASE_URL}/researcher/research/${researchId}`,
+        accessToken,
+        {
+            method: "GET",
+        }
+    );
+
+    const body = await response.json();
+    if (!response.ok) {
+        throw new Error(JSON.stringify(body.error));
+    }
+    
+    if (body.research.imageUrl) {
+        body.research.imageUrl = getFullImageUrl(body.research.imageUrl);
+    }
+
+    return body.research;
+}
+
+/**
+ * Updates a research by ID via the API
+ * @param accessToken - The user's authentication token
+ * @param researchId - The UUID of the research
+ * @param updateData - The partial fields to update
+ * @returns The updated research object
  */
 export async function updateResearch(
-  pageId: string,
-  updateData: { data?: Data; published?: boolean; title?: string; description?: string },
-  accessToken: string
+    accessToken: string,
+    researchId: string,
+    updateData: UpdateResearchData
 ): Promise<ResearchRecord> {
-  const response = await authFetch(`${API_BASE_URL}/researcher/page/${pageId}`, accessToken, {
-    method: "PATCH",
-    body: JSON.stringify(updateData),
-  });
+    const formData = new FormData();
+    Object.entries(updateData).forEach(([key, val]) => val && formData.append(key, val));
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to update research page: ${pageId}`);
-  }
+    const response = await authFetch(
+        `${API_BASE_URL}/researcher/research/${researchId}`,
+        accessToken,
+        {
+            method: "PATCH",
+            body: formData,
+        }
+    );
 
-  const json = await response.json();
-  return json.page;
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+    }
+
+    if (body.research?.imageUrl) {
+        body.research.imageUrl = getFullImageUrl(body.research.imageUrl);
+    }
+
+    return body.research;
 }

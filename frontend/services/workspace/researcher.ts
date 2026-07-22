@@ -1,5 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+import { PaginatedResult } from "../../types/common.ts";
 import { authFetch } from "../auth.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace";
 
@@ -21,8 +22,8 @@ export async function fetchRecentResearches(
     if (!response.ok) {
         throw new Error(`Failed to fetch recent researches: ${response.status} ${response.statusText}`);
     }
-    const { researches } = await response.json();
-    return researches;
+    const data = await response.json();
+    return data.items;
 }
 
 /**
@@ -41,13 +42,7 @@ export async function fetchMyResearches(
         order?: "asc" | "desc";
         filter?: string;
     } = {}
-): Promise<{ 
-    researches: WorkspaceResearchRecord[]; 
-    totalCount: number; 
-    totalPages: number; 
-    page: number;
-    limit: number 
-}> {
+): Promise<PaginatedResult<WorkspaceResearchRecord>> {
     // Construct query parameters
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
@@ -57,7 +52,7 @@ export async function fetchMyResearches(
     if (params.filter) queryParams.append("filter", params.filter);
 
     const response = await authFetch(
-        `${API_BASE_URL}/researcher/my-researches/?${queryParams.toString()}`,
+        `${API_BASE_URL}/researcher/my-researches?${queryParams.toString()}`,
         accessToken,
         { method: "GET" }
     );
@@ -71,8 +66,8 @@ export async function fetchMyResearches(
     
     // Return the data to be used by the UI (e.g., Shadcn Pagination)
     return {
-        researches: data.researches,
-        totalCount: data.totalCount,
+        items: data.items,
+        total: data.total,
         totalPages: data.totalPages,
         page: data.page,
         limit: data.limit

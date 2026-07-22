@@ -16,7 +16,7 @@ export default function MyResearches() {
     
     // Core State
     const [researches, setResearches] = useState<WorkspaceResearchRecord[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
+    const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     
     // Single source of truth for loading/transition state
@@ -37,8 +37,8 @@ export default function MyResearches() {
             // We keep the loading state true for 300ms to ensure the fade-in 
             // effect is visible even if the API is extremely fast
             setTimeout(() => {
-                setResearches(data.researches);
-                setTotalCount(data.totalCount);
+                setResearches(data.items);
+                setTotal(data.total);
                 setTotalPages(data.totalPages);
                 setIsLoading(false);
             }, 300);
@@ -60,7 +60,7 @@ export default function MyResearches() {
     return (
         <div className="w-full overflow-hidden">
             <div className="flex items-center mb-6">
-                <h2 className="text-2xl font-semibold">My Research ({totalCount})</h2>
+                <h2 className="text-2xl tracking-tight text-zinc-600">My Research ({total})</h2>
 
                 <div className="flex gap-2 ml-auto">
                     <SearchBar 
@@ -85,7 +85,7 @@ export default function MyResearches() {
                     {/* If loading, show skeletons. Otherwise, show stories. */}
                     {isLoading
                         ? Array.from({ length: 10 }).map((_, i) => <ResearchCard key={`skeleton-${i}`} isLoading />)
-                        : researches.map((research) => <ResearchCard key={research} research={research} />)
+                        : researches.map((research) => <ResearchCard key={research.id} research={research} />)
                     }
                 </div>
             </div>

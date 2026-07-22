@@ -14,14 +14,14 @@ export default function RecentResearches() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        async function loadRecentStories() {
+        async function loadRecentResearches() {
             if (!accessToken) return;
             try {
                 setIsLoading(true);
                 setError(null);
 
-                const researches = await fetchRecentResearches(accessToken);
-                setRecentResearches(researches);
+                const data = await fetchRecentResearches(accessToken);
+                setRecentResearches(data);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load recent researches")
@@ -31,7 +31,7 @@ export default function RecentResearches() {
         }
 
         if (accessToken) {
-            loadRecentStories();
+            loadRecentResearches();
         }
     }, [accessToken]); // Re run for access token changes
 
@@ -40,7 +40,7 @@ export default function RecentResearches() {
 
     return (
         <div className="w-full">
-            <h2 className="text-black text-2xl font-semibold">Recent Researches</h2>
+            <h2 className="text-2xl tracking-tight text-zinc-600">Recent Researches</h2>
             <div className="grid grid-cols-4 gap-8 py-4">
                 <ResearchCard isNewResearch/>
 
