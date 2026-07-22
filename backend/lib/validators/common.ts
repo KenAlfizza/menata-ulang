@@ -44,22 +44,3 @@ export const maxWordRule = (max: number, message?: string) =>
       message: message || `Must be ${max} words or less`
     }
   );
-
-
-/**
- * Image validation rule
- *
- * Validates uploaded `File` objects:
- * - Non-empty
- * - Maximum size 5MB
- * - MIME type one of JPEG, PNG, WebP
- *
- * Note: Runtime must provide `File` (Deno/file API environment compatibility).
- */
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-export const imageRule = z
-    .instanceof(File)
-    .refine((f) => f.size > 0, "File is empty")
-    .refine((f) => f.size <= MAX_SIZE, "Image size is maximum 10MB")
-    .refine((f) => ACCEPTED_TYPES.includes(f.type), "Only JPEG, PNG, WebP");

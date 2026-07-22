@@ -22,7 +22,7 @@ export default function MyStories() {
     // Single source of truth for loading/transition state
     const [isLoading, setIsLoading] = useState(true);
     
-    const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState("");
     const [page, setPage] = useState(1);
 
     const isInitialMount = useRef(true);
@@ -32,13 +32,13 @@ export default function MyStories() {
         
         setIsLoading(true);
         try {
-            const data = await fetchMyStories(accessToken, { search, page, limit: 10 });
+            const data = await fetchMyStories(accessToken, { filter, page, limit: 10 });
             
             // We keep the loading state true for 300ms to ensure the fade-in 
             // effect is visible even if the API is extremely fast
             setTimeout(() => {
-                setStories(data.items);
-                setTotalCount(data.total);
+                setStories(data.stories);
+                setTotalCount(data.totalCount);
                 setTotalPages(data.totalPages);
                 setIsLoading(false);
             }, 300);
@@ -46,7 +46,7 @@ export default function MyStories() {
             console.error("Fetch Error:", err);
             setIsLoading(false);
         }
-    }, [accessToken, search, page]);
+    }, [accessToken, filter, page]);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -55,7 +55,7 @@ export default function MyStories() {
             return;
         }
         loadStories();
-    }, [page, search, loadStories]);
+    }, [page, filter, loadStories]);
 
     return (
         <div className="w-full overflow-hidden">
@@ -66,7 +66,7 @@ export default function MyStories() {
                     <SearchBar 
                         placeholder="Search..." 
                         onSearch={(val) => {
-                            setSearch(val);
+                            setFilter(val);
                             setPage(1);
                         }} 
                     />
@@ -78,7 +78,7 @@ export default function MyStories() {
 
             {/* Transition Container: Stable height, changing opacity */}
             <div 
-                className="transition-opacity duration-300 ease-in-out"
+                className="min-h-[400px] transition-opacity duration-300 ease-in-out"
                 style={{ opacity: isLoading ? 0.4 : 1 }}
             >
                 <div className="grid grid-cols-5 gap-8 py-4">
