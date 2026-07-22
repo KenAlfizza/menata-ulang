@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.12",
+    "jsr:@std/path@*": "1.1.4",
     "jsr:@std/path@1.1.4": "1.1.4",
     "npm:@hono/zod-validator@0.8": "0.8.0_hono@4.12.27_zod@4.4.3",
     "npm:@prisma/adapter-pg@^7.8.0": "7.8.0",

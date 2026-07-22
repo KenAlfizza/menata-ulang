@@ -7,6 +7,8 @@ import reflection from "./reflection.ts";
 import feedback from "./feedback.ts";
 import author from "./author.ts";
 import researcher from "./researcher.ts";
+import files from "./files.ts";
+import editor from "./editor.ts";
 
 // Router object
 const router = new Hono();
@@ -21,5 +23,7 @@ router.route("/feedback", feedback);
 router.route("/author", author);
 router.route("/feedback", feedback)
 router.route("/researcher", researcher);
+router.route("/files", files);
+router.route("/editor", editor)
 
 export default router;
