@@ -9,11 +9,11 @@ import { WorkspaceResearchRecord } from "@/types/workspace";
  * @returns The three most recently edited stories by the user
  * @throws If the backend returns a non-2xx response.
  */
-export async function fetchRecentStories(
+export async function fetchRecentResearches(
     accessToken: string
 ): Promise<WorkspaceResearchRecord[]> {
     const response = await authFetch(
-        `${API_BASE_URL}/author/my-researches/recent`, 
+        `${API_BASE_URL}/researcher/my-researches/recent`, 
         accessToken, 
         { method: "GET" }, 
     );
@@ -57,7 +57,7 @@ export async function fetchMyResearches(
     if (params.filter) queryParams.append("filter", params.filter);
 
     const response = await authFetch(
-        `${API_BASE_URL}/author/my-researches/?${queryParams.toString()}`,
+        `${API_BASE_URL}/researcher/my-researches/?${queryParams.toString()}`,
         accessToken,
         { method: "GET" }
     );

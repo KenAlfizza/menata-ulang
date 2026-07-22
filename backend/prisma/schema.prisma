@@ -29,7 +29,6 @@ model User {
   podcasts    Podcast[]
   reflections Reflection[]
 
-  storypages  StoryPage[]
   researchpages ResearchPage[]
   
   /// Hearts given by this user across different content types.
@@ -60,34 +59,46 @@ enum TokenType {
 }
 
 model Story {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
   title       String
   description String
-  text        String
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id])
   imageUrl    String    @default("")
   published   Boolean   @default(false)
-  publishedAt DateTime?   
+  publishedAt DateTime?
   research    Research?
 
-  // Updated Thread Relation (Strict 1-to-1)
-  // Connects this Story directly to a dedicated Thread container
+  // Hearts relation
+  heartsCount Int        @default(0)
+  hearts      Heart[]
+
+  // Updated Thread Relation
   threadId    String     @unique
   thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  /// Cached counter for total hearts received by this story.
-  heartsCount Int        @default(0)
-
-  /// Relation link to individual heart records.
-  hearts      Heart[]
+  // Story Page
+  page        StoryPage[]
+  @@map("stories")
 }
+
+model StoryPage {
+  id        String   @id @default(cuid(2))
+  puckData  Json
+  storyId   String   @unique
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  @@map("story_pages")
+}
+
+
 
 model Research {
   id        Int       @id @default(autoincrement())
   text      String
-  storyId   Int       @unique   
+  storyId   String    @unique   
   story     Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
 }
 
@@ -187,7 +198,7 @@ model Heart {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// The ID of the target Story (optional).
-  storyId   Int?
+  storyId   String?
   /// Story link relation.
   story     Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
   
@@ -214,20 +225,6 @@ model Feedback {
   content     String   @db.Text
   resolved    Boolean  @default(false) // Added resolved flag
   createdAt   DateTime @default(now())
-}
-
-model StoryPage {
-  id          String   @id @default(cuid(2)) // Backend-generated CUID
-  title       String
-  description String
-  imageUrl    String   @default("")
-  slug        String   @unique
-  puckData    Json     // Saves the flexible layout schema from Puck editor
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  authorId    Int
-  author      User     @relation(fields: [authorId], references: [id])
 }
 
 model ResearchPage {

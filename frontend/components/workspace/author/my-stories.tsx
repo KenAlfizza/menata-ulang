@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Filter } from "lucide-react";
 import { useAuth } from "@/context/auth-context.tsx";
-import { fetchMyStories } from "@/services/author";
+import { fetchMyStories } from "@/services/workspace/author";
 import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
 
 import { SearchBar } from "../../searchbar.tsx";
@@ -22,7 +22,7 @@ export default function MyStories() {
     // Single source of truth for loading/transition state
     const [isLoading, setIsLoading] = useState(true);
     
-    const [filter, setFilter] = useState("");
+    const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
 
     const isInitialMount = useRef(true);
@@ -32,13 +32,13 @@ export default function MyStories() {
         
         setIsLoading(true);
         try {
-            const data = await fetchMyStories(accessToken, { filter, page, limit: 10 });
+            const data = await fetchMyStories(accessToken, { search, page, limit: 10 });
             
             // We keep the loading state true for 300ms to ensure the fade-in 
             // effect is visible even if the API is extremely fast
             setTimeout(() => {
-                setStories(data.stories);
-                setTotalCount(data.totalCount);
+                setStories(data.items);
+                setTotalCount(data.total);
                 setTotalPages(data.totalPages);
                 setIsLoading(false);
             }, 300);
@@ -46,7 +46,7 @@ export default function MyStories() {
             console.error("Fetch Error:", err);
             setIsLoading(false);
         }
-    }, [accessToken, filter, page]);
+    }, [accessToken, search, page]);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -55,7 +55,7 @@ export default function MyStories() {
             return;
         }
         loadStories();
-    }, [page, filter, loadStories]);
+    }, [page, search, loadStories]);
 
     return (
         <div className="w-full overflow-hidden">
@@ -66,7 +66,7 @@ export default function MyStories() {
                     <SearchBar 
                         placeholder="Search..." 
                         onSearch={(val) => {
-                            setFilter(val);
+                            setSearch(val);
                             setPage(1);
                         }} 
                     />
@@ -78,7 +78,7 @@ export default function MyStories() {
 
             {/* Transition Container: Stable height, changing opacity */}
             <div 
-                className="min-h-[400px] transition-opacity duration-300 ease-in-out"
+                className="transition-opacity duration-300 ease-in-out"
                 style={{ opacity: isLoading ? 0.4 : 1 }}
             >
                 <div className="grid grid-cols-5 gap-8 py-4">

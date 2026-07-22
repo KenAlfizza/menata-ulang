@@ -1,11 +1,11 @@
 "use client"
 
-// import { fetchRecentStories } from "@/api/author";
-
 import { ResearchCard } from "./research-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
+
 import type { WorkspaceResearchRecord } from "@/types/workspace.ts";
+import { fetchRecentResearches } from "@/services/workspace/researcher.ts";
 
 export default function RecentResearches() {
     const { accessToken } = useAuth();
@@ -20,11 +20,11 @@ export default function RecentResearches() {
                 setIsLoading(true);
                 setError(null);
 
-                // const stories = await fetchRecentStories(accessToken);
-                // setRecentStories(stories);
+                const researches = await fetchRecentResearches(accessToken);
+                setRecentResearches(researches);
             } catch (err) {
                 console.error(err);
-                setError("Failed to load recent stories")
+                setError("Failed to load recent researches")
             } finally {
                 setIsLoading(false);
             }
@@ -35,12 +35,12 @@ export default function RecentResearches() {
         }
     }, [accessToken]); // Re run for access token changes
 
-    if (isLoading) return <div className="py-4 text-gray-500">Loading stories...</div>;
+    if (isLoading) return <div className="py-4 text-gray-500">Loading researches...</div>;
     if (error) return <div className="py-4 text-red-500">{error}</div>;
 
     return (
         <div className="w-full">
-            <h2 className="text-black text-2xl font-semibold">Recent Research</h2>
+            <h2 className="text-black text-2xl font-semibold">Recent Researches</h2>
             <div className="grid grid-cols-4 gap-8 py-4">
                 <ResearchCard isNewResearch/>
 
