@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button";
-import { PenBox, Plus, Router } from "lucide-react";
+import { PenBox, Plus } from "lucide-react";
 
 import { formatDate } from "@/components/workspace/format-date";
 import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
@@ -16,8 +15,6 @@ interface StoryCardProps {
 }
 
 export function StoryCard({ story, isNewStory = false, isLoading = false }: StoryCardProps) {
-    const router = useRouter();
-
     if (isLoading) {
         return (
             <Button 
@@ -31,11 +28,6 @@ export function StoryCard({ story, isNewStory = false, isLoading = false }: Stor
                     {/* Title */}
                     <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
                         <div className="w-40 h-8 bg-zinc-100 rounded-sm shrink-0" />
-                    </div>
-
-                    {/* Description */}
-                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
-                        <div className="w-20 h-6 bg-zinc-100 rounded-sm shrink-0" />
                     </div>
 
                     {/* Date */}
@@ -63,10 +55,9 @@ export function StoryCard({ story, isNewStory = false, isLoading = false }: Stor
         );
     } else {
         // Exact fallback logic evaluation constants matching your original signature
-        const id = story?.id ?? "";
+        const id = story?.id ?? "0";
         const title = story?.title ?? "Story title";
-        const description = story?.description ?? "No description provided"
-        const image = (story?.imageUrl && story.imageUrl.trim() !== "") ? `${story.imageUrl}` : "/logo-icon.svg";
+        const image = (story?.imageUrl && story.imageUrl.trim() !== "") ? story.imageUrl : "/logo-icon.svg";
         const alt = story?.title ? story.title : "Story Image";
         const date = story?.updatedAt ? formatDate(new Date(story.updatedAt)) : formatDate(new Date());
         const isPublished = story?.published ?? false;
@@ -75,7 +66,6 @@ export function StoryCard({ story, isNewStory = false, isLoading = false }: Stor
             <Button 
                 asChild
                 className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
-                onClick={() => router.push(`/workspace/author/view/${id}`)}
             >
                 <div className="w-full flex flex-col h-auto">
                     {/* Image */}
@@ -85,17 +75,11 @@ export function StoryCard({ story, isNewStory = false, isLoading = false }: Stor
                         width={128}
                         height={128}
                         className="shrink-0"
-                        unoptimized // remove in prod
                     />
 
                     {/* Title */}
                     <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
                         {title}
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-md text-center tracking-tight text-zinc-500 break-words">
-                        {description}
                     </div>
 
                     {/* Date */}

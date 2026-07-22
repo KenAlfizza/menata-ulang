@@ -14,23 +14,13 @@
  * @param options - Standard `RequestInit` options merged on top of the defaults.
  */
 export function authFetch(url: string, accessToken: string, options: RequestInit = {}): Promise<Response> {
-  const isFormData = options.body instanceof FormData;
-
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${accessToken}`,
-    ...options.headers,
-  };
-
-  // Only set Content-Type for non-FormData bodies. For FormData, the browser
-  // must generate its own Content-Type with the multipart boundary — setting
-  // it manually (or leaving a hardcoded application/json) breaks the upload.
-  if (!isFormData) {
-    (headers as Record<string, string>)["Content-Type"] = "application/json";
-  }
-
   return fetch(url, {
     ...options,
     credentials: "include",
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...options.headers,
+    },
   });
 }
