@@ -7,7 +7,7 @@ import { authMiddleware } from "../middleware/auth.ts";
 
 import { validate } from "../lib/validators/index.ts";
 
-import { researcherCreateSchema, researcherListQuerySchema, researcherParamsSchema, researcherPatchSchema, researcherPagePatchSchema } from "../lib/validators/researcher.ts";
+import { researcherCreateSchema, researcherListQuerySchema, researcherParamsSchema, researcherPatchSchema, researcherPagePatchSchema, publishResearchSchema } from "../lib/validators/researcher.ts";
 
 import { researcherService } from "../services/researcherService.ts";
 import { UpdateResearchData, UpdateResearchPageData } from "../types/services/researcher.ts";
@@ -197,6 +197,38 @@ researcher.patch("/research/:id", authMiddleware, validate("form", researcherPat
         if (result.error === 'NOT_FOUND') return c.json({ error: "Research not found" }, 404);
         if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
         if (result.error === 'SLUG_TAKEN') return c.json({ error: "Slug is already taken" }, 409);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, research: result.data }, 200);
+});
+
+/**
+ * PATCH /research/:id/publish - Update research publish status
+ * Middleware: `authMiddleware`, `validate("form", publishResearchSchema)`.
+ * Behaviour: Sets the published state of the research and manages the publishedAt timestamp.
+ * 
+ * @param {string} id - The unique identifier of the research.
+ * @param {boolean} published - The target publish state.
+ * 
+ * @returns {Promise<Response>} JSON response containing:
+ * - 200: success with updated `research` record
+ * - 404: research not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+researcher.patch("/research/:id/publish", authMiddleware, validate("form", publishResearchSchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const researchId = c.req.param("id");
+    
+    // Zod guarantees this data is valid based on your schema
+    const { published } = c.req.valid("form");
+
+    const result = await researcherService.setResearchPublishStatus(researchId, userId, published);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Research not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
         return c.json({ error: "Internal Server Error" }, 500);
     }
 

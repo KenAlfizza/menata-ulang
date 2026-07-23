@@ -19,6 +19,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "../../../context/auth-context.tsx";
+import { useState } from "react";
+import { setResearchPublishStatus } from "../../../services/researcher.ts";
+import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-context.tsx";
+
 
 interface ResearchCardProps {
     research?: WorkspaceResearchRecord;
@@ -28,21 +33,56 @@ interface ResearchCardProps {
 }
 
 export function ResearchCard({ research, isNewResearch = false, isLoading = false, onDelete }: ResearchCardProps) {
+    const { accessToken } = useAuth();
+    const { triggerRefresh } = useResearcherRefresh();
+    const [currentResearch, setCurrentResearch] = useState<WorkspaceResearchRecord | undefined>(research);
+
+    const id = currentResearch?.id ?? research?.id ?? "0";
+    const title = currentResearch?.title ?? research?.title ?? "Untitled Research";
+    const imageUrl = (currentResearch?.imageUrl && currentResearch.imageUrl.trim() !== "") ? `${currentResearch.imageUrl}` : (research?.imageUrl && research.imageUrl.trim() !== "") ? `${research.imageUrl}` : "/logo-icon.svg";
+    const alt = currentResearch?.title ?? research?.title ? currentResearch?.title ?? research?.title : "Story Image";
+    const description = currentResearch?.description ?? research?.description ?? "A short description describing the main point of the research";
+    const date = currentResearch?.updatedAt ? formatDate(new Date(currentResearch.updatedAt)) : research?.updatedAt ? formatDate(new Date(research.updatedAt)) : formatDate(new Date());
+    const isPublished = currentResearch?.published ?? research?.published ?? false;
+
+    const handlePublishToggle = async (publishState: boolean) => {
+        if (!accessToken) return;
+        try {
+            const updatedResearch = await setResearchPublishStatus(accessToken, id, publishState);
+            setCurrentResearch(updatedResearch as unknown as WorkspaceResearchRecord);
+            triggerRefresh();
+
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                
+                if (parsedError?.message) {
+                    alertMessage = parsedError.message;
+                }
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+
+            alert(`Research ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
+        }
+    };
+
     // 1. UPDATED LOADING SKELETON
     if (isLoading) {
         return (
             <Card className="w-full h-full min-h-[160px] bg-white/50 border border-zinc-100 rounded-md shadow-sm animate-pulse">
-                <CardContent className="p-4 flex flex-row items-start gap-4 h-full">
-                    {/* Left Side Image Skeleton */}
+                <CardContent className="flex flex-row items-start gap-4 h-full">
                     <div className="w-32 h-32 bg-zinc-200 rounded-md shrink-0" />
-
-                    {/* Right Side Contents Skeleton */}
                     <div className="flex-1 flex flex-col h-32 justify-between">
                         <div className="w-full flex flex-col gap-2">
                             <div className="w-2/3 h-6 bg-zinc-200 rounded" />
                             <div className="w-full h-4 bg-zinc-200 rounded" />
                         </div>
-
                         <div className="pt-2 flex items-center justify-between w-full border-t border-zinc-200/50">
                             <div className="w-1/4 h-3 bg-zinc-200 rounded" />
                             <div className="w-14 h-3 bg-zinc-200 rounded" />
@@ -57,35 +97,19 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
     if (isNewResearch) {
         return (
             <Card className="group relative w-full max-w-[160px] h-full min-h-[160px] bg-white/50 border-dashed border-zinc-200 hover:bg-zinc-200 transition-colors duration-200 flex items-center justify-center p-6 overflow-hidden">
-                
-                {/* Stretched Link targets the entire background box */}
                 <Link
                     href="/workspace/researcher/new"
                     className="absolute inset-0 z-0 cursor-pointer"
                     aria-label="Create new research"
                 />
-                
-                {/* Icon stays centered visually on layer z-10 */}
                 <Plus className="relative z-10 text-zinc-300 w-12 h-12 transition-transform duration-200 group-hover:scale-110 group-hover:text-zinc-500 pointer-events-none" />
             </Card>
         );
     }
 
-
     // 3. BASE CONTENT STATE
-    const id = research?.id ?? "0";
-    const title = research?.title ?? "Untitled Research";
-    const imageUrl = (research?.imageUrl && research.imageUrl.trim() !== "") ? `${research.imageUrl}` : "/logo-icon.svg";
-    const alt = research?.title ? research.title : "Story Image";
-    const description = research?.description ?? "A short description describing the main point of the research";
-    const date = research?.updatedAt ? formatDate(new Date(research.updatedAt)) : formatDate(new Date());
-    const isPublished = research?.published ?? false;
-
     return (
-        /* Added 'group relative' here so the stretched anchor targets this card boundary box */
         <Card className="group relative w-full h-full min-h-[160px] bg-white/50 border border-zinc-100 shadow-sm hover:bg-zinc-200/80 transition-colors duration-200 overflow-hidden p-0">
-
-            {/* THE STRETCHED LINK: Zero footprint anchor filling the entire background layout canvas */}
             <Link
                 href={`/workspace/researcher/view/${id}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
@@ -93,16 +117,11 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
             />
 
             <CardContent className="p-4 flex flex-row items-start h-full gap-4 relative z-10 pointer-events-none">
-                {/* 
-                  NOTE: pointer-events-none on parent allows clicks to pass through to the backdrop Link.
-                  We explicitly add 'pointer-events-auto' below back onto custom standalone triggers.
-                */}
-
                 {/* Left Aligned Image Container */}
                 <div className="relative w-32 h-32 shrink-0 overflow-hidden rounded-md bg-zinc-50 flex items-center justify-center">
                     <Image
                         src={imageUrl}
-                        alt={alt}
+                        alt={alt || ""}
                         width={128}
                         height={128}
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -141,12 +160,33 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
                                                 <span>About</span>
                                             </Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link href={`/workspace/researcher/view/${id}`} className="flex items-center gap-2 cursor-pointer">
-                                                <ArrowUpRightFromSquare className="w-4 h-4" />
-                                                <span>Publish</span>
-                                            </Link>
-                                        </DropdownMenuItem>
+                                        {!isPublished ? (
+                                            <DropdownMenuItem 
+                                                asChild
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePublishToggle(true);
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-2 cursor-pointer">
+                                                    <ArrowUpRightFromSquare className="w-4 h-4" />
+                                                    <span>Publish</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem 
+                                                asChild
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePublishToggle(false);
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-2 cursor-pointer">
+                                                    <ArrowUpRightFromSquare className="w-4 h-4" />
+                                                    <span>Unpublish</span>
+                                                </div>
+                                            </DropdownMenuItem>        
+                                        )}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuLabel>Page</DropdownMenuLabel>
                                         <DropdownMenuItem asChild>
@@ -209,6 +249,5 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
                 </div>
             </CardContent>
         </Card>
-    )
+    );
 }
-

@@ -10,16 +10,16 @@ import { ResearchCard } from "./research-card.tsx";
 import { PageSelector } from "./page-selector.tsx";
 import { fetchMyResearches } from "@/services/workspace/researcher.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace.ts";
+import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-context.tsx";
 
 export default function MyResearches() {
     const { accessToken } = useAuth();
+    const { refreshKey } = useResearcherRefresh();
     
-    // Core State
     const [researches, setResearches] = useState<WorkspaceResearchRecord[]>([]);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    
-    // Single source of truth for loading/transition state
+
     const [isLoading, setIsLoading] = useState(true);
     
     const [filter, setFilter] = useState("");
@@ -33,9 +33,6 @@ export default function MyResearches() {
         setIsLoading(true);
         try {
             const data = await fetchMyResearches(accessToken, { filter, page, limit: 10 });
-            
-            // We keep the loading state true for 300ms to ensure the fade-in 
-            // effect is visible even if the API is extremely fast
             setTimeout(() => {
                 setResearches(data.items);
                 setTotal(data.total);
@@ -57,6 +54,12 @@ export default function MyResearches() {
         loadStories();
     }, [page, filter, loadStories]);
 
+    // Refetch whenever a publish toggle happens anywhere (MyResearches or RecentResearches)
+    useEffect(() => {
+        if (refreshKey === 0) return; // skip firing on initial mount
+        loadStories();
+    }, [refreshKey, loadStories]);
+    
     return (
         <div className="w-full">
             <div className="flex items-center">

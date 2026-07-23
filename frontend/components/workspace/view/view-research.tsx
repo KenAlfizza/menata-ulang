@@ -11,7 +11,7 @@ import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Textarea } from "../../ui/textarea.tsx";
 import { ArrowLeft, ArrowUpRightFromSquare, Edit, Eye, ImageIcon, PenBox, Save, X } from "lucide-react";
-import { retrieveResearch, updateResearch } from "@/services/researcher.ts";
+import { retrieveResearch, updateResearch, setResearchPublishStatus } from "@/services/researcher.ts";
 import { ResearchRecord } from "../../../types/research.ts";
 import { useAuth } from "@/context/auth-context.tsx";
 
@@ -152,6 +152,59 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
         }
     };
 
+    const handlePublish = async () => {
+        if (!accessToken) return;
+        try {
+            const publishedResearch = await setResearchPublishStatus(accessToken, researchId, true);
+            setResearch(publishedResearch);
+
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                
+                if (parsedError?.message) {
+                    alertMessage = parsedError.message;
+                }
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+
+            alert(`Research publishing failed: ${alertMessage}. Please try again.`);
+        }
+    }
+
+    const handleUnpublish = async () => {
+        if (!accessToken) return;
+        try {
+            const publishedResearch = await setResearchPublishStatus(accessToken, researchId, false);
+            setResearch(publishedResearch);
+
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                
+                if (parsedError?.message) {
+                    alertMessage = parsedError.message;
+                }
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+
+            alert(`Research publishing failed: ${alertMessage}. Please try again.`);
+        }
+    }
+
+
     if (isLoading) return <main className="m-8">Loading...</main>;
 
     // Form is considered dirty if any form field changed OR a new image was selected
@@ -160,15 +213,15 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
     const isPublished = research?.published ?? false;
 
     return (
-        <main className="min-h-screen bg-zinc-100/50">
-            <div className="bg-white px-2 h-12 flex justify-between items-center border-b border-zinc-200">
+        <main className="min-h-screen bg-zinc-100">
+            <div className="sticky top-0 z-50 bg-white px-2 h-12 border-b border-zinc-300 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Button onClick={() => router.back()} variant="ghost" className="h-8 w-8 p-0 bg-zinc-100 hover:bg-zinc-200">
+                    <Button onClick={() => router.back()} variant="ghost" className="h-8 w-8 p-0 bg-zinc-200/25 hover:bg-zinc-200/50">
                         <ArrowLeft size={16} />
                     </Button>
                     <Image src="/logo-text.svg" alt="Logo" width={96} height={20} className="brightness-0" priority />
-                    <span className="text-zinc-300">|</span>
-                    <span className="text-xs tracking-tight text-zinc-500">RESEARCH</span>
+                    <span className="text-black/50">|</span>
+                    <span className="text-xs tracking-tight text-black/50">RESEARCH</span>
                 </div>
             </div>
 
@@ -304,25 +357,28 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1.5 text-sm font-medium tracking-tight">
+                                <div className="flex items-center gap-1.5 text-md font-medium tracking-tight">
                                     {isPublished ? (
                                         <>
-                                            <span className="text-green-600 text-xs">Published</span>
+                                            <span className="text-green-600">Published</span>
                                             <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 animate-pulse" />
                                         </>
                                     ) : (
                                         <>
-                                            <span className="text-yellow-600 text-xs">Draft</span>
+                                            <span className="text-yellow-600">Draft</span>
                                             <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" />
                                         </>
                                     )}
                                 </div>
+                                {!isPublished && (
                                 <Button 
                                     className="bg-yellow-400/60 hover:bg-yellow-400/100"
+                                    onClick={handlePublish}
                                     >
                                     <ArrowUpRightFromSquare className="w-4 h-4" />
                                     <span>Publish</span>
                                 </Button>
+                                )}
                             </div>
                         </section>
                     </CardContent>

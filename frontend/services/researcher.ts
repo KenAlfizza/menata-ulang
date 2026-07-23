@@ -100,3 +100,40 @@ export async function updateResearch(
 
     return body.research;
 }
+
+/**
+ * Updates the publish status of a research entry via the API
+ * @param accessToken - The user's authentication token
+ * @param researchId - The unique identifier of the research
+ * @param published - The target publish state
+ * @returns The updated research object
+ */
+export async function setResearchPublishStatus(
+    accessToken: string,
+    researchId: string,
+    published: boolean
+): Promise<ResearchRecord> {
+    const formData = new FormData();
+    formData.append("published", String(published));
+
+    const response = await authFetch(
+        `${API_BASE_URL}/researcher/research/${researchId}/publish`,
+        accessToken,
+        {
+            method: "PATCH",
+            body: formData,
+        }
+    );
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+    }
+
+    if (body.research?.imageUrl) {
+        body.research.imageUrl = getFullImageUrl(body.research.imageUrl);
+    }
+
+    return body.research;
+}

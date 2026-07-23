@@ -325,6 +325,65 @@ export const researcherService = {
         }
     },
 
+    /**
+     * Updates the publish status of a research entity.
+     * Performs an ownership check to ensure the research belongs to the requesting researcher.
+     * 
+     * @param {string} researchId - The unique identifier of the research.
+     * @param {number} userId - The ID of the researcher requesting the status change.
+     * @param {boolean} published - The target publish state.
+     * 
+     * @returns {Promise<ResearcherServiceResult<ResearchRecord>>}
+     */
+    async setResearchPublishStatus(
+        researchId: string,
+        userId: number,
+        published: boolean
+    ): Promise<ResearcherServiceResult<ResearchRecord>> {
+        try {
+            // Verify ownership and existence
+            const existing = await prisma.research.findUnique({ 
+                where: { id: researchId },
+                include: { 
+                    page: {
+                        select: { id: true, puckData: true }
+                    } 
+                }
+            });
+            if (!existing) return { success: false, error: 'NOT_FOUND' };
+            if (existing.researcherId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            // Update in database
+            const updated = await prisma.research.update({
+                where: { id: researchId },
+                data: { 
+                    published,
+                    publishedAt: published ? (existing.publishedAt || new Date()) : null
+                },
+                include: { 
+                    page: {
+                        select: { id: true, puckData: true }
+                    } 
+                }
+            });
+
+            // Create a record object
+            const researchRecord: ResearchRecord = {
+                ...updated,
+                page: {
+                    id: updated.page[0].id,
+                    puckData: updated.page[0].puckData as PuckOutputData,
+                }
+            };
+
+            return { success: true, data: researchRecord };
+
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
 
     /**
      * Deletes a research and its associated records by its unique ID.
@@ -448,7 +507,7 @@ export const researcherService = {
         try {
             const researches = await prisma.research.findMany({
                 where: { researcherId: userId },
-                take: 3,
+                take: 2,
                 orderBy: {updatedAt: "desc"}
             })
 
