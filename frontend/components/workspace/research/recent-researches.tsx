@@ -41,15 +41,16 @@ export default function RecentResearches() {
     return (
         <div className="w-full">
             <h2 className="text-2xl tracking-tight text-zinc-600">Recent Researches</h2>
-            <div className="grid grid-cols-4 gap-8 py-4">
-                <ResearchCard isNewResearch/>
-
-                {recentResearches.map((research) => (
-                    <ResearchCard 
-                        key={research.id} 
-                        research={research} 
-                    />
-                ))}
+            <div className="flex flex-row gap-8 py-4">
+                <ResearchCard isNewResearch />
+                <div className="flex gap-8 w-full">
+                    {recentResearches.map((research) => (
+                        <ResearchCard 
+                            key={research.id} 
+                            research={research} 
+                        />
+                    ))}
+                </div>
                 
             </div>
         </div>

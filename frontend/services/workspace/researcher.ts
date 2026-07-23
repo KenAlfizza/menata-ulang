@@ -1,6 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 import { PaginatedResult } from "../../types/common.ts";
+import { getFullImageUrl } from "../../utils/url.ts";
 import { authFetch } from "../auth.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace";
 
@@ -23,7 +24,14 @@ export async function fetchRecentResearches(
         throw new Error(`Failed to fetch recent researches: ${response.status} ${response.statusText}`);
     }
     const data = await response.json();
-    return data.items;
+
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceResearchRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+
+    return transformedItems;
 }
 
 /**
@@ -62,11 +70,17 @@ export async function fetchMyResearches(
     }
 
     // Capture the full response object
-    const data = await response.json();
+        const data = await response.json();
+        
+    // Update image URL
+    const transformedItems = data.items.map((item: WorkspaceResearchRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
     
     // Return the data to be used by the UI (e.g., Shadcn Pagination)
     return {
-        items: data.items,
+        items: transformedItems,
         total: data.total,
         totalPages: data.totalPages,
         page: data.page,

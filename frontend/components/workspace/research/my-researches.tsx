@@ -58,8 +58,8 @@ export default function MyResearches() {
     }, [page, filter, loadStories]);
 
     return (
-        <div className="w-full overflow-hidden">
-            <div className="flex items-center mb-6">
+        <div className="w-full">
+            <div className="flex items-center">
                 <h2 className="text-2xl tracking-tight text-zinc-600">My Research ({total})</h2>
 
                 <div className="flex gap-2 ml-auto">
@@ -90,7 +90,7 @@ export default function MyResearches() {
                 </div>
             </div>
 
-            <div className="mt-8">
+            <div className="w-full mt-8">
                 <PageSelector 
                     currentPage={page} 
                     totalPages={totalPages} 
