@@ -19,6 +19,7 @@ import { Render } from "@puckeditor/core";
 //import { createPuckConfig } from "../../editor/researcher/puck.config.tsx";
 import { ResearchPageRecord } from "../../../types/page.ts";
 import { formatDate } from "../format-date.tsx";
+import { createPuckConfig } from "../../editor/research/puck.config.tsx";
 
 interface ResearchFormValues {
     title: string;
@@ -354,7 +355,9 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             {researchPagePreview ? (
                             <div className="border rounded-lg max-h-128 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] mt-2">
                                 <Link href={`/workspace/researcher/edit/${researchPagePreview.id}`}>
-                                    <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg p-1" />
+                                    <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg p-1">
+                                        <Render config={createPuckConfig(accessToken || "")} data={researchPagePreview.puckData} />
+                                    </div>
                                 </Link>
                             </div>
                             ) : (
