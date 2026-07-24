@@ -9,13 +9,14 @@ import { ResearchSaveButton } from "./save-button.tsx";
 interface EditorHeaderProps {
     isSaving: boolean;
     onSave: (currentData: Data) => void;
+    hasUnsavedChanges: boolean;
 }
 
-export function EditorHeader({ isSaving, onSave }: EditorHeaderProps) {
+export function EditorHeader({ isSaving, onSave, hasUnsavedChanges }: EditorHeaderProps) {
     return (
         <div className="bg-white px-2 h-12 flex justify-between items-center border-b border-zinc-200 z-50">
             <div className="flex items-center gap-2 w-1/4">
-                <BackButton />
+                <BackButton hasUnsavedChanges={hasUnsavedChanges} />
                 <Image
                     src="/logo-text.svg"
                     alt="Logo"

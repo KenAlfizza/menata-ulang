@@ -24,11 +24,18 @@ export function ResearchEditor({ pageId }: ResearchEditorProps) {
     const { accessToken } = useAuth();
 
     const [data, setData] = useState<Data | null>(null);
+    const [lastSavedData, setLastSavedData] = useState<Data | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<ApiErrorResponse | null>(null);
     const [statusCode, setStatusCode] = useState<number | null>(null);
 
     const { isSaving, saveWorkspace } = useSaveResearch({ pageId, accessToken });
+
+    const hasUnsavedChanges = useMemo(() => {
+        if (!data || !lastSavedData) return false;
+        return JSON.stringify(data) !== JSON.stringify(lastSavedData);
+    }, [data, lastSavedData]);
 
     const puckConfig = useMemo(() => {
         return createPuckConfig(accessToken || "");
@@ -41,6 +48,7 @@ export function ResearchEditor({ pageId }: ResearchEditorProps) {
                 setIsLoading(true);
                 const researchPage = await retrieveResearchPage(accessToken, pageId);
                 setData(researchPage.puckData);
+                setLastSavedData(researchPage.puckData);
             } catch (err: any) {
                 if (err instanceof ApiError) {
                     setError(err.response);
@@ -64,11 +72,24 @@ export function ResearchEditor({ pageId }: ResearchEditorProps) {
         initPageWorkspace();
     }, [pageId, accessToken]);
 
+    const handleSaveToServer = async (currentPuckData: any) => {
+        const success = await saveWorkspace(currentPuckData);
+        if (success) {
+            setLastSavedData(currentPuckData); // Clears warning until new edits are made
+        }
+    };
+
     const overrides = useMemo(
         () => ({
-            header: () => <EditorHeader isSaving={isSaving} onSave={saveWorkspace} />,
+            header: () => (
+                <EditorHeader 
+                    isSaving={isSaving} 
+                    onSave={handleSaveToServer} 
+                    hasUnsavedChanges={hasUnsavedChanges} 
+                />
+            ),
         }),
-        [isSaving, saveWorkspace]
+        [isSaving, handleSaveToServer, hasUnsavedChanges]
     );
 
     if (isLoading) {
