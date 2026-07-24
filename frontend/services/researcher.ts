@@ -137,3 +137,30 @@ export async function setResearchPublishStatus(
 
     return body.research;
 }
+
+/**
+ * Deletes a research entry via the API
+ * @param accessToken - The user's authentication token
+ * @param researchId - The unique identifier of the research to delete
+ * @returns A boolean indicating success
+ */
+export async function deleteResearch(
+    accessToken: string,
+    researchId: string
+): Promise<boolean> {
+    const response = await authFetch(
+        `${API_BASE_URL}/researcher/research/${researchId}`,
+        accessToken,
+        {
+            method: "DELETE",
+        }
+    );
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+    }
+
+    return body.success ?? true;
+}

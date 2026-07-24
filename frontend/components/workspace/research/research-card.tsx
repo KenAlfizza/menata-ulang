@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "../../../context/auth-context.tsx";
 import { useState } from "react";
-import { setResearchPublishStatus } from "../../../services/researcher.ts";
+import { deleteResearch, setResearchPublishStatus } from "../../../services/researcher.ts";
 import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-context.tsx";
 
 
@@ -69,6 +69,36 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
             }
 
             alert(`Research ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
+        }
+    };
+
+    const handleDeleteResearch = async (researchId: string) => {
+        if (!accessToken) return;
+        try {
+            await deleteResearch(accessToken, researchId);
+            
+            if (onDelete) {
+                onDelete(researchId);
+            }
+            triggerRefresh();
+
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                
+                if (parsedError?.message) {
+                    alertMessage = parsedError.message;
+                }
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+
+            alert(`Research deletion failed: ${alertMessage}. Please try again.`);
         }
     };
 
@@ -206,7 +236,7 @@ export function ResearchCard({ research, isNewResearch = false, isLoading = fals
                                             className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onDelete?.(id);
+                                                handleDeleteResearch(id);
                                             }}
                                         >
                                             <Trash2 className="w-4 h-4" />

@@ -10,8 +10,8 @@ import { Label } from "../../ui/label.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Textarea } from "../../ui/textarea.tsx";
-import { ArrowLeft, ArrowUpRightFromSquare, Edit, Eye, ImageIcon, PenBox, Save, X } from "lucide-react";
-import { retrieveResearch, updateResearch, setResearchPublishStatus } from "@/services/researcher.ts";
+import { ArrowDownLeftFromSquare, ArrowLeft, ArrowUpRightFromSquare, Edit, Eye, ImageIcon, PenBox, Save, Trash2, X } from "lucide-react";
+import { retrieveResearch, updateResearch, setResearchPublishStatus, deleteResearch } from "@/services/researcher.ts";
 import { ResearchRecord } from "../../../types/research.ts";
 import { useAuth } from "@/context/auth-context.tsx";
 
@@ -178,14 +178,42 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
         }
     };
 
+    const handleDeleteResearch = async () => {
+        if (!accessToken) return;
+        try {
+            await deleteResearch(accessToken, researchId);
+            
+            // Handle post-deletion logic (e.g., redirecting or updating parent state)
+            router.push("/workspace/researcher"); 
 
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                
+                if (parsedError?.message) {
+                    alertMessage = parsedError.message;
+                }
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+
+            alert(`Research deletion failed: ${alertMessage}. Please try again.`);
+        }
+    };
+
+    
     if (isLoading) return <main className="m-8">Loading...</main>;
 
     // Form is considered dirty if any form field changed OR a new image was selected
     const hasChanges = isDirty || isImageDirty;
-    const updatedAt = research?.updatedAt ? formatDate(new Date(research.updatedAt)) : formatDate(new Date());
+    const updatedAt = research?.updatedAt ? formatDate(new Date(research.updatedAt)) : "";
     const isPublished = research?.published ?? false;
-    const publishedAt = research?.publishedAt ?? null;
+    const publishedAt = research?.publishedAt ? formatDate(new Date(research.publishedAt)) : "";
 
     return (
         <main className="min-h-screen bg-zinc-100">
@@ -202,7 +230,7 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
 
             <div className="p-8 space-y-8">
                 <Card className="shadow-sm">
-                    <CardContent className="space-y-8 p-4">
+                    <CardContent className="space-y-4 p-4">
                         <section className="flex flex-col gap-2 px-2">
                             <div className="w-full h-8 flex items-center justify-between gap-2">
                                 <div className="flex flex-col">
@@ -339,10 +367,16 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             
                         </section>
                             
-                        <section className="pt-4 px-2 flex flex-row w-full border-t border-zinc-200/50">
+                        <section className="pt-4 px-2 flex flex-ro items-center gap-8 w w-full border-t border-zinc-200/50">
                             <div className="flex flex-col">
                                 <Label className="text-lg">Visibility</Label>
                                 <span className="text-zinc-500">Publish this research for everyone to see, or keep it hidden as a private draft.</span>
+                                {publishedAt && (
+                                     <div className="mt-1 flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
+                                        <ArrowUpRightFromSquare className="w-3.5 h-3.5" /> 
+                                        <span>Published: {publishedAt}</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex items-center gap-4 ml-auto">
                                 <div className="flex items-center gap-1.5 font-medium tracking-tight">
@@ -381,12 +415,30 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                                             }
                                         }
                                         >
-                                        <ArrowUpRightFromSquare className="w-4 h-4" />
+                                        <ArrowDownLeftFromSquare className="w-4 h-4" />
                                         <span>Unpublish</span>
                                     </Button>
                                     )}
                                 </div>
                             </div>
+                        </section>
+                        
+                        <section className="pt-4 px-2 flex flex-row items-center gap-8 w-full border-t border-zinc-200/50">
+                            <div className="flex flex-col">
+                                <Label className="text-lg">Delete</Label>
+                                <span className="text-zinc-500">Permanently delete this research from the website.</span>
+                            </div>
+                            <Button 
+                                className="ml-auto bg-red-400/60 hover:bg-red-400/100"
+                                onClick={(e) => {
+                                    e.stopPropagation(); 
+                                    handleDeleteResearch();
+                                    }
+                                }
+                                >
+                                <Trash2 className="w-4 h-4" />
+                                <span>Delete</span>
+                            </Button>
                         </section>
                     </CardContent>
                 </Card>
