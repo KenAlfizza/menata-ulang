@@ -10,6 +10,7 @@ export interface ResearchRecord {
     imageUrl: string;
     slug: string;
     published: boolean;
+    publishedAt: Date;
     createdAt: Date | string;
     updatedAt: Date | string;
     authorId: number;

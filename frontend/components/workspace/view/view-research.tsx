@@ -152,11 +152,11 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
         }
     };
 
-    const handlePublish = async () => {
+   const handlePublishToggle = async (publishState: boolean) => {
         if (!accessToken) return;
         try {
-            const publishedResearch = await setResearchPublishStatus(accessToken, researchId, true);
-            setResearch(publishedResearch);
+            const updatedResearch = await setResearchPublishStatus(accessToken, researchId, publishState);
+            setResearch(updatedResearch as ResearchRecord);
 
         } catch (error: unknown) {
             let alertMessage = "An unexpected error occurred";
@@ -174,35 +174,9 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                 alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
             }
 
-            alert(`Research publishing failed: ${alertMessage}. Please try again.`);
+            alert(`Research ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
         }
-    }
-
-    const handleUnpublish = async () => {
-        if (!accessToken) return;
-        try {
-            const publishedResearch = await setResearchPublishStatus(accessToken, researchId, false);
-            setResearch(publishedResearch);
-
-        } catch (error: unknown) {
-            let alertMessage = "An unexpected error occurred";
-
-            try {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                const errorString = errorMessage.replace(/^Error:\s*/, '');
-                const parsedError = JSON.parse(errorString);
-                
-                if (parsedError?.message) {
-                    alertMessage = parsedError.message;
-                }
-            } catch {
-                const errObj = error as { response?: { data?: { message?: string } } };
-                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
-            }
-
-            alert(`Research publishing failed: ${alertMessage}. Please try again.`);
-        }
-    }
+    };
 
 
     if (isLoading) return <main className="m-8">Loading...</main>;
@@ -211,6 +185,7 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
     const hasChanges = isDirty || isImageDirty;
     const updatedAt = research?.updatedAt ? formatDate(new Date(research.updatedAt)) : formatDate(new Date());
     const isPublished = research?.published ?? false;
+    const publishedAt = research?.publishedAt ?? null;
 
     return (
         <main className="min-h-screen bg-zinc-100">
@@ -227,15 +202,22 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
 
             <div className="p-8 space-y-8">
                 <Card className="shadow-sm">
-                    <CardContent className="space-y-8">
-                        <section className="p-2">
-                            <div className="w-full h-8 flex items-center justify-between">
-                                <Label className="text-lg">About Research</Label>
+                    <CardContent className="space-y-8 p-4">
+                        <section className="flex flex-col gap-2 px-2">
+                            <div className="w-full h-8 flex items-center justify-between gap-2">
+                                <div className="flex flex-col">
+                                    <Label className="text-lg">About Research</Label>
+                                    <span className="text-zinc-500">Update detailed information of your research, including its title, description, slug, and image.</span>
+                                </div>
+                                <div className="ml-auto flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
+                                    <PenBox className="w-3.5 h-3.5" /> 
+                                    <span>Updated: {updatedAt}</span>
+                                </div>
                                 
                                 {/* Container for buttons with invisible/retained layout footprint or absolute conditional rendering */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center">
                                     {hasChanges ? (
-                                        <div className="flex items-center gap-2 text-white animate-in fade-in duration-200">
+                                        <div className="flex items-center gap-1 text-white animate-in fade-in duration-200">
                                             <Button 
                                                 className="bg-green-400/60 hover:bg-green-400/100"
                                                 onClick={handleSubmit(onSubmit)}>
@@ -315,49 +297,55 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             </form>
                         </section>
 
-                        <section className="border-t pt-4 px-2 space-y-4">
-                            {researchPagePreview ? (
-                                <>
-                                    <div className="flex items-center">
-                                        <Label className="text-lg">Research Page</Label>
-                                        <Link
-                                            className="ml-auto space-x-1"
-                                            href={`/workspace/researcher/edit/${researchPagePreview.id}`}
-                                        >
-                                            <Button className="bg-green-400/60 hover:bg-green-400/100">
-                                                <Edit size={16} /> Edit
-                                            </Button>
-                                        </Link>
-                                        <Link href={`/`} className="flex items-center gap-2 cursor-pointer ml-2">
-                                            <Button className="bg-blue-400/60 hover:bg-blue-400/100">
-                                                <Eye className="w-4 h-4" />
-                                                <span>Preview</span>
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="border rounded-lg max-h-128 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] mt-2">
-                                        <Link href={`/workspace/researcher/edit/${researchPagePreview.id}`}>
-                                            <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg p-1" />
-                                        </Link>
-                                    </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <div className="p-4 text-center text-zinc-500">
-                                        Loading research page preview...
-                                    </div>
+                        <section className="border-t pt-4 px-2">
+                            <div className="flex flex-row">
+                                <div className="flex flex-col">
+                                    <Label className="text-lg">Research Page</Label>
+                                    <span className="text-zinc-500">Preview your research page to see how it looks to readers, or jump straight into the editor to make changes.</span>
                                 </div>
-                            )}
-                        </section>
-                            
-                        <section className="pt-4 px-2 flex items-center justify-between w-full border-t border-zinc-200/50">
-                            <div className="flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
-                                <PenBox className="w-3.5 h-3.5" /> 
-                                <span>Updated: {updatedAt}</span>
+                                
+                                {researchPagePreview && (
+                                <div className="ml-auto flex items-center gap-1">
+                                    <Link
+                                        href={`/workspace/researcher/edit/${researchPagePreview.id}`}
+                                    >
+                                        <Button className="cursor-pointer bg-green-400/60 hover:bg-green-400/100">
+                                            <Edit size={16} /> Edit
+                                        </Button>
+                                    </Link>
+                                    <Link href={`/`}>
+                                        <Button className="cursor-pointer bg-blue-400/60 hover:bg-blue-400/100">
+                                            <Eye className="w-4 h-4" />
+                                            <span>Preview</span>
+                                        </Button>
+                                    </Link>
+                                </div>
+                                )}
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1.5 text-md font-medium tracking-tight">
+                            {researchPagePreview ? (
+                            <div className="border rounded-lg max-h-128 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] mt-2">
+                                <Link href={`/workspace/researcher/edit/${researchPagePreview.id}`}>
+                                    <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg p-1" />
+                                </Link>
+                            </div>
+                            ) : (
+                            <div>
+                                <div className="flex items-center justify-center border rounded-lg min-h-64 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] mt-2">
+                                    <span className="text-zinc-400">Loading research page preview...</span>
+                                </div>
+                            </div>
+                            )}
+                            
+                        </section>
+                            
+                        <section className="pt-4 px-2 flex flex-row w-full border-t border-zinc-200/50">
+                            <div className="flex flex-col">
+                                <Label className="text-lg">Visibility</Label>
+                                <span className="text-zinc-500">Publish this research for everyone to see, or keep it hidden as a private draft.</span>
+                            </div>
+                            <div className="flex items-center gap-4 ml-auto">
+                                <div className="flex items-center gap-1.5 font-medium tracking-tight">
                                     {isPublished ? (
                                         <>
                                             <span className="text-green-600">Published</span>
@@ -370,15 +358,34 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                                         </>
                                     )}
                                 </div>
-                                {!isPublished && (
-                                <Button 
-                                    className="bg-yellow-400/60 hover:bg-yellow-400/100"
-                                    onClick={handlePublish}
-                                    >
-                                    <ArrowUpRightFromSquare className="w-4 h-4" />
-                                    <span>Publish</span>
-                                </Button>
-                                )}
+                                <div>
+                                    {!isPublished && (
+                                    <Button 
+                                        className="bg-yellow-400/60 hover:bg-yellow-400/100"
+                                        onClick={(e) => {
+                                            e.stopPropagation(); 
+                                            handlePublishToggle(true);
+                                            }
+                                        }
+                                        >
+                                        <ArrowUpRightFromSquare className="w-4 h-4" />
+                                        <span>Publish</span>
+                                    </Button>
+                                    )}
+                                    {isPublished && (
+                                    <Button 
+                                        className="bg-red-400/60 hover:bg-red-400/100"
+                                        onClick={(e) => {
+                                            e.stopPropagation(); 
+                                            handlePublishToggle(false);
+                                            }
+                                        }
+                                        >
+                                        <ArrowUpRightFromSquare className="w-4 h-4" />
+                                        <span>Unpublish</span>
+                                    </Button>
+                                    )}
+                                </div>
                             </div>
                         </section>
                     </CardContent>
