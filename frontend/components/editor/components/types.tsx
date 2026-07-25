@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Typography, Spacing, Size, ImageUpload, Color, Margin, Padding} from "../fields/types.tsx";
+import { Typography, Size, ImageUpload, Color, Margin, Padding} from "../fields/types.tsx";
 import { Slot } from "@puckeditor/core";
 
 /**
