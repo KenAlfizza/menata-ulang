@@ -16,13 +16,20 @@ export const defaultColor: Color = {
     opacity: "100%",
 };
 
+export const defaultColorText: Color = {
+    mode: "solid",
+    hex: "#000000",
+    opacity: "100%",
+};
+
+
 const parsePercent = (val: string, fallback: number): number => {
     const parsed = parseInt(val?.replace("%", ""), 10);
     return isNaN(parsed) ? fallback : parsed;
 };
 
 // Helper function to convert hex + percentage opacity to an rgba() or hex string
-export const getBackgroundColor = (colorObj?: { hex?: string; opacity?: string }) => {
+export const getColor = (colorObj?: { hex?: string; opacity?: string }) => {
     if (!colorObj || !colorObj.hex) return "transparent";
 
     const hex = colorObj.hex;

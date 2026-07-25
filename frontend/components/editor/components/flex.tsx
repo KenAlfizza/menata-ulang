@@ -2,7 +2,7 @@ import { FlexComponentType } from "./types.tsx";
 
 // Import fields
 import { ComponentConfig, Fields } from "@puckeditor/core";
-import { colorPickerField, getBackgroundColor } from "../fields/color.tsx";
+import { colorPickerField, getColor } from "../fields/color.tsx";
 import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
 import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
 
@@ -57,7 +57,7 @@ export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
           boxSizing: "border-box",
           minWidth: "64px",
           minHeight: "100px",
-          backgroundColor: getBackgroundColor(color),
+          backgroundColor: getColor(color),
           ...resolveMarginStyles(margin),
           ...resolvePaddingStyles(padding),
         }}

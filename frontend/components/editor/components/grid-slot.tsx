@@ -1,6 +1,6 @@
 import { Fields, ComponentConfig } from "@puckeditor/core";
 import { GridSlotType } from "./types.tsx";
-import { colorPickerField, getBackgroundColor } from "../fields/color.tsx";
+import { colorPickerField, getColor } from "../fields/color.tsx";
 import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
 import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
 
@@ -35,7 +35,7 @@ export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
                     boxSizing: "border-box",
                     minBlockSize: "128px",
                     minInlineSize: "128px",
-                    backgroundColor: getBackgroundColor(color),
+                    backgroundColor: getColor(color),
                     ...resolveMarginStyles(margin),
                     ...resolvePaddingStyles(padding),
                 }}

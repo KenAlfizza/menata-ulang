@@ -9,6 +9,7 @@ export interface TitleComponentType {
     // Content Fields
     title: string;
     typography: Typography;
+    color: Color;
     margin: Margin;
 
     // Animation Fields
@@ -18,8 +19,10 @@ export interface TitleComponentType {
 
 export interface TextComponentType {
     text: string;
-    margin: Margin;
     typography: Typography;
+    color: Color;
+    margin: Margin;
+    
 }
 
 export interface ImageComponentType {

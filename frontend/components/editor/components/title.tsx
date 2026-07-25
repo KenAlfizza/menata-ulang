@@ -8,6 +8,7 @@ import { resolveTypographyStyles, typographyField } from "../fields/typography.t
 // Import icon
 import { BookType } from "lucide-react";
 import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
+import { colorPickerField, getColor } from "../fields/color.tsx";
 
 // Title component fields
 export const TitleComponentFields: Fields<TitleComponentType> = {
@@ -15,13 +16,15 @@ export const TitleComponentFields: Fields<TitleComponentType> = {
         type: "text",
         label: "Title",
         labelIcon: <BookType size={16} />,
+        contentEditable: true,
     },
     typography: typographyField,
+    color: colorPickerField,
     margin: marginField,
 }
 
 // Title component render
-export function TitleComponent({ title, typography, margin }: TitleComponentType) {
+export function TitleComponent({ title, typography, margin, color }: TitleComponentType) {
     return (
         <div style={{ 
             width: "100%", 
@@ -33,6 +36,7 @@ export function TitleComponent({ title, typography, margin }: TitleComponentType
                 style={{
                     width: "100%",
                     boxSizing: "border-box",
+                    color: getColor(color),
                     ...resolveTypographyStyles(typography),
                     ...resolveMarginStyles(margin),
                 }}

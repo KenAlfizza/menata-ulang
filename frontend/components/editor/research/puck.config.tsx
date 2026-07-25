@@ -29,7 +29,7 @@ import { GridSlotComponent, GridSlotFields } from "../components/grid-slot.tsx";
 import { defaultTypography, defaultTypographyHeader } from "../fields/typography.tsx";
 import { defaultPadding } from "../fields/padding.tsx";
 import { defaultSize } from "../fields/size.tsx";
-import { defaultColor } from "../fields/color.tsx";
+import { defaultColor, defaultColorText } from "../fields/color.tsx";
 import { defaultMargin } from "../fields/margin.tsx";
 
 
@@ -61,8 +61,8 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 defaultProps: {
                     title: "My Research",
                     typography: { ...defaultTypographyHeader },
+                    color: { ...defaultColorText },
                     margin: { ...defaultMargin },
-                    padding: { ...defaultPadding },
                 },
                 render: (props) => <TitleComponent {...props} />
             },
@@ -71,8 +71,8 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 defaultProps: {
                     text: "This is a paragraph of text.",
                     typography: defaultTypography,
+                    color: { ...defaultColorText },
                     margin: { ...defaultMargin },
-                    padding: { ...defaultPadding },
                 },
                 render: (props) => <TextComponent {...props} />
             },
