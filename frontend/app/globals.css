@@ -129,3 +129,11 @@
     @apply font-sans;
   }
 }
+
+/* Force Puck editor and canvas elements to inherit the rem font */
+.puck-root, 
+.puck-canvas, 
+.puck-canvas *, 
+.puck-dropzone * {
+  font-family: var(--font-rem), sans-serif !important;
+}
