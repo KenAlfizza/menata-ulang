@@ -8,7 +8,6 @@ import { resolveTypographyStyles, typographyField } from "../fields/typography.t
 // Import icon
 import { BookType } from "lucide-react";
 import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
-import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
 
 // Title component fields
 export const TitleComponentFields: Fields<TitleComponentType> = {

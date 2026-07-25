@@ -8,6 +8,7 @@ import { Pipette, Paintbrush, Layers } from "lucide-react";
 // Import Shadcn / Radix Components
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "../../ui/button.tsx";
 
 export const defaultColor: Color = {
     mode: "solid",
@@ -89,19 +90,23 @@ export const colorPickerField: ColorCustomField = {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* Native color picker styled as a button box (No nested Popover) */}
-                            <div className="relative w-8 h-8 rounded border border-slate-300 overflow-hidden shrink-0 cursor-pointer shadow-sm">
+                            {/* Shadcn Button wrapping the native color input */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="relative w-8 h-8 p-0 rounded border border-slate-300 overflow-hidden shrink-0 shadow-sm"
+                            >
                                 <input
                                     type="color"
                                     value={currentHex}
                                     onChange={(e) => handleHexChange(e.target.value)}
-                                    className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer opacity-0"
+                                    className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
                                 />
                                 <div
                                     className="w-full h-full pointer-events-none"
                                     style={{ backgroundColor: currentHex }}
                                 />
-                            </div>
+                            </Button>
 
                             {/* Shadcn Input */}
                             <Input
