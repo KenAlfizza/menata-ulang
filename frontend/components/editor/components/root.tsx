@@ -17,6 +17,7 @@ export const RootComponent: ComponentConfig<RootComponentType>["render"] = ({
 }) => {
     return (
         <div
+            className="min-h-screen"
             style={{
                 ...resolvePaddingStyles(padding),
                 backgroundColor: getBackgroundColor(color),

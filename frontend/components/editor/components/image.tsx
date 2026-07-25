@@ -1,23 +1,27 @@
-import type { ImageComponentType } from "./types";
+import type { ImageComponentType } from "./types.tsx";
 import { Fields } from "@puckeditor/core";
 import { resizeField } from "../fields/size.tsx";
 
 // Import the static enabled/disabled fields
-import { spacingField } from "../fields/spacing.tsx";
-import { defaultSize } from "../fields/size";
-import { resolvePixelStyles } from "../fields/spacing";
+import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
+import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
+import { defaultSize } from "../fields/size.tsx";
+
 import { createImageUploadField } from "../fields/upload-image.tsx";
+
+
 import { Image } from "lucide-react";
+
 
 /** Image component fields */
 export const createImageComponentFields = (accessToken: string): Fields<ImageComponentType> => ({
     imageUpload: createImageUploadField(accessToken),
     resize: resizeField,
-    spacing: spacingField,
+    margin: marginField,
 })
 
 /** Image component render */
-export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentType) {
+export function ImageComponent({ imageUpload, resize, margin }: ImageComponentType) {
     const currentSize = resize || defaultSize;
     const r = currentSize.borderRadius || defaultSize.borderRadius;
 
@@ -31,7 +35,7 @@ export function ImageComponent({ imageUpload, resize, spacing }: ImageComponentT
         <div className="flex justify-center items-center min-w-8 min-h-8">
             <div
                 style={{
-                    ...resolvePixelStyles(spacing),
+                    ...resolveMarginStyles(margin),
                     width: containerWidth,
                     height: hasExplicitHeight ? currentSize.height : "auto",
                     flexShrink: 0,

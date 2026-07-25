@@ -2,8 +2,9 @@ import { FlexComponentType } from "./types.tsx";
 
 // Import fields
 import { ComponentConfig, Fields } from "@puckeditor/core";
-import { spacingField } from "../fields/spacing.tsx";
 import { colorPickerField, getBackgroundColor } from "../fields/color.tsx";
+import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
+import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
 
 export const justifyOptions = [
     { label: "Start", value: "flex-start" },
@@ -20,17 +21,18 @@ export const FlexComponentFields: Fields<FlexComponentType> = {
         type: "select",
         label: "Direction",
         options: [
-        { label: "Row", value: "row" },
-        { label: "Column", value: "column" },
+            { label: "Row", value: "row" },
+            { label: "Column", value: "column" },
         ],
     },
-    spacing: spacingField,
-    slot: { type: "slot" },
     justify: {
         label: "Justify",
         type: "select",
         options: justifyOptions,
     },
+    margin: marginField,
+    padding: paddingField,
+    slot: { type: "slot" },
     color: colorPickerField
 }
 
@@ -38,21 +40,28 @@ export const FlexComponentFields: Fields<FlexComponentType> = {
 export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
   direction = "row",
   justify = "flex-start",
+  margin,
+  padding,
   slot: Slot,
   color,
 }) => {
   return (
-    <Slot
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: direction,
-        justifyContent: justify,
-        width: "100%",
-        minWidth: "64px",
-        minHeight: "100px",
-        backgroundColor: getBackgroundColor(color)
-      }}
-    />
+    <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+      <Slot
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          flexDirection: direction,
+          justifyContent: justify,
+          width: "100%",
+          boxSizing: "border-box",
+          minWidth: "64px",
+          minHeight: "100px",
+          backgroundColor: getBackgroundColor(color),
+          ...resolveMarginStyles(margin),
+          ...resolvePaddingStyles(padding),
+        }}
+      />
+    </div>
   );
 };

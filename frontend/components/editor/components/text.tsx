@@ -4,10 +4,10 @@ import { TextComponentType } from "./types.tsx";
 
 // Import fields
 import { resolveTypographyStyles, typographyField } from "../fields/typography.tsx";
-import { resolvePixelStyles, spacingField } from "../fields/spacing.tsx";
 
 // Import icon
 import { Text } from "lucide-react";
+import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
 
 // Text component fields
 export const TextComponentFields: Fields<TextComponentType> = {
@@ -18,19 +18,23 @@ export const TextComponentFields: Fields<TextComponentType> = {
         contentEditable: true,
     },
     typography: typographyField,
-    spacing: spacingField,
+    margin: marginField,
 };
 
 // Text component render
-export function TextComponent({ text, typography, spacing }: TextComponentType) {
+export function TextComponent({ text, typography, margin }: TextComponentType) {
     return (
-        <div
-            style={{
-                ...resolveTypographyStyles(typography),
-                ...resolvePixelStyles(spacing),
-            }}
+        <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+            <div
+                style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    ...resolveTypographyStyles(typography),
+                    ...resolveMarginStyles(margin),
+                }}
             >
-            {text}
+                {text}
+            </div>
         </div>
     )
 }

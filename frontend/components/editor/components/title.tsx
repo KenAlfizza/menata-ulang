@@ -4,10 +4,11 @@ import { TitleComponentType } from "./types.tsx";
 
 // Import fields
 import { resolveTypographyStyles, typographyField } from "../fields/typography.tsx";
-import { resolvePixelStyles, spacingField } from "../fields/spacing.tsx";
 
 // Import icon
 import { BookType } from "lucide-react";
+import { marginField, resolveMarginStyles } from "../fields/margin.tsx";
+import { paddingField, resolvePaddingStyles } from "../fields/padding.tsx";
 
 // Title component fields
 export const TitleComponentFields: Fields<TitleComponentType> = {
@@ -17,20 +18,28 @@ export const TitleComponentFields: Fields<TitleComponentType> = {
         labelIcon: <BookType size={16} />,
     },
     typography: typographyField,
-    spacing: spacingField,
+    margin: marginField,
 }
 
 // Title component render
-export function TitleComponent({ title, typography, spacing }: TitleComponentType) {
+export function TitleComponent({ title, typography, margin }: TitleComponentType) {
     return (
-        <h2
-        className="font-bold tracking-tight text-slate-950"
-        style={{
-            ...resolveTypographyStyles(typography),
-            ...resolvePixelStyles(spacing),
-        }}
-        >
-        {title}
-        </h2>
-    )
+        <div style={{ 
+            width: "100%", 
+            display: "flex", 
+            flexDirection: "column",
+        }}>
+            <h2
+                className="font-bold tracking-tight text-slate-950"
+                style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    ...resolveTypographyStyles(typography),
+                    ...resolveMarginStyles(margin),
+                }}
+            >
+                {title}
+            </h2>
+        </div>
+    );
 }

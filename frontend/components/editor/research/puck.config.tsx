@@ -27,10 +27,10 @@ import { GridSlotComponent, GridSlotFields } from "../components/grid-slot.tsx";
 
 // Default fields metadata
 import { defaultTypography, defaultTypographyHeader } from "../fields/typography.tsx";
-import { defaultSpacing } from "../fields/spacing.tsx";
 import { defaultPadding } from "../fields/padding.tsx";
 import { defaultSize } from "../fields/size.tsx";
 import { defaultColor } from "../fields/color.tsx";
+import { defaultMargin } from "../fields/margin.tsx";
 
 
 export type EditResearchConfig = Config<
@@ -61,7 +61,8 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 defaultProps: {
                     title: "My Research",
                     typography: { ...defaultTypographyHeader },
-                    spacing: { ...defaultSpacing },
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
                 },
                 render: (props) => <TitleComponent {...props} />
             },
@@ -70,7 +71,8 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 defaultProps: {
                     text: "This is a paragraph of text.",
                     typography: defaultTypography,
-                    spacing: defaultSpacing,
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
                 },
                 render: (props) => <TextComponent {...props} />
             },
@@ -78,7 +80,7 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 fields: createImageComponentFields(accessToken),
                 defaultProps: {
                     resize: defaultSize,
-                    spacing: defaultSpacing,
+                    margin: { ...defaultMargin },
                     imageUpload: {
                         url: "",
                         alt: "Research Image"
@@ -91,7 +93,8 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                 defaultProps: {
                     direction: "row",
                     justify: "flex-start",
-                    spacing: { ...defaultSpacing },
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
                     slot: [],
                     color: { ...defaultColor},
                 },
@@ -105,7 +108,9 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                     rows: 1, 
                     gap: 16, 
                     slot: [], 
-                    color: { ...defaultColor} 
+                    color: { ...defaultColor}, 
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
                 },
                 render: GridSlotComponent,
             },

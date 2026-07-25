@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Typography, Spacing, Size, ImageUpload, Color, Padding } from "../fields/types.tsx";
+import { Typography, Spacing, Size, ImageUpload, Color, Margin, Padding} from "../fields/types.tsx";
 import { Slot } from "@puckeditor/core";
 
 /**
@@ -8,8 +8,8 @@ import { Slot } from "@puckeditor/core";
 export interface TitleComponentType {
     // Content Fields
     title: string;
-    spacing: Spacing;
     typography: Typography;
+    margin: Margin;
 
     // Animation Fields
     clickAction?: string;
@@ -18,25 +18,28 @@ export interface TitleComponentType {
 
 export interface TextComponentType {
     text: string;
-    spacing: Spacing;
+    margin: Margin;
     typography: Typography;
 }
 
 export interface ImageComponentType {
     resize: Size;        
-    spacing: Spacing;
+    margin: Margin;
     imageUpload: ImageUpload;
 }
 
 export interface FlexComponentType {
     direction: "row" | "column";
     justify: string;
-    spacing: Spacing;
+    margin: Margin;
+    padding: Padding;
     slot: Slot;
     color: Color;
 }
 
 export interface GridSlotType {
+    margin: Margin;
+    padding: Padding;
     columns: number;
     rows: number;
     gap: number;
