@@ -10,14 +10,14 @@ import { Label } from "../../ui/label.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Textarea } from "../../ui/textarea.tsx";
-import { ArrowDownLeftFromSquare, ArrowLeft, ArrowUpRightFromSquare, Edit, Eye, ImageIcon, PenBox, Save, Trash2, X } from "lucide-react";
+import { ArrowDownLeftFromSquare, ArrowLeft, ArrowUpRightFromSquare, Edit, Eye, ImageIcon, PenBox, Save, Trash2, X, AlertCircle } from "lucide-react";
 import { retrieveResearch, updateResearch, setResearchPublishStatus, deleteResearch } from "@/services/researcher.ts";
-import { ResearchRecord } from "../../../types/research.ts";
+import { ResearchRecord } from "@/types/research.ts";
 import { useAuth } from "@/context/auth-context.tsx";
+import { ApiError } from "@/types/error.ts"; // Adjust path if needed
 
 import { Render } from "@puckeditor/core";
-//import { createPuckConfig } from "../../editor/researcher/puck.config.tsx";
-import { ResearchPageRecord } from "../../../types/page.ts";
+import { ResearchPageRecord } from "@/types/page.ts";
 import { formatDate } from "../format-date.tsx";
 import { createPuckConfig } from "../../editor/research/puck.config.tsx";
 
@@ -46,8 +46,26 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
     const [researchPagePreview, setResearchPagePreview] = useState<ResearchPageRecord>();
     const [isRollingBack, setIsRollingBack] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [toastError, setToastError] = useState<string | null>(null);
     const [research, setResearch] = useState<ResearchRecord>();
     const [isLoading, setIsLoading] = useState(true);
+
+    // Helper to display bottom error popup
+    const showToastError = (message: string) => {
+        setToastError(message);
+        setTimeout(() => {
+            setToastError((current) => (current === message ? null : current));
+        }, 6000);
+    };
+
+    // Helper to extract message from ApiError or fallback using the correct response structure
+    const extractErrorMessage = (err: any, defaultMsg: string) => {
+        if (err instanceof ApiError) {
+            // Check if there are field errors for image, otherwise fall back to main error message
+            return err.response?.error?.fields?.image || err.response?.error || defaultMsg;
+        }
+        return err?.message || defaultMsg;
+    };
 
     // Fetch research data on mount
     useEffect(() => {
@@ -69,8 +87,12 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                 setPendingFile(null);
                 setIsImageDirty(false);
                 setResearchPagePreview(data.page);
-            } catch (err: unknown) {
-                setError("Failed to load research.");
+            } catch (err: any) {
+                if (err instanceof ApiError) {
+                    setError(err.response?.error?.message || "Failed to load research.");
+                } else {
+                    setError("Failed to load research.");
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -131,25 +153,10 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
             setPendingFile(null);
             setIsImageDirty(false);
             reset(data);
-        } catch (error: unknown) {
-            let alertMessage = "An unexpected error occurred";
-
-            try {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                const errorString = errorMessage.replace(/^Error:\s*/, '');
-                const parsedError = JSON.parse(errorString);
-                
-                if (parsedError?.fields?.image) {
-                    alertMessage = parsedError.fields.image;
-                } else if (parsedError?.message) {
-                    alertMessage = parsedError.message;
-                }
-            } catch {
-                const errObj = error as { response?: { data?: { message?: string } } };
-                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
-            }
-
-            alert(`Research update failed: ${alertMessage}. Please try again.`);
+        } catch (err: any) {
+            const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
+            showToastError(`Research update failed: ${alertMessage}. Please try again.`);
+            console.error(err);
         }
     };
 
@@ -159,23 +166,10 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
             const updatedResearch = await setResearchPublishStatus(accessToken, researchId, publishState);
             setResearch(updatedResearch as ResearchRecord);
 
-        } catch (error: unknown) {
-            let alertMessage = "An unexpected error occurred";
-
-            try {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                const errorString = errorMessage.replace(/^Error:\s*/, '');
-                const parsedError = JSON.parse(errorString);
-                
-                if (parsedError?.message) {
-                    alertMessage = parsedError.message;
-                }
-            } catch {
-                const errObj = error as { response?: { data?: { message?: string } } };
-                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
-            }
-
-            alert(`Research ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
+        } catch (err: any) {
+            const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
+            showToastError(`Research ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
+            console.error(err);
         }
     };
 
@@ -187,23 +181,10 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
             // Handle post-deletion logic (e.g., redirecting or updating parent state)
             router.push("/workspace/researcher"); 
 
-        } catch (error: unknown) {
-            let alertMessage = "An unexpected error occurred";
-
-            try {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                const errorString = errorMessage.replace(/^Error:\s*/, '');
-                const parsedError = JSON.parse(errorString);
-                
-                if (parsedError?.message) {
-                    alertMessage = parsedError.message;
-                }
-            } catch {
-                const errObj = error as { response?: { data?: { message?: string } } };
-                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
-            }
-
-            alert(`Research deletion failed: ${alertMessage}. Please try again.`);
+        } catch (err: any) {
+            const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
+            showToastError(`Research deletion failed: ${alertMessage}. Please try again.`);
+            console.error(err);
         }
     };
 
@@ -217,7 +198,7 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
     const publishedAt = research?.publishedAt ? formatDate(new Date(research.publishedAt)) : "";
 
     return (
-        <main className="min-h-screen bg-zinc-100">
+        <main className="min-h-screen bg-zinc-100 relative pb-20">
             <div className="sticky top-0 z-50 bg-white px-2 h-12 border-b border-zinc-300 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <Button onClick={() => router.back()} variant="ghost" className="h-8 w-8 p-0 bg-zinc-200/25 hover:bg-zinc-200/50">
@@ -280,7 +261,6 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                                             className="hidden"
                                             accept="image/*"
                                             onChange={handleImageChange}
-
                                         />
                                         <label
                                             htmlFor="picture"
@@ -355,7 +335,7 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             {researchPagePreview ? (
                             <div className="border rounded-lg max-h-128 overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-4rem),transparent_100%)] mt-2">
                                 <Link href={`/workspace/researcher/edit/${researchPagePreview.id}`}>
-                                    <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg p-1">
+                                    <div className="min-h-64 hover:bg-zinc-100/70 rounded-lg">
                                         <Render config={createPuckConfig(accessToken || "")} data={researchPagePreview.puckData} />
                                     </div>
                                 </Link>
@@ -370,12 +350,12 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                             
                         </section>
                             
-                        <section className="pt-4 px-2 flex flex-ro items-center gap-8 w w-full border-t border-zinc-200/50">
+                        <section className="pt-4 px-2 flex flex-row items-center gap-8 w-full border-t border-zinc-200/50">
                             <div className="flex flex-col">
                                 <Label className="text-lg">Visibility</Label>
                                 <span className="text-zinc-500">Publish this research for everyone to see, or keep it hidden as a private draft.</span>
                                 {publishedAt && (
-                                     <div className="mt-1 flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
+                                   <div className="mt-1 flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
                                         <ArrowUpRightFromSquare className="w-3.5 h-3.5" /> 
                                         <span>Published: {publishedAt}</span>
                                     </div>
@@ -446,6 +426,20 @@ export default function WorkspaceViewResearch({ researchId }: { researchId: stri
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Bottom Floating Error Toast Popup */}
+            {toastError && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg border border-red-500 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-lg w-[90%]">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span className="text-sm flex-1">{toastError}</span>
+                    <Button 
+                        onClick={() => setToastError(null)}
+                        className="w-8 h-8 p-1 bg-red-600 hover:bg-red-700 rounded transition-colors text-white/80 hover:text-white"
+                    >
+                        <X className="w-4 h-4" />
+                    </Button>
+                </div>
+            )}
         </main>
     );
 }

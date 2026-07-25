@@ -59,7 +59,7 @@ export async function updateResearchPage(
 
     const body = await response.json();
     if (!response.ok) {
-        throw new Error(JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
     return body.researchPage;
 }

@@ -1,5 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+import { ApiError, ApiErrorResponse } from "../types/error.ts";
 import { ResearchRecord, UpdateResearchData } from "../types/research.ts";
 import { getFullImageUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
@@ -27,7 +28,7 @@ export async function createResearch(accessToken: string, researchData: {
     const body = await response.json();
 
     if (!response.ok) {
-        throw new Error(JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
     return body.research;
@@ -54,7 +55,7 @@ export async function retrieveResearch(
 
     const body = await response.json();
     if (!response.ok) {
-        throw new Error(JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
     
     if (body.research.imageUrl) {
@@ -91,7 +92,7 @@ export async function updateResearch(
     const body = await response.json();
 
     if (!response.ok) {
-        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
     if (body.research?.imageUrl) {
@@ -128,7 +129,7 @@ export async function setResearchPublishStatus(
     const body = await response.json();
 
     if (!response.ok) {
-        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
     if (body.research?.imageUrl) {
@@ -159,7 +160,7 @@ export async function deleteResearch(
     const body = await response.json();
 
     if (!response.ok) {
-        throw new Error(typeof body.error === "string" ? body.error : JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
     return body.success ?? true;
