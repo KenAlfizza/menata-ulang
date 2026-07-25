@@ -1,6 +1,10 @@
 import { Config } from "@puckeditor/core";
 
 /** Import components */
+// Root component
+import { RootComponentType } from "../components/types.tsx";
+import { RootComponent, RootComponentFields } from "../components/root.tsx";
+
 // Title component
 import { TitleComponentType } from "../components/types.tsx";
 import { TitleComponent, TitleComponentFields } from "../components/title.tsx";
@@ -24,27 +28,31 @@ import { GridSlotComponent, GridSlotFields } from "../components/grid-slot.tsx";
 // Default fields metadata
 import { defaultTypography, defaultTypographyHeader } from "../fields/typography.tsx";
 import { defaultSpacing } from "../fields/spacing.tsx";
+import { defaultPadding } from "../fields/padding.tsx";
 import { defaultSize } from "../fields/size.tsx";
+import { defaultColor } from "../fields/color.tsx";
 
 
-export type EditResearchConfig = Config<{
-    Title: TitleComponentType;
-    Text: TextComponentType;
-    Image: ImageComponentType;
-    Flex: FlexComponentType;
-    Grid: GridSlotType;
-}>;
+export type EditResearchConfig = Config<
+    {
+        Title: TitleComponentType;
+        Text: TextComponentType;
+        Image: ImageComponentType;
+        Flex: FlexComponentType;
+        Grid: GridSlotType;
+    },
+    RootComponentType
+>;
 
 export const createPuckConfig = (accessToken: string): EditResearchConfig => {
     return {
         root: {
-            fields: {
-                // Title: { type: "text" },
-                // Description: { type: "textarea" },
+            fields: RootComponentFields,
+            defaultProps: {
+                padding: { ...defaultPadding},
+                color: { ...defaultColor},
             },
-            render: ({ children }) => {
-                return children;
-            },
+            render: (props) => <RootComponent {...props} />
         },
 
         components: {
@@ -85,13 +93,20 @@ export const createPuckConfig = (accessToken: string): EditResearchConfig => {
                     justify: "flex-start",
                     spacing: { ...defaultSpacing },
                     slot: [],
+                    color: { ...defaultColor},
                 },
                 render: (props) => <FlexComponent {...props} />,
             },
             Grid: {
                 label: "Grid",
                 fields: GridSlotFields,
-                defaultProps: { columns: 2, rows: 1, gap: 16, slot: [] },
+                defaultProps: { 
+                    columns: 2, 
+                    rows: 1, 
+                    gap: 16, 
+                    slot: [], 
+                    color: { ...defaultColor} 
+                },
                 render: GridSlotComponent,
             },
         },

@@ -1,11 +1,13 @@
 import { Fields, ComponentConfig } from "@puckeditor/core";
 import { GridSlotType } from "./types.tsx";
+import { colorPickerField, getBackgroundColor } from "../fields/color.tsx";
 
 export const GridSlotFields: Fields<GridSlotType> = {
     columns: { type: "number", label: "Columns", min: 1 },
     rows: { type: "number", label: "Rows", min: 1 },
     gap: { type: "number", label: "Gap (px)" },
     slot: { type: "slot" },
+    color: colorPickerField,
 };
 
 export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
@@ -13,6 +15,7 @@ export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
     rows = 1,
     gap = 16,
     slot: SlotContent,
+    color,
 }) => {
     return (
         <SlotContent
@@ -23,6 +26,7 @@ export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
                 gap: `${gap}px`,
                 minBlockSize: "128px",
                 minInlineSize: "128px",
+                backgroundColor: getBackgroundColor(color)
             }}
             minEmptyHeight={80}
         />

@@ -9,6 +9,14 @@ export interface Spacing {
     right: string;
 }
 
+export interface Padding {
+    all: string;
+    top: string;
+    bottom: string;
+    left: string;
+    right: string;
+}
+
 export interface Typography {
     family: string;
     size: string;
@@ -43,6 +51,7 @@ export interface ImageUpload {
 
 // Strictly-typed Puck Custom Field interface
 export type SpacingCustomField = CustomField<Spacing>;
+export type PaddingCustomField = CustomField<Padding>;
 export type TypographyCustomField = CustomField<Typography>;
 export type SizeCustomField = CustomField<Size>;
 export type ColorCustomField = CustomField<Color>;

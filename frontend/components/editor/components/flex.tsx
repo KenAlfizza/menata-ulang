@@ -3,6 +3,7 @@ import { FlexComponentType } from "./types.tsx";
 // Import fields
 import { ComponentConfig, Fields } from "@puckeditor/core";
 import { spacingField } from "../fields/spacing.tsx";
+import { colorPickerField, getBackgroundColor } from "../fields/color.tsx";
 
 export const justifyOptions = [
     { label: "Start", value: "flex-start" },
@@ -30,6 +31,7 @@ export const FlexComponentFields: Fields<FlexComponentType> = {
         type: "select",
         options: justifyOptions,
     },
+    color: colorPickerField
 }
 
 /** Flex component render */
@@ -37,6 +39,7 @@ export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
   direction = "row",
   justify = "flex-start",
   slot: Slot,
+  color,
 }) => {
   return (
     <Slot
@@ -48,6 +51,7 @@ export const FlexComponent: ComponentConfig<FlexComponentType>["render"] = ({
         width: "100%",
         minWidth: "64px",
         minHeight: "100px",
+        backgroundColor: getBackgroundColor(color)
       }}
     />
   );
