@@ -11,6 +11,7 @@ import { PageSelector } from "./page-selector.tsx";
 import { fetchMyResearches } from "@/services/workspace/researcher.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace.ts";
 import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-context.tsx";
+import { ApiError } from "@/types/error.ts";
 
 export default function MyResearches() {
     const { accessToken } = useAuth();
@@ -21,16 +22,28 @@ export default function MyResearches() {
     const [totalPages, setTotalPages] = useState(0);
 
     const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const [filter, setFilter] = useState("");
     const [page, setPage] = useState(1);
 
     const isInitialMount = useRef(true);
 
+    const extractErrorMessage = (err: unknown, defaultMsg: string) => {
+        if (err instanceof ApiError) {
+            const errorPayload = err.response?.error;
+            if (typeof errorPayload === "string") return errorPayload;
+            if (errorPayload?.message) return errorPayload.message;
+        }
+        if (err instanceof Error) return err.message;
+        return defaultMsg;
+    };
+
     const loadStories = useCallback(async () => {
         if (!accessToken) return;
         
         setIsLoading(true);
+        setErrorMessage(null);
         try {
             const data = await fetchMyResearches(accessToken, { filter, page, limit: 10 });
             setTimeout(() => {
@@ -41,6 +54,8 @@ export default function MyResearches() {
             }, 300);
         } catch (err) {
             console.error("Fetch Error:", err);
+            const message = extractErrorMessage(err, "Failed to load researches");
+            setErrorMessage(message);
             setIsLoading(false);
         }
     }, [accessToken, filter, page]);
@@ -78,6 +93,12 @@ export default function MyResearches() {
                     </Button>
                 </div>
             </div>
+
+            {errorMessage && (
+                <div className="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm my-4">
+                    {errorMessage}
+                </div>
+            )}
 
             {/* Transition Container: Stable height, changing opacity */}
             <div 

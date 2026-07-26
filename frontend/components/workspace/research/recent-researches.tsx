@@ -7,26 +7,38 @@ import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-con
 
 import type { WorkspaceResearchRecord } from "@/types/workspace.ts";
 import { fetchRecentResearches } from "@/services/workspace/researcher.ts";
+import { ApiError } from "@/types/error.ts";
 
 export default function RecentResearches() {
     const { accessToken } = useAuth();
     const { refreshKey } = useResearcherRefresh();
     const [recentResearches, setRecentResearches] = useState<WorkspaceResearchRecord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const extractErrorMessage = (err: unknown, defaultMsg: string) => {
+        if (err instanceof ApiError) {
+            const errorPayload = err.response?.error;
+            if (typeof errorPayload === "string") return errorPayload;
+            if (errorPayload?.message) return errorPayload.message;
+        }
+        if (err instanceof Error) return err.message;
+        return defaultMsg;
+    };
 
     useEffect(() => {
         async function loadRecentResearches() {
             if (!accessToken) return;
             try {
                 setIsLoading(true);
-                setError(null);
+                setErrorMessage(null);
 
                 const data = await fetchRecentResearches(accessToken);
                 setRecentResearches(data);
             } catch (err) {
                 console.error(err);
-                setError("Failed to load recent researches")
+                const message = extractErrorMessage(err, "Failed to load recent researches");
+                setErrorMessage(message);
             } finally {
                 setIsLoading(false);
             }
@@ -37,11 +49,16 @@ export default function RecentResearches() {
         }
     }, [accessToken, refreshKey]); // refetch on token change OR on any publish toggle
 
-    if (error) return <div className="py-4 text-red-500">{error}</div>;
-
     return (
         <div className="w-full">
             <h2 className="text-2xl tracking-tight text-zinc-600">Recent Researches</h2>
+            
+            {errorMessage && (
+                <div className="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm my-4">
+                    {errorMessage}
+                </div>
+            )}
+
             <div className="flex flex-row gap-8 py-4">
                 <ResearchCard isNewResearch />
                 <div 
