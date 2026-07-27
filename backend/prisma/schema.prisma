@@ -26,10 +26,9 @@ model User {
   // Relationships
   tokens      Token[]
   stories     Story[]
+  researches  Research[]
   podcasts    Podcast[]
   reflections Reflection[]
-
-  researchpages ResearchPage[]
   
   /// Hearts given by this user across different content types.
   hearts      Heart[]
@@ -70,7 +69,6 @@ model Story {
   imageUrl    String    @default("")
   published   Boolean   @default(false)
   publishedAt DateTime?
-  research    Research?
 
   // Hearts relation
   heartsCount Int        @default(0)
@@ -93,13 +91,38 @@ model StoryPage {
   @@map("story_pages")
 }
 
-
-
 model Research {
-  id        Int       @id @default(autoincrement())
-  text      String
-  storyId   String    @unique   
-  story     Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
+  title       String
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  researcherId    Int
+  researcher      User      @relation(fields: [researcherId], references: [id])
+  imageUrl    String    @default("")
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+
+  // Hearts relation
+  heartsCount Int        @default(0)
+  hearts      Heart[]
+
+  // Updated Thread Relation
+  threadId    String     @unique
+  thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  // Research Page
+  page        ResearchPage[]
+  @@map("researches")
+}
+
+model ResearchPage {
+  id        String          @id @default(cuid(2))
+  puckData  Json
+  researchId   String       @unique
+  research     Research     @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  @@map("research_pages")
 }
 
 model Podcast {
@@ -137,6 +160,7 @@ model Thread {
   // Inverse 1-to-1 relations mapping back to content types
   podcast     Podcast?
   story       Story?
+  research    Research?
 
   // A Thread owns many individual Reflection comments/replies
   reflections Reflection[]
@@ -201,6 +225,11 @@ model Heart {
   storyId   String?
   /// Story link relation.
   story     Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  /// The ID of the target Research (optional).
+  researchId   String?
+  /// Research link relation.
+  research     Research?   @relation(fields: [researchId], references: [id], onDelete: Cascade)
   
   /// The ID of the target Podcast (optional).
   podcastId Int?
@@ -226,17 +255,3 @@ model Feedback {
   resolved    Boolean  @default(false) // Added resolved flag
   createdAt   DateTime @default(now())
 }
-
-model ResearchPage {
-  id          String   @id @default(cuid(2)) // Backend-generated CUID
-  title       String
-  description String
-  slug        String   @unique
-  puckData    Json     // Saves the flexible layout schema from Puck editor
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  researcherId    Int
-  researcher      User     @relation(fields: [researcherId], references: [id])
-}
-

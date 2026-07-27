@@ -1,16 +1,29 @@
-import { Data } from "@puckeditor/core";
+import { ResearchPageRecord } from "./page.ts";
 
 /**
- * Core Database Model Interface returned by backend
+ * `ResearchRecord` model returned by the backend.
  */
 export interface ResearchRecord {
     id: string;
     title: string;
     description: string;
+    imageUrl: string;
     slug: string;
-    puckData: Data;
     published: boolean;
+    publishedAt: Date;
     createdAt: Date | string;
     updatedAt: Date | string;
-    researcherId: number;
+    authorId: number;
+    page: ResearchPageRecord;
+}
+
+/**
+ * Update research data similar to the backend update data
+ */
+export interface UpdateResearchData {
+    title?: string;
+    description?: string;
+    slug?: string;
+    image?: File;
+    published?: boolean;
 }

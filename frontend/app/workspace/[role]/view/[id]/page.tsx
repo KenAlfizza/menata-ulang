@@ -3,6 +3,7 @@
 import AuthGuard from "@/components/auth-guard";
 import { use } from "react";
 import WorkspaceViewStory from "@/components/workspace/view/view-story.tsx";
+import WorkspaceViewResearch from "@/components/workspace/view/view-research.tsx";
 
 
 type Role = "author" | "host" | "researcher" ;
@@ -18,6 +19,8 @@ export default function WorkspaceNewPage({ params }: WorkspaceViewPageProps) {
         switch (role) {
             case "author":
                 return <WorkspaceViewStory storyId={id}/>
+            case "researcher":
+                return <WorkspaceViewResearch researchId={id}/>
             default:
                 return "View view"
         }

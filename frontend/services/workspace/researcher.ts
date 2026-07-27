@@ -1,7 +1,10 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+import { PaginatedResult } from "../../types/common.ts";
+import { getFullImageUrl } from "../../utils/url.ts";
 import { authFetch } from "../auth.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace";
+import { ApiError, ApiErrorResponse } from "@/types/error.ts";
 
 /**
  * Fetch the recently edited research
@@ -18,11 +21,18 @@ export async function fetchRecentResearches(
         { method: "GET" }, 
     );
 
+    const body = await response.json();
     if (!response.ok) {
-        throw new Error(`Failed to fetch recent researches: ${response.status} ${response.statusText}`);
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
-    const { researches } = await response.json();
-    return researches;
+
+    // Update image URL
+    const transformedItems = body.items.map((item: WorkspaceResearchRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
+
+    return transformedItems;
 }
 
 /**
@@ -41,13 +51,7 @@ export async function fetchMyResearches(
         order?: "asc" | "desc";
         filter?: string;
     } = {}
-): Promise<{ 
-    researches: WorkspaceResearchRecord[]; 
-    totalCount: number; 
-    totalPages: number; 
-    page: number;
-    limit: number 
-}> {
+): Promise<PaginatedResult<WorkspaceResearchRecord>> {
     // Construct query parameters
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
@@ -57,25 +61,28 @@ export async function fetchMyResearches(
     if (params.filter) queryParams.append("filter", params.filter);
 
     const response = await authFetch(
-        `${API_BASE_URL}/researcher/my-researches/?${queryParams.toString()}`,
+        `${API_BASE_URL}/researcher/my-researches?${queryParams.toString()}`,
         accessToken,
         { method: "GET" }
     );
 
+    const body = await response.json();
     if (!response.ok) {
-        throw new Error(`Failed to fetch researches: ${response.status} ${response.statusText}`);
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
-
-    // Capture the full response object
-    const data = await response.json();
+        
+    // Update image URL
+    const transformedItems = body.items.map((item: WorkspaceResearchRecord) => ({
+        ...item,
+        imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
+    }));
     
     // Return the data to be used by the UI (e.g., Shadcn Pagination)
     return {
-        researches: data.researches,
-        totalCount: data.totalCount,
-        totalPages: data.totalPages,
-        page: data.page,
-        limit: data.limit
+        items: transformedItems,
+        total: body.total,
+        totalPages: body.totalPages,
+        page: body.page,
+        limit: body.limit
     };
 }
-
