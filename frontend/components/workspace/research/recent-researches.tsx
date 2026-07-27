@@ -3,53 +3,81 @@
 import { ResearchCard } from "./research-card.tsx";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
+import { useResearcherRefresh } from "@/context/workspace/researcher-refresh-context.tsx";
 
 import type { WorkspaceResearchRecord } from "@/types/workspace.ts";
 import { fetchRecentResearches } from "@/services/workspace/researcher.ts";
+import { ApiError } from "@/types/error.ts";
 
 export default function RecentResearches() {
     const { accessToken } = useAuth();
+    const { refreshKey } = useResearcherRefresh();
     const [recentResearches, setRecentResearches] = useState<WorkspaceResearchRecord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const extractErrorMessage = (err: unknown, defaultMsg: string) => {
+        if (err instanceof ApiError) {
+            const errorPayload = err.response?.error;
+            if (typeof errorPayload === "string") return errorPayload;
+            if (errorPayload?.message) return errorPayload.message;
+        }
+        if (err instanceof Error) return err.message;
+        return defaultMsg;
+    };
 
     useEffect(() => {
-        async function loadRecentStories() {
+        async function loadRecentResearches() {
             if (!accessToken) return;
             try {
                 setIsLoading(true);
-                setError(null);
+                setErrorMessage(null);
 
-                const researches = await fetchRecentResearches(accessToken);
-                setRecentResearches(researches);
+                const data = await fetchRecentResearches(accessToken);
+                setRecentResearches(data);
             } catch (err) {
                 console.error(err);
-                setError("Failed to load recent researches")
+                const message = extractErrorMessage(err, "Failed to load recent researches");
+                setErrorMessage(message);
             } finally {
                 setIsLoading(false);
             }
         }
 
         if (accessToken) {
-            loadRecentStories();
+            loadRecentResearches();
         }
-    }, [accessToken]); // Re run for access token changes
-
-    if (isLoading) return <div className="py-4 text-gray-500">Loading researches...</div>;
-    if (error) return <div className="py-4 text-red-500">{error}</div>;
+    }, [accessToken, refreshKey]); // refetch on token change OR on any publish toggle
 
     return (
         <div className="w-full">
-            <h2 className="text-black text-2xl font-semibold">Recent Researches</h2>
-            <div className="grid grid-cols-4 gap-8 py-4">
-                <ResearchCard isNewResearch/>
+            <h2 className="text-2xl tracking-tight text-zinc-600">Recent Researches</h2>
+            
+            {errorMessage && (
+                <div className="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm my-4">
+                    {errorMessage}
+                </div>
+            )}
 
-                {recentResearches.map((research) => (
-                    <ResearchCard 
-                        key={research.id} 
-                        research={research} 
-                    />
-                ))}
+            <div className="flex flex-row gap-8 py-4">
+                <ResearchCard isNewResearch />
+                <div 
+                className="w-full transition-opacity duration-300 ease-in-out"
+                style={{ opacity: isLoading ? 0.4 : 1 }}
+            >
+                <div className="grid grid-cols-2 gap-8">
+                    {/* If loading, show skeletons. Otherwise, show stories. */}
+                    {isLoading
+                    ?   Array.from({ length: 2 }).map((_, i) => <ResearchCard key={`skeleton-${i}`} isLoading />)
+                    :   recentResearches.map((research) => (
+                            <ResearchCard 
+                                key={research.id} 
+                                research={research} 
+                            />
+                        ))
+                    } 
+                </div>
+            </div>
                 
             </div>
         </div>
