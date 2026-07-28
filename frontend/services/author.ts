@@ -1,6 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-import { StoryRecord, UpdateStoryData } from "../types/story.ts";
+import { ApiError, ApiErrorResponse } from "../types/error.ts";
+import { StoryRecord } from "../types/story.ts";
 import { getFullImageUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
 
@@ -104,4 +105,68 @@ export async function updateStory(
     }
 
     return body.story;
+}
+
+/**
+ * Updates the publish status of a story entry via the API
+ * @param accessToken - The user's authentication token
+ * @param storyId - The unique identifier of the story
+ * @param published - The target publish state
+ * @returns The updated story object
+ */
+export async function setStoryPublishStatus(
+    accessToken: string,
+    storyId: string,
+    published: boolean
+): Promise<StoryRecord> {
+    const formData = new FormData();
+    formData.append("published", String(published));
+
+    const response = await authFetch(
+        `${API_BASE_URL}/author/story/${storyId}/publish`,
+        accessToken,
+        {
+            method: "PATCH",
+            body: formData,
+        }
+    );
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(body as ApiErrorResponse, response.status);
+    }
+
+    if (body.story?.imageUrl) {
+        body.story.imageUrl = getFullImageUrl(body.story.imageUrl);
+    }
+
+    return body.story;
+}
+
+/**
+ * Deletes a story entry via the API
+ * @param accessToken - The user's authentication token
+ * @param storyId - The unique identifier of the story to delete
+ * @returns A boolean indicating success
+ */
+export async function deleteStory(
+    accessToken: string,
+    storyId: string
+): Promise<boolean> {
+    const response = await authFetch(
+        `${API_BASE_URL}/author/story/${storyId}`,
+        accessToken,
+        {
+            method: "DELETE",
+        }
+    );
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(body as ApiErrorResponse, response.status);
+    }
+
+    return body.success ?? true;
 }

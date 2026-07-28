@@ -7,7 +7,7 @@ import { authMiddleware } from "../middleware/auth.ts";
 
 import { validate } from "../lib/validators/index.ts";
 
-import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema, storyPagePatchSchema } from "../lib/validators/author.ts";
+import { storyCreateSchema, storyListQuerySchema, storyParamsSchema, storyPatchSchema, storyPagePatchSchema, publishStorySchema } from "../lib/validators/author.ts";
 
 import { authorService } from "../services/authorService.ts";
 import { UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
@@ -197,6 +197,38 @@ author.patch("/story/:id", authMiddleware, validate("form", storyPatchSchema), a
         if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
         if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
         if (result.error === 'SLUG_TAKEN') return c.json({ error: "Slug is already taken" }, 409);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+
+    return c.json({ success: true, story: result.data }, 200);
+});
+
+/**
+ * PATCH /story/:id/publish - Update story publish status
+ * Middleware: `authMiddleware`, `validate("form", publishStorySchema)`.
+ * Behaviour: Sets the published state of the story and manages the publishedAt timestamp.
+ * 
+ * @param {string} id - The unique identifier of the story.
+ * @param {boolean} published - The target publish state.
+ * 
+ * @returns {Promise<Response>} JSON response containing:
+ * - 200: success with updated `story` record
+ * - 404: story not found
+ * - 403: forbidden (unauthorized access)
+ * - 500: internal server error
+ */
+author.patch("/story/:id/publish", authMiddleware, validate("form", publishStorySchema), async (c) => {
+    const { id: userId } = c.get("user");
+    const storyId = c.req.param("id");
+    
+    // Zod guarantees this data is valid based on your schema
+    const { published } = c.req.valid("form");
+
+    const result = await authorService.setStoryPublishStatus(storyId, userId, published);
+
+    if (!result.success) {
+        if (result.error === 'NOT_FOUND') return c.json({ error: "Story not found" }, 404);
+        if (result.error === 'UNAUTHORIZED') return c.json({ error: "Forbidden" }, 403);
         return c.json({ error: "Internal Server Error" }, 500);
     }
 

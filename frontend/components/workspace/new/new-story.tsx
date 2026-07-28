@@ -6,10 +6,9 @@ import { Card, CardContent } from "../../ui/card.tsx";
 import { Label } from "../../ui/label.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
-import { ArrowLeft, ImageIcon } from "lucide-react";
+import { ArrowLeft, ImageIcon, AlertCircle, X } from "lucide-react";
 import { createStory } from "@/services/author.ts";
-import { useAuth } from "@/context/auth-context.tsx"; // Ensure this points to your auth provider
-
+import { useAuth } from "@/context/auth-context.tsx";
 import Image from "next/image";
 
 export default function NewStory() {
@@ -23,8 +22,18 @@ export default function NewStory() {
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    
+    // Toast & Field Error States
+    const [toastError, setToastError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    // Helper to display bottom error popup
+    const showToastError = (message: string) => {
+        setToastError(message);
+        setTimeout(() => {
+            setToastError((current) => (current === message ? null : current));
+        }, 6000);
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -40,17 +49,18 @@ export default function NewStory() {
         setDescription("");
         setImage(null);
         setImagePreview(null);
-        setError(null);
+        setToastError(null);
+        setFieldErrors({});
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+        e.preventDefault();
         if (!accessToken) {
-            setError("You must be logged in to create a story.");
+            showToastError("You must be logged in to create a story.");
             return;
         }
 
-        setError(null);
+        setToastError(null);
         setFieldErrors({});
         setIsSubmitting(true);
 
@@ -61,22 +71,23 @@ export default function NewStory() {
                 description,
                 image: image || undefined,
             });
-            router.push(`/workspace/author/view/${data.id}`); // Adjust path as needed
+            router.push(`/workspace/author/view/${data.id}`);
         } catch (err: any) {
             const errorData = JSON.parse(err.message);
             
-            // If the error has a 'fields' object (from our Zod validator), show them
+            // Check for field-specific errors
             if (errorData.fields) {
                 setFieldErrors(errorData.fields);
-                setError("Please correct the errors below.");
-            } else {
-                // Otherwise, show the general error message
-                setError(errorData.message || "An unexpected error occurred.");
             }
+            
+            // Show general error message
+            const message = errorData.message || "An unexpected error occurred";
+            showToastError(`Story creation failed: ${message}. Please try again.`);
         } finally {
             setIsSubmitting(false);
         }
     };
+
     return (
         <main className="min-h-screen bg-zinc-100/50">
             <div className="bg-white px-2 h-12 flex justify-between items-center border-b border-zinc-200">
@@ -92,13 +103,7 @@ export default function NewStory() {
                 <Card className="shadow-sm">
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {error && (
-                                <div className="p-3 text-sm text-red-600 bg-red-50 rounded border border-red-200">
-                                    {error}
-                                </div>
-                            )}
-
-                            {/** Title Input */}
+                            {/* Title Input */}
                             <div className="space-y-2">
                                 <Label htmlFor="title">Story Title</Label>
                                 <Input
@@ -111,7 +116,7 @@ export default function NewStory() {
                                 />
                             </div>
 
-                            {/** Description Input */}
+                            {/* Description Input */}
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description</Label>
                                 <Input
@@ -123,7 +128,7 @@ export default function NewStory() {
                                 />
                             </div>
 
-                            {/** Slug Input */}
+                            {/* Slug Input */}
                             <div className="space-y-2">
                                 <Label htmlFor="slug">Slug</Label>
                                 <Input
@@ -138,7 +143,7 @@ export default function NewStory() {
                                 )}
                             </div>
 
-                            {/** Image Input & Preview */}
+                            {/* Image Input & Preview */}
                             <div className="space-y-4">
                                 <Label>Cover Image</Label>
                                 <Input 
@@ -165,9 +170,12 @@ export default function NewStory() {
                                         </div>
                                     )}
                                 </label>
+                                {fieldErrors.image && (
+                                    <p className="text-xs text-red-600">{fieldErrors.image}</p>
+                                )}
                             </div>
 
-                            {/** Form Actions */}
+                            {/* Form Actions */}
                             <div className="flex items-center justify-end gap-2 pt-4 border-t">
                                 <Button 
                                     type="submit" 
@@ -189,6 +197,20 @@ export default function NewStory() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Bottom Floating Error Toast Popup */}
+            {toastError && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg border border-red-500 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-lg w-[90%]">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span className="text-sm flex-1">{toastError}</span>
+                    <Button 
+                        onClick={() => setToastError(null)}
+                        className="w-8 h-8 p-1 bg-red-600 hover:bg-red-700 rounded transition-colors text-white/80 hover:text-white"
+                    >
+                        <X className="w-4 h-4" />
+                    </Button>
+                </div>
+            )}
         </main>
     );
 }
