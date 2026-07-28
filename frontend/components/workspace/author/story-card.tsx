@@ -3,13 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { PenBox, Plus } from "lucide-react";
-import { formatDate } from "@/components/workspace/format-date";
+import { formatDate } from "@/utils/format-date.ts";
 import { WorkspaceStoryRecord } from "@/types/workspace.ts";
 import {
     Card,
     CardContent,
-} from "@/components/ui/card";
-import { useAuth } from "../../../context/auth-context.tsx";
+} from "@/components/ui/card.tsx";
+import { useAuth } from "@/context/auth-context.tsx";
 import { useState } from "react";
 import { deleteStory, setStoryPublishStatus } from "@/services/author.ts";
 import { useWorkspaceRefresh } from "@/context/workspace/refresh-context.tsx";
