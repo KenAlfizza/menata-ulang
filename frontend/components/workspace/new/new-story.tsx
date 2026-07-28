@@ -162,7 +162,7 @@ export default function NewStory() {
 
                             {/* Slug Input */}
                             <div className="space-y-2">
-                                <Label htmlFor="slug">Slug</Label>
+                                <Label htmlFor="slug">URL Slug</Label>
                                 <Input
                                     id="slug"
                                     className={fieldErrors.slug ? "border-red-500" : ""}

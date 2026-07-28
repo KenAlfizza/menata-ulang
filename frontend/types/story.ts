@@ -10,6 +10,7 @@ export interface StoryRecord {
     imageUrl: string;
     slug: string;
     published: boolean;
+    publishedAt: Date | string;
     createdAt: Date | string;
     updatedAt: Date | string;
     authorId: number;
