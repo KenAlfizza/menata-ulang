@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MoreVertical, PenBox, Plus, Trash2, Eye, FileText, ArrowUpRightFromSquare, Edit } from "lucide-react";
 
-import { formatDate } from "@/components/workspace/format-date";
+import { formatDate } from "@/utils/format-date.ts";
 import { WorkspaceResearchRecord } from "@/types/workspace.ts";
 import { Button } from "@/components/ui/button.tsx";
 import {

@@ -326,6 +326,65 @@ export const authorService = {
         }
     },
 
+    /**
+     * Updates the publish status of a story entity.
+     * Performs an ownership check to ensure the story belongs to the requesting user.
+     * 
+     * @param {string} storyId - The unique identifier of the story.
+     * @param {number} userId - The ID of the user requesting the status change.
+     * @param {boolean} published - The target publish state.
+     * 
+     * @returns {Promise<AuthorServiceResult<StoryRecord>>}
+     */
+    async setStoryPublishStatus(
+        storyId: string,
+        userId: number,
+        published: boolean
+    ): Promise<AuthorServiceResult<StoryRecord>> {
+        try {
+            // Verify ownership and existence
+            const existing = await prisma.story.findUnique({ 
+                where: { id: storyId },
+                include: { 
+                    page: {
+                        select: { id: true, puckData: true }
+                    } 
+                }
+            });
+            if (!existing) return { success: false, error: 'NOT_FOUND' };
+            // Adjust this field name based on your actual schema (e.g., authorId, ownerId)
+            if (existing.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
+
+            // Update in database
+            const updated = await prisma.story.update({
+                where: { id: storyId },
+                data: { 
+                    published,
+                    publishedAt: published ? (existing.publishedAt || new Date()) : null
+                },
+                include: { 
+                    page: {
+                        select: { id: true, puckData: true }
+                    } 
+                }
+            });
+
+            // Create a story record object (adjust type to match your StoryRecord definition)
+            const storyRecord: StoryRecord = {
+                ...updated,
+                page: {
+                    id: updated.page[0].id,
+                    puckData: updated.page[0].puckData as PuckOutputData,
+                }
+            };
+
+            return { success: true, data: storyRecord };
+
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
 
     /**
      * Deletes a story and its associated records by its unique ID.
