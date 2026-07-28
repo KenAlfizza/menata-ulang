@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Filter } from "lucide-react";
 import { useAuth } from "@/context/auth-context.tsx";
-import { fetchMyStories } from "@/services/workspace/author";
+import { fetchMyStories } from "@/services/workspace/author.ts";
 import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
 
 import { SearchBar } from "../../searchbar.tsx";

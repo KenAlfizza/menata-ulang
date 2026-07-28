@@ -103,6 +103,38 @@ export default function NewStory() {
                 <Card className="shadow-sm">
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Image Input & Preview */}
+                            <div className="space-y-4">
+                                <Label>Cover Image</Label>
+                                <Input 
+                                    id="picture" 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={handleImageChange} 
+                                />
+                                <label 
+                                    htmlFor="picture" 
+                                    className="cursor-pointer group flex flex-col justify-center items-center w-full min-h-48 border-2 border-dashed rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden p-4"
+                                >
+                                    {imagePreview ? (
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="max-h-64 object-contain"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center text-zinc-400 group-hover:text-zinc-500">
+                                            <ImageIcon size={48} className="mb-2" />
+                                            <span className="text-sm font-medium">Click to upload image</span>
+                                        </div>
+                                    )}
+                                </label>
+                                {fieldErrors.image && (
+                                    <p className="text-xs text-red-600">{fieldErrors.image}</p>
+                                )}
+                            </div>
+                            
                             {/* Title Input */}
                             <div className="space-y-2">
                                 <Label htmlFor="title">Story Title</Label>
@@ -140,38 +172,6 @@ export default function NewStory() {
                                 />
                                 {fieldErrors.slug && (
                                     <p className="text-xs text-red-600">{fieldErrors.slug}</p>
-                                )}
-                            </div>
-
-                            {/* Image Input & Preview */}
-                            <div className="space-y-4">
-                                <Label>Cover Image</Label>
-                                <Input 
-                                    id="picture" 
-                                    type="file" 
-                                    className="hidden" 
-                                    accept="image/*"
-                                    onChange={handleImageChange} 
-                                />
-                                <label 
-                                    htmlFor="picture" 
-                                    className="cursor-pointer group flex flex-col justify-center items-center w-full min-h-48 border-2 border-dashed rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden p-4"
-                                >
-                                    {imagePreview ? (
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="max-h-64 object-contain"
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center text-zinc-400 group-hover:text-zinc-500">
-                                            <ImageIcon size={48} className="mb-2" />
-                                            <span className="text-sm font-medium">Click to upload image</span>
-                                        </div>
-                                    )}
-                                </label>
-                                {fieldErrors.image && (
-                                    <p className="text-xs text-red-600">{fieldErrors.image}</p>
                                 )}
                             </div>
 

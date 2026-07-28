@@ -105,7 +105,7 @@ export function StoryCard({ story, isNewStory = false, isLoading = false, onDele
         return (
             <Card className="group relative w-full bg-white/50 border-dashed border-zinc-200 hover:bg-zinc-200 transition-colors duration-200 flex items-center justify-center p-6 overflow-hidden">
                 <Link
-                    href="/workspace/story/new"
+                    href="/workspace/author/new"
                     className="absolute inset-0 z-0 cursor-pointer"
                     aria-label="Create new research"
                 />
