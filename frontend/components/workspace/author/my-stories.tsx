@@ -62,7 +62,7 @@ export default function MyStories() {
     return (
         <div className="w-full">
             <div className="flex items-center mb-6">
-                <h2 className="text-2xl font-semibold">My Stories ({totalCount})</h2>
+                <h2 className="text-2xl tracking-tight text-zinc-600">My Stories ({totalCount})</h2>
 
                 <div className="flex gap-2 ml-auto">
                     <SearchBar 

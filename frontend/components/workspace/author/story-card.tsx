@@ -165,7 +165,7 @@ export function StoryCard({ story, isNewStory = false, isLoading = false, onDele
                         {isPublished ? (
                             <>
                                 <span className="text-green-600 text-xs">Published</span>
-                                <span className="w-1 h-1 rounded-full bg-green-500 shrink-0 animate-ping" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 animate-pulse" />
                             </>
                         ) : (
                             <>
