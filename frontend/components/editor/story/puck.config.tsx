@@ -1,30 +1,36 @@
 import { Config } from "@puckeditor/core";
 
 /** Import components */
+// Root component
+import { RootComponentType } from "../components/types.tsx";
+import { RootComponent, RootComponentFields } from "../components/root.tsx";
+
 // Title component
-import { TitleComponentType } from "./components/types.tsx";
-import { TitleComponent, TitleComponentFields } from "./components/title.tsx";
+import { TitleComponentType } from "../components/types.tsx";
+import { TitleComponent, TitleComponentFields } from "../components/title.tsx";
 
 // Text component
-import { TextComponentType } from "./components/types.tsx";
-import { TextComponent, TextComponentFields } from "./components/text.tsx";
+import { TextComponentType } from "../components/types.tsx";
+import { TextComponent, TextComponentFields } from "../components/text.tsx";
 
 // Image Component
-import { ImageComponentType } from "./components/types.tsx";
-import { ImageComponent, createImageComponentFields } from "./components/image.tsx";
+import { ImageComponentType } from "../components/types.tsx";
+import { ImageComponent, createImageComponentFields } from "../components/image.tsx";
 
 // Flex Component
-import { FlexComponentType } from "./components/types.tsx";
-import { FlexComponent, FlexComponentFields } from "./components/flex.tsx";
+import { FlexComponentType } from "../components/types.tsx";
+import { FlexComponent, FlexComponentFields } from "../components/flex.tsx";
 
 // Grid Component
-import { GridSlotType } from "./components/types.tsx";
-import { GridSlotComponent, GridSlotFields } from "./components/grid-slot.tsx";
+import { GridSlotType } from "../components/types.tsx";
+import { GridSlotComponent, GridSlotFields } from "../components/grid-slot.tsx";
 
 // Default fields metadata
-import { defaultTypography, defaultTypographyHeader } from "./fields/typography.tsx";
-import { defaultSpacing } from "./fields/spacing.tsx";
-import { defaultSize } from "./fields/size.tsx";
+import { defaultTypography, defaultTypographyHeader } from "../fields/typography.tsx";
+import { defaultPadding } from "../fields/padding.tsx";
+import { defaultSize } from "../fields/size.tsx";
+import { defaultColor, defaultColorText } from "../fields/color.tsx";
+import { defaultMargin } from "../fields/margin.tsx";
 
 
 export type EditStoryConfig = Config<{
@@ -33,18 +39,17 @@ export type EditStoryConfig = Config<{
     Image: ImageComponentType;
     Flex: FlexComponentType;
     Grid: GridSlotType;
-}>;
+}, RootComponentType>;
 
 export const createPuckConfig = (accessToken: string): EditStoryConfig => {
     return {
         root: {
-            fields: {
-                Title: { type: "text" },
-                Description: { type: "textarea" },
+            fields: RootComponentFields,
+            defaultProps: {
+                padding: { ...defaultPadding },
+                color: { ...defaultColor },
             },
-            render: ({ children }) => {
-                return children;
-            },
+            render: (props) => <RootComponent {...props} />
         },
 
         components: {
@@ -53,7 +58,8 @@ export const createPuckConfig = (accessToken: string): EditStoryConfig => {
                 defaultProps: {
                     title: "My Story",
                     typography: { ...defaultTypographyHeader },
-                    spacing: { ...defaultSpacing },
+                    color: { ...defaultColorText },
+                    margin: { ...defaultMargin },
                 },
                 render: (props) => <TitleComponent {...props} />
             },
@@ -62,7 +68,8 @@ export const createPuckConfig = (accessToken: string): EditStoryConfig => {
                 defaultProps: {
                     text: "This is a paragraph of text.",
                     typography: defaultTypography,
-                    spacing: defaultSpacing,
+                    color: { ...defaultColorText },
+                    margin: { ...defaultMargin },
                 },
                 render: (props) => <TextComponent {...props} />
             },
@@ -70,7 +77,7 @@ export const createPuckConfig = (accessToken: string): EditStoryConfig => {
                 fields: createImageComponentFields(accessToken),
                 defaultProps: {
                     resize: defaultSize,
-                    spacing: defaultSpacing,
+                    margin: { ...defaultMargin },
                     imageUpload: {
                         url: "",
                         alt: "Story Image"
@@ -83,7 +90,9 @@ export const createPuckConfig = (accessToken: string): EditStoryConfig => {
                 defaultProps: {
                     direction: "row",
                     justify: "flex-start",
-                    spacing: { ...defaultSpacing },
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
+                    color: { ...defaultColor },
                     slot: [],
                 },
                 render: (props) => <FlexComponent {...props} />,
@@ -91,7 +100,15 @@ export const createPuckConfig = (accessToken: string): EditStoryConfig => {
             Grid: {
                 label: "Grid",
                 fields: GridSlotFields,
-                defaultProps: { columns: 2, rows: 1, gap: 16, slot: [] },
+                defaultProps: { 
+                    columns: 2, 
+                    rows: 1, 
+                    gap: 16, 
+                    slot: [], 
+                    color: { ...defaultColor }, 
+                    margin: { ...defaultMargin },
+                    padding: { ...defaultPadding },
+                },
                 render: GridSlotComponent,
             },
         },
