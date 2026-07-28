@@ -1,3 +1,4 @@
+![Menata Ulang Logo](logo.svg)
 # Menata Ulang
 A space to cultivate self-compassion and self-acceptance through evidence-based scientific reflection and community, centered around the unconditional acceptance of self. Menata Ulang aims to increase individual awareness of behaviors, thoughts, and feelings that impact life experiences and perspectives. 
 Menata Ulang will serve as a community that accommodates the journey to discover, heal, and rebuild ourselves.Menata Ulang provides a space for discussion, listening, and reflecting on personal experiences and identity. It also delivers skills to manage semi-crisis mental health situations and resources for critical mental health emergencies. 
