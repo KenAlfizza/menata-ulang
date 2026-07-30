@@ -1,124 +1,181 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button";
-import { PenBox, Plus, Router } from "lucide-react";
-
-import { formatDate } from "@/components/workspace/format-date";
-import type { WorkspaceStoryRecord } from "@/types/workspace.ts";
+import Image from "next/image";
+import { PenBox, Plus } from "lucide-react";
+import { formatDate } from "@/utils/format-date.ts";
+import { WorkspaceStoryRecord } from "@/types/workspace.ts";
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card.tsx";
+import { useAuth } from "@/context/auth-context.tsx";
+import { useState } from "react";
+import { deleteStory, setStoryPublishStatus } from "@/services/author.ts";
+import { useWorkspaceRefresh } from "@/context/workspace/refresh-context.tsx";
+import { StoryCardDropdown } from "./story-card-dropdown.tsx";
 
 interface StoryCardProps {
     story?: WorkspaceStoryRecord;
     isNewStory?: boolean;
     isLoading?: boolean;
+    onDelete?: (id: string) => void;
 }
 
-export function StoryCard({ story, isNewStory = false, isLoading = false }: StoryCardProps) {
-    const router = useRouter();
+export function StoryCard({ story, isNewStory = false, isLoading = false, onDelete }: StoryCardProps) {
+    const { accessToken } = useAuth();
+    const { triggerRefresh } = useWorkspaceRefresh();
+    const [currentStory, setCurrentStory] = useState<WorkspaceStoryRecord | undefined>(story);
+
+    const id = currentStory?.id ?? story?.id ?? "0";
+    const title = currentStory?.title ?? story?.title ?? "Untitled Story";
+    const imageUrl = (currentStory?.imageUrl && currentStory.imageUrl.trim() !== "")
+        ? currentStory.imageUrl
+        : (story?.imageUrl && story.imageUrl.trim() !== "")
+        ? story.imageUrl
+        : "/logo-icon.svg";
+    const alt = currentStory?.title ?? story?.title ? currentStory?.title ?? story?.title : "Story Image";
+    const description = currentStory?.description ?? story?.description ?? "A short description of your story...";
+    const date = currentStory?.updatedAt
+        ? formatDate(new Date(currentStory.updatedAt))
+        : story?.updatedAt
+        ? formatDate(new Date(story.updatedAt))
+        : formatDate(new Date());
+    const isPublished = currentStory?.published ?? story?.published ?? false;
+
+    const handlePublishToggle = async (publishState: boolean) => {
+        if (!accessToken) return;
+        try {
+            const updatedStory = await setStoryPublishStatus(accessToken, id, publishState);
+            setCurrentStory(updatedStory as unknown as WorkspaceStoryRecord);
+            triggerRefresh();
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                if (parsedError?.message) alertMessage = parsedError.message;
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+            alert(`Story ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}. Please try again.`);
+        }
+    };
+
+    const handleDeleteStory = async (storyId: string) => {
+        if (!accessToken) return;
+        try {
+            await deleteStory(accessToken, storyId);
+            if (onDelete) onDelete(storyId);
+            triggerRefresh();
+        } catch (error: unknown) {
+            let alertMessage = "An unexpected error occurred";
+            try {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const errorString = errorMessage.replace(/^Error:\s*/, '');
+                const parsedError = JSON.parse(errorString);
+                if (parsedError?.message) alertMessage = parsedError.message;
+            } catch {
+                const errObj = error as { response?: { data?: { message?: string } } };
+                alertMessage = errObj?.response?.data?.message || (error instanceof Error ? error.message : "Something went wrong");
+            }
+            alert(`Story deletion failed: ${alertMessage}. Please try again.`);
+        }
+    };
 
     if (isLoading) {
         return (
-            <Button 
-                asChild
-                className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
-            >
-                <div className="w-full flex flex-col h-auto gap-3">
-                    {/* Image */}
-                    <div className="w-40 h-32 bg-zinc-100 rounded-md shrink-0"/>
-
-                    {/* Title */}
-                    <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
-                        <div className="w-40 h-8 bg-zinc-100 rounded-sm shrink-0" />
+            <Card className="w-full h-full min-h-[160px] bg-white/50 border border-zinc-100 shadow-sm animate-pulse">
+                <CardContent className="flex flex-col h-full p-4 gap-4">
+                    <div className="w-full h-32 bg-zinc-200 rounded-md" />
+                    <div className="w-2/3 min-h-[2lh] bg-zinc-200 rounded" />
+                    <div className="w-full min-h-[2lh] bg-zinc-200 rounded" />
+                    <div className="flex justify-between mt-auto pt-2">
+                        <div className="w-1/4 h-3 bg-zinc-200 rounded" />
+                        <div className="w-1/4 h-3 bg-zinc-200 rounded" />
                     </div>
-
-                    {/* Description */}
-                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
-                        <div className="w-20 h-6 bg-zinc-100 rounded-sm shrink-0" />
-                    </div>
-
-                    {/* Date */}
-                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
-                        <div className="w-20 h-6 bg-zinc-100 rounded-sm shrink-0" />
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center text-md tracking-tight ml-auto gap-1 mt-auto">
-                        <div className="w-16 h-4 bg-zinc-100 rounded-sm shrink-0" />
-                    </div>
-                </div>
-            </Button>
-        )
+                </CardContent>
+            </Card>
+        );
     }
+
     if (isNewStory) {
         return (
-            <Button
-                asChild
-                className="flex w-full h-full bg-white/50 p-6 hover:bg-zinc-200 shadow-sm">
-                    <Link href="/workspace/author/new" className="flex">
-                        <Plus className="text-zinc-300 !size-16" />
-                    </Link>
-            </Button>
+            <Card className="group relative w-full bg-white/50 border-dashed border-zinc-200 hover:bg-zinc-200 transition-colors duration-200 flex items-center justify-center p-6 overflow-hidden">
+                <Link
+                    href="/workspace/author/new"
+                    className="absolute inset-0 z-0 cursor-pointer"
+                    aria-label="Create new research"
+                />
+                <Plus className="relative z-10 text-zinc-300 w-12 h-12 transition-transform duration-200 group-hover:scale-110 group-hover:text-zinc-500 pointer-events-none" />
+            </Card>
         );
-    } else {
-        // Exact fallback logic evaluation constants matching your original signature
-        const id = story?.id ?? "";
-        const title = story?.title ?? "Story title";
-        const description = story?.description ?? "No description provided"
-        const image = (story?.imageUrl && story.imageUrl.trim() !== "") ? `${story.imageUrl}` : "/logo-icon.svg";
-        const alt = story?.title ? story.title : "Story Image";
-        const date = story?.updatedAt ? formatDate(new Date(story.updatedAt)) : formatDate(new Date());
-        const isPublished = story?.published ?? false;
+    }
 
-        return (
-            <Button 
-                asChild
-                className="w-full h-full bg-white/50 p-4 hover:bg-zinc-200 whitespace-normal shadow-sm"
-                onClick={() => router.push(`/workspace/author/view/${id}`)}
-            >
-                <div className="w-full flex flex-col h-auto">
-                    {/* Image */}
+    return (
+        <Card className="group relative w-full bg-white/50 border border-zinc-100 shadow-sm hover:bg-zinc-100/80 transition-colors duration-200 overflow-hidden flex flex-col">
+            <Link
+                href={`/workspace/author/view/${id}`}
+                className="absolute inset-0 z-10 cursor-pointer"
+                aria-label={`View ${title}`}
+            />
+            <CardContent className="w-full flex flex-col h-full gap-3">
+                {/* Image Container */}
+                <div className="flex justify-center items-center w-full w-32 h-32 rounded-md overflow-hidden bg-zinc-100">
                     <Image
-                        src={image}
-                        alt={alt}
+                        src={imageUrl}
+                        alt={alt || "Story Image"}
                         width={128}
                         height={128}
-                        className="shrink-0"
-                        unoptimized // remove in prod
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        unoptimized
                     />
-
-                    {/* Title */}
-                    <div className="text-xl text-center tracking-tight text-zinc-600 whitespace-normal break-words">
+                </div>
+            
+                {/* Title & Dropdown Row */}
+                <div className="w-full flex items-start justify-between gap-2">
+                    <h3 className="text-lg font-medium tracking-tight text-zinc-800 break-words group-hover:text-zinc-950 transition-colors line-clamp-2">
                         {title}
+                    </h3>
+                    <div className="relative z-20 shrink-0">
+                        <StoryCardDropdown
+                            story={currentStory ?? story ?? { id: "", title: "", published: false, description: "", imageUrl: "", updatedAt: "" }}
+                            onPublishToggle={handlePublishToggle}
+                            onDelete={handleDeleteStory}
+                            accessToken={accessToken ?? ""}
+                            triggerRefresh={triggerRefresh}
+                        />
                     </div>
+                </div>
 
-                    {/* Description */}
-                    <div className="text-md text-center tracking-tight text-zinc-500 break-words">
-                        {description}
+                {/* Description */}
+                <p className="text-sm text-zinc-600 line-clamp-2 min-h-[2lh]">
+                    {description}
+                </p>
+
+                {/* Footer Meta */}
+                <div className="flex items-center justify-between w-full border-t border-zinc-200/50 pt-3 mt-auto">
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                        <PenBox className="w-3.5 h-3.5" />
+                        <span>{date}</span>
                     </div>
-
-                    {/* Date */}
-                    <div className="flex items-center gap-1 text-sm text-center tracking-tight text-zinc-400">
-                        <PenBox /> {date}
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center text-md tracking-tight ml-auto gap-1 mt-auto">
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
                         {isPublished ? (
                             <>
-                                <span className="text-green-500">Published</span>
-                                <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                                <span className="text-green-600 text-xs">Published</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 animate-pulse" />
                             </>
                         ) : (
                             <>
-                                <span className="text-yellow-500">Draft</span>
-                                <div className="w-2 h-2 rounded-full bg-yellow-500 shrink-0" />
+                                <span className="text-yellow-600 text-xs">Draft</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" />
                             </>
                         )}
                     </div>
                 </div>
-            </Button>
-        );
-    }
+            </CardContent>
+        </Card>
+    );
 }

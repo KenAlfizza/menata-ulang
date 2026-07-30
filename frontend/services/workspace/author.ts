@@ -4,6 +4,7 @@ import { WorkspaceStoryRecord } from "@/types/workspace.ts";
 import { authFetch } from "../auth.ts";
 import { PaginatedResult } from "../../types/common.ts";
 import { getFullImageUrl } from "../../utils/url.ts";
+import { ApiError, ApiErrorResponse } from "../../types/error.ts";
 
 /**
  * Fetch the recently edited stories
@@ -20,13 +21,13 @@ export async function fetchRecentStories(
         { method: "GET" }, 
     );
 
+    const body = await response.json();
     if (!response.ok) {
-        throw new Error(`Failed to fetch recent stories: ${response.status} ${response.statusText}`);
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
-    const data = await response.json();
 
     // Update image URL
-    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+    const transformedItems = body.items.map((item: WorkspaceStoryRecord) => ({
         ...item,
         imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
     }));
@@ -58,7 +59,7 @@ export async function fetchMyStories(
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.sort) queryParams.append("sort", params.sort);
     if (params.order) queryParams.append("order", params.order);
-    if (params.search) queryParams.append("filter", params.search);
+    if (params.search) queryParams.append("search", params.search);
 
     console.log("Params: ", queryParams.toString());
 
@@ -73,20 +74,20 @@ export async function fetchMyStories(
     }
 
     // Capture the full response object
-    const data = await response.json();
+    const body = await response.json();
     
     // Update image URL
-    const transformedItems = data.items.map((item: WorkspaceStoryRecord) => ({
+    const transformedItems = body.items.map((item: WorkspaceStoryRecord) => ({
         ...item,
         imageUrl: item.imageUrl ? getFullImageUrl(item.imageUrl) : null
     }));
     
-    // Return the data to be used by the UI (e.g., Shadcn Pagination)
+    // Return the body to be used by the UI (e.g., Shadcn Pagination)
     return {
         items: transformedItems,
-        total: data.total,
-        totalPages: data.totalPages,
-        page: data.page,
-        limit: data.limit
+        total: body.total,
+        totalPages: body.totalPages,
+        page: body.page,
+        limit: body.limit
     };
 }

@@ -18,7 +18,7 @@ import { ApiError } from "@/types/error.ts"; // Adjust path if needed
 
 import { Render } from "@puckeditor/core";
 import { ResearchPageRecord } from "@/types/page.ts";
-import { formatDate } from "../format-date.tsx";
+import { formatDate } from "@/utils/format-date.ts";
 import { createPuckConfig } from "../../editor/research/puck.config.tsx";
 
 interface ResearchFormValues {

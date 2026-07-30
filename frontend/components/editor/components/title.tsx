@@ -28,8 +28,7 @@ export function TitleComponent({ title, typography, margin, color }: TitleCompon
     return (
         <div style={{ 
             width: "100%", 
-            display: "flex", 
-            flexDirection: "column",
+            display: "flex",
         }}>
             <h2
                 className="font-bold tracking-tight text-slate-950"

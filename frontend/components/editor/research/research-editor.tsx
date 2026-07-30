@@ -83,6 +83,7 @@ export function ResearchEditor({ pageId }: ResearchEditorProps) {
         () => ({
             header: () => (
                 <EditorHeader 
+                    editorName="RESEARCH EDITOR"
                     isSaving={isSaving} 
                     onSave={handleSaveToServer} 
                     hasUnsavedChanges={hasUnsavedChanges} 

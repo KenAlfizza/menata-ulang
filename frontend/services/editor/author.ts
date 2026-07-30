@@ -3,6 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { Data } from "@puckeditor/core";
 import { StoryPageRecord } from "../../types/page.ts";
 import { authFetch } from "../auth.ts";
+import { ApiError, ApiErrorResponse } from "../../types/error.ts";
 
 /**
  * Retrieves a story page by ID via the API
@@ -25,7 +26,7 @@ export async function retrieveStoryPage(
 
     const body = await response.json();
     if (!response.ok) {
-        throw new Error(JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
     return body.storyPage;
 }
@@ -56,7 +57,7 @@ export async function updateStoryPage(
 
     const body = await response.json();
     if (!response.ok) {
-        throw new Error(JSON.stringify(body.error));
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
     return body.storyPage;
 }

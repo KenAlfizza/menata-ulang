@@ -53,14 +53,6 @@ export const storyPatchSchema = z.object({
     description: z.string().min(1).max(500).optional(),
     
     image: imageRule.optional(),
-        
-    published: z
-        .preprocess((val) => {
-            if (val === "true" || val === true) return true;
-            if (val === "false" || val === false) return false;
-            return val;
-        }, z.boolean())
-        .optional(),
 });
 
 /**
@@ -93,4 +85,17 @@ export const storyListQuerySchema = z.object({
     order: z.enum(["asc", "desc"]).default("desc").optional(),
     page: z.coerce.number().int().min(1).default(1).optional(),
     limit: z.coerce.number().int().min(1).max(50).default(10).optional(),
+});
+
+
+/**
+ * Zod validator schema for publishing/unpublishing a story entry.
+ * Safely parses string or boolean inputs into a strict boolean.
+ */
+export const publishStorySchema = z.object({
+    published: z.preprocess((val) => {
+        if (val === "true" || val === true) return true;
+        if (val === "false" || val === false) return false;
+        return val;
+    }, z.boolean()),
 });

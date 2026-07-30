@@ -8,17 +8,18 @@ import { Button } from "../../ui/button";
 const usePuck = createUsePuck();
 
 interface SaveButtonProps {
+    hasUnsavedChanges: boolean;
     isSaving: boolean;
     onSave: (data: any) => void;
 }
 
-export function ResearchSaveButton({ isSaving, onSave }: SaveButtonProps) {
+export function SaveButton({ hasUnsavedChanges, isSaving, onSave }: SaveButtonProps) {
     // Access the live Puck data correctly via s.appState.data
     const puckData = usePuck((s) => s.appState.data);
 
     return (
         <Button
-            disabled={isSaving}
+            disabled={isSaving || !hasUnsavedChanges}
             onClick={() => onSave(puckData)}
             aria-label="Save"
             className="bg-zinc-100 h-8 w-8 flex items-center justify-center rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-200"

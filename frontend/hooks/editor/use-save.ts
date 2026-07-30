@@ -1,6 +1,7 @@
 import { useTransition, useCallback } from "react";
 import { Data } from "@puckeditor/core";
 import { updateResearchPage } from "@/services/editor/researcher";
+import { updateStoryPage } from "@/services/editor/author.ts";
 
 interface UseSaveProps {
     pageId: string;
@@ -17,6 +18,31 @@ export function useSaveResearch({ pageId, accessToken }: UseSaveProps) {
             startSaving(async () => {
                 try {
                     await updateResearchPage(accessToken, pageId, currentData);
+                    resolve(true);
+                } catch (err: any) {
+                    alert(`Error trying to update data record: ${err.message}`);
+                    resolve(false);
+                }
+            });
+        });
+    }, [pageId, accessToken]);
+
+    return {
+        isSaving,
+        saveWorkspace,
+    };
+}
+
+export function useSaveStory({ pageId, accessToken }: UseSaveProps) {
+    const [isSaving, startSaving] = useTransition();
+
+    const saveWorkspace = useCallback(async (currentData: Data): Promise<boolean> => {
+        if (!pageId || !accessToken) return false;
+
+        return new Promise((resolve) => {
+            startSaving(async () => {
+                try {
+                    await updateStoryPage(accessToken, pageId, currentData);
                     resolve(true);
                 } catch (err: any) {
                     alert(`Error trying to update data record: ${err.message}`);
