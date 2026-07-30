@@ -24,7 +24,7 @@ export const GridSlotComponent: ComponentConfig<GridSlotType>["render"] = ({
     margin,
 }) => {
     return (
-        <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", height: "auto" }}>
             <SlotContent
                 style={{
                     display: "grid",
