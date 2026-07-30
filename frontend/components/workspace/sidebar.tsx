@@ -36,7 +36,7 @@ export function WorkspaceSidebar() {
     <Sidebar collapsible="icon">
         <SidebarHeader className="flex items-center justify-center">
             <Link
-                href="/"
+                href="/home"
                 className={`flex items-center justify-center transition-all duration-100 ${
                     isCollapsed ? "p-0" : "p-4"
                 }`}
