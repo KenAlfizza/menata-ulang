@@ -59,13 +59,17 @@ host.post("/podcast",
             = await hostService.createPodcast(user.id, createPodcastData);
 
         if (!result.success) {
-            if (result.error === 'SLUG_TAKEN') {
-                return c.json({ error: "Slug is already taken" }, 400);
-            }
-            return c.json({ error: "Internal server error" }, 500);
+            const status = result.error === 'SLUG_TAKEN' ? 409 : 500;
+            return c.json({ 
+            success: false, 
+            error: { 
+                message: result.error === 'SLUG_TAKEN' ? "Slug is taken" : "Internal error",
+                code: result.error 
+            } 
+            }, status);
         }
 
-        return c.json({ message: "Podcast created", ok: true, podcast: result.data });
+        return c.json({ success: true, story: result.data }, 201);
     }
 );
 
