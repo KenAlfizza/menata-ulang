@@ -1,5 +1,5 @@
 import { Data } from "@puckeditor/core";
-import { StoryPageRecord } from "@/types/story.ts";
+import { StoryPageRecord } from "@/types/page.ts";
 import { authFetch } from "./auth.ts";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
