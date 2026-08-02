@@ -4,10 +4,10 @@ import { z } from 'zod';
 import { idRule } from "./common.ts";
 import { SupportedAudioType, SUPPORTED_AUDIO_TYPES, isSupportedAudioType, SupportedImageType, SUPPORTED_IMAGE_TYPES, isSupportedImageType, verifyMagicBytes } from "../security/files.ts";
 
-const PODCAST_MAX_SIZE_MB = 50;
+const PODCAST_MAX_SIZE_MB = 25;
 const PODCAST_MAX_SIZE_BYTES = PODCAST_MAX_SIZE_MB * 1024 * 1024;
 
-const IMAGE_MAX_SIZE_MB = 5;
+const IMAGE_MAX_SIZE_MB = 15;
 const IMAGE_MAX_SIZE_BYTES = IMAGE_MAX_SIZE_MB * 1024 * 1024;
 
 
@@ -79,14 +79,17 @@ const podcastImageRule = z
  * - file: File
  * - title: string (max 100 chars)
  * - description: string (max 200 chars)
+ * - transcript: string
  */
 export const podcastPostSchema = z.object({
+    slug: z.string().min(1, "Slug is required").max(100, "Slug must be 100 characters or fewer"),
     title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or fewer"),
     description: z.string().max(200, "Description must be 200 characters or fewer"),
+    transcript: z.string().min(1, "Transcript is required"),
+    
     audio: podcastAudioRule,
-    image: podcastImageRule,
+    image: podcastImageRule.optional(),
 });
-
 
 /** GET Schemas **/
 export const podcastGetByIdSchema = z.object({
