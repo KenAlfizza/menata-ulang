@@ -6,6 +6,29 @@ import { getFullFileUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
 
 /**
+ * Helper function to process and prepare a PodcastRecord from the backend response.
+ * This handles converting stored file paths to full public URLs for both images and audio.
+ * 
+ * @param body - The raw response object containing the podcast data.
+ * @returns The processed PodcastRecord with full URLs.
+ */
+function processPodcastResponse(body: PodcastRecord): PodcastRecord {
+    if (!body) {
+        throw new Error("Podcast record data is missing or undefined.");
+    }
+
+    // Safely check and assign URLs if they exist
+    if (body.imageUrl) {
+        body.imageUrl = getFullFileUrl(body.imageUrl);
+    }
+    if (body.audioUrl) {
+        body.audioUrl = getFullFileUrl(body.audioUrl);
+    }
+
+    return body;
+}
+
+/**
  * Creates a new podcast via the API
  * @param accessToken - The user's authentication token
  * @param podcastData - The podcast details including title, slug, description, transcript, image, and audio
@@ -33,13 +56,26 @@ export async function createPodcast(accessToken: string, podcastData: {
         throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
-    if (body.podcast.imageUrl) {
-        body.podcast.imageUrl = getFullFileUrl(body.podcast.imageUrl);
+    return processPodcastResponse(body.podcast);
+}
+
+/**
+ * Retrieves a single podcast by its ID via the API
+ * @param accessToken - The user's authentication token
+ * @param id - The unique identifier of the podcast to retrieve
+ * @returns The podcast object or throws an error
+ */
+export async function retrievePodcast(accessToken: string, id: string): Promise<PodcastRecord> {
+    const response = await authFetch(`${API_BASE_URL}/host/podcast/${id}`, accessToken, {
+        method: "GET",
+    });
+
+    const body = await response.json();
+    console.log(body)
+
+    if (!response.ok) {
+        throw new ApiError(body as ApiErrorResponse, response.status);
     }
 
-    if (body.podcast.audioUrl) {
-        body.podcast.audioUrl = getFullFileUrl(body.podcast.audioUrl);
-    }
-
-    return body.podcast;
+    return processPodcastResponse(body.podcast);
 }

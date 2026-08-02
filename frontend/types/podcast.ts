@@ -10,8 +10,8 @@ export type PodcastRecord = {
     transcript: string,
     duration: number,
     
-    audioUrl: string,
-    imageUrl: string,
+    audioUrl: string | null,
+    imageUrl: string | null,
 
     createdAt: Date,
     updatedAt: Date | null,

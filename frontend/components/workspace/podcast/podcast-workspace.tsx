@@ -1,7 +1,6 @@
 "use-client";
 
 import { WorkspaceRefreshProvider } from "@/context/workspace/refresh-context.tsx";
-import RecentPodcasts from "./recent-podcasts.tsx";
 import { PodcastCard } from "./podcast-card.tsx";
 
 export default function PodcastWorkspace() {
