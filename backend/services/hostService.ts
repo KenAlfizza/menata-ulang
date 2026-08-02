@@ -133,7 +133,50 @@ export const hostService = {
             console.error("Database Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
-    }
+    },
 
-    
+    /**
+     * Retrieves a single podcast record based on its ID.
+     * 
+     * @param id - The unique identifier of the podcast to retrieve.
+     * @returns A promise resolving to a service result containing the PodcastRecord or API error
+     */
+    async getPodcastById(id: string) : Promise<HostServiceResult<PodcastRecord>> {
+        try {
+            const podcast = await prisma.podcast.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    slug: true,
+                    title: true,
+                    description: true,
+                    transcript: true,
+                    duration: true,
+                    audioUrl: true,
+                    imageUrl: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    published: true,
+                    publishedAt: true,
+                    hostId: true,
+                    threadId: true,
+                    heartsCount: true,
+                }
+            });
+
+            if (!podcast) {
+                return { success: false, error: 'NOT_FOUND' };
+            }
+
+            const podcastRecord = await this.buildPodcastRecord(podcast);
+
+            return {
+                success: true,
+                data: podcastRecord
+            };
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
 }

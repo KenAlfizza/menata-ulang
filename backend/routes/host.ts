@@ -10,7 +10,7 @@ import {
     podcastPatchParamSchema,
     podcastPatchFormSchema,
     podcastDeleteParamSchema
-} from "../lib/validators/podcast.ts";
+} from "../lib/validators/host.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 import { hostService } from "../services/hostService.ts";
 import { HostServiceResult } from "../types/services/host.ts";
@@ -70,6 +70,53 @@ host.post("/podcast",
         }
 
         return c.json({ success: true, story: result.data }, 201);
+    }
+);
+
+/**
+ * GET /podcast/:id - Retrieve a single podcast by ID
+ * 
+ * Middleware: `authMiddleware` (Optional for public, but included per your pattern), `validate("query", podcastQuerySchema)` (Optional).
+ * Autorization: `HOST` or `SUPERUSER` to access their own podcasts, or `PUBLIC` for general browsing.
+ * 
+ * Path Parameters:
+ * - id        : UUID of the podcast to retrieve
+ * 
+ * Query Parameters:
+ * - slug      : Optional filter to find podcast by slug
+ * 
+ * Behavior: 
+ * - checks if podcast exists
+ * - returns the fully constructed PodcastRecord via hostService
+ * 
+ * Responses:
+ * - 200: podcast payload
+ * - 404: not found
+ * - 400: bad request / invalid ID
+ * - 500: internal server error
+ */
+host.get("/podcast/:id",
+    authMiddleware,
+    validate("param", podcastGetByIdSchema), 
+    async (c) => {
+        const { id } = c.req.valid("param");
+
+        // Get the podcast from the service layer
+        const result : HostServiceResult<PodcastRecord> 
+            = await hostService.getPodcastById(id);
+
+        if (!result.success) {
+            const status = result.error === 'NOT_FOUND' ? 404 : 500;
+            return c.json({ 
+            success: false, 
+            error: { 
+                message: result.error === 'NOT_FOUND' ? "Podcast not found" : "Internal error",
+                code: result.error 
+            } 
+            }, status);
+        }
+
+        return c.json({ success: true, podcast: result.data }, 200);
     }
 );
 
