@@ -7,7 +7,7 @@ import { PodcastRecord } from "../podcast.ts";
 
 // Services response data type
 export type HostServiceResult<PodcastRecord> =
-| { success: true; data: PodcastRecord }
+| { success: true; data?: PodcastRecord }
 | { success: false; 
     error: 
         'SLUG_TAKEN' | 

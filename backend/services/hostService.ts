@@ -281,4 +281,66 @@ export const hostService = {
             return { success: false, error: 'INTERNAL_ERROR' };
         }
     },
+
+    /**
+     * Deletes a podcast record based on the provided ID.
+     * 
+     * This method:
+     * 1. Checks if the podcast exists.
+     * 2. Verifies that the requesting user owns the podcast (ownership check).
+     * 3. Removes the audio and image files from storage if they exist.
+     * 4. Deletes the podcast record from the database.
+     * 
+     * @param userId - The identifier of the host user performing the deletion.
+     * @param podcastId - The ID of the podcast to delete.
+     * @returns A promise resolving to a service result containing success/failure status and error message.
+     */
+    async deletePodcast(
+        userId: number,
+        podcastId: string
+    ) : Promise<HostServiceResult<void>> { // Returns void as nothing is returned upon deletion
+        try {
+            // Retrieve current podcast data to check ownership and existing media
+            const currentPodcast = await prisma.podcast.findUnique({
+                where: { id: podcastId },
+                select: { 
+                    hostId: true, 
+                    imageUrl: true, 
+                    audioUrl: true
+                }
+            });
+
+            // Check if podcast exists
+            if (!currentPodcast) {
+                return { success: false, error: 'NOT_FOUND' };
+            }
+
+            // PREMISSION CHECK (Ownership)
+            if (currentPodcast.hostId !== userId) {
+                return { success: false, error: 'UNAUTHORIZED' };
+            }
+
+            // Clean up storage (Delete image and audio if they exist)
+            if (currentPodcast.imageUrl) {
+                await storage.delete(currentPodcast.imageUrl);
+            }
+
+            if (currentPodcast.audioUrl) {
+                await storage.delete(currentPodcast.audioUrl);
+            }
+
+            // Delete the record from the database
+            await prisma.podcast.delete({
+                where: { id: podcastId }
+            });
+
+            return {
+                success: true,
+            };
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
 }

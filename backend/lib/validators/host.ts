@@ -117,5 +117,5 @@ export const podcastPatchParamSchema = z.object({
 
 /** DELETE Schemas **/
 export const podcastDeleteParamSchema = z.object({
-    id:idRule,
+    id: cuidRule,
 })

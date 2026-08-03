@@ -17,6 +17,28 @@ import { hostService } from "../services/hostService.ts";
 import { HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
 import { PodcastRecord } from "../types/podcast.ts";
 
+// Helper function to map internal error codes to HTTP status codes and messages
+function handleError(
+    error: string,
+    defaultStatus: ContentfulStatusCode = 500,
+    defaultMessage: string = "An internal server error occurred"
+): { status: ContentfulStatusCode; message: string } {
+    switch (error) {
+        case 'NOT_FOUND':
+            return { status: 404, message: "Podcast not found" };
+        
+        case 'UNAUTHORIZED':
+            return { status: 401, message: "You are not authorized to update this podcast" };
+        
+        case 'SLUG_TAKEN':
+            return { status: 400, message: "This custom link (slug) is already in use" };
+        
+        case 'INTERNAL_ERROR':
+        default:
+            return { status: defaultStatus, message: defaultMessage };
+    }
+}
+
 const host = new Hono<{ Variables: AppVariables}>();
 
 /**
@@ -164,32 +186,8 @@ host.patch("/podcast/:id",
 
         // Handle Service Response
         if (!result.success) {
-            let status: ContentfulStatusCode = 500;
-            let message = "An internal server error occurred";
-
-            switch (result.error) {
-                case 'NOT_FOUND':
-                    status = 404;
-                    message = "Podcast not found";
-                    break;
-                    
-                case 'UNAUTHORIZED':
-                    status = 401;
-                    message = "You are not authorized to update this podcast";
-                    break;
-                    
-                case 'SLUG_TAKEN':
-                    status = 400;
-                    message = "This custom link (slug) is already in use";
-                    break;
-                    
-                case 'INTERNAL_ERROR':
-                default:
-                    status = 500;
-                    message = "An unexpected internal server error occurred";
-                    break;
-            }
-
+            const { status, message } = handleError(result.error);
+            
             return c.json({ 
                 success: false, 
                 error: { 
@@ -200,6 +198,68 @@ host.patch("/podcast/:id",
         }
 
         return c.json({ success: true, podcast: result.data }, 200);
+    }
+);
+
+/**
+ * DELETE /podcast/:id - Delete a podcast (Soft Delete)
+ * 
+ * Middleware: `authMiddleware`, `validate("param", podcastDeleteParamSchema)`
+ * Authorization: `HOST` (owner) or `SUPERUSER`
+ * 
+ * Path Parameters:
+ * - id : UUID of the podcast to delete
+ * 
+ * Behavior: 
+ * - Checks ownership (only the host can delete their own podcast)
+ * - Soft-deletes the record (sets published: false, deletedAt: now)
+ * - Removes associated audio and image files from storage
+ * 
+ * Responses:
+ * - 200: success (no data returned)
+ * - 404: not found
+ * - 401: unauthorized (not the owner)
+ * - 500: internal server error
+ */
+host.delete("/podcast/:id",
+    authMiddleware,
+    validate("param", podcastDeleteParamSchema),
+    async (c) => {
+        // Get the podcast ID from the path parameter
+        const { id } = c.req.valid("param");
+
+        // Get the user from the auth middleware
+        const user = c.get("user");
+        
+        // Validate user role
+        if (!user || !["HOST", "SUPERUSER"].includes(user.role)) {
+            return c.json({
+                success: false,
+                error: {
+                    message: "Forbidden",
+                    code: "FORBIDDEN"
+                }
+            }, 403);
+        }
+
+        // Call the service layer to handle soft deletion, file cleanup, and checks
+        const result: HostServiceResult<void> = await hostService.deletePodcast(user.id, id);
+
+        // Handle Service Response
+        if (!result.success) {
+            const { status, message } = handleError(result.error);
+            
+            return c.json({ 
+                success: false, 
+                error: { 
+                    message: message,
+                    code: result.error 
+                } 
+            }, status);
+        }
+
+        // Return success response (no data payload)
+        return c.json({ success: true }, 200);
     }
 );
 
