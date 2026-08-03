@@ -27,3 +27,15 @@ export interface CreatePodcastData extends Pick<
     audio?: File,
     image?: File,
 }
+
+export interface UpdatePodcastData extends Partial<Pick<
+    PodcastRecord,
+    'slug' |
+    'title' |
+    'description' |
+    'transcript' |
+    'published'
+>> {
+    audio?: File,
+    image?: File
+}

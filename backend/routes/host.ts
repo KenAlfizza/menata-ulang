@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AppVariables } from "../types.ts";
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 // Validators
 import { validate } from "../lib/validators/index.ts";
@@ -13,7 +14,7 @@ import {
 } from "../lib/validators/host.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 import { hostService } from "../services/hostService.ts";
-import { HostServiceResult } from "../types/services/host.ts";
+import { HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
 import { PodcastRecord } from "../types/podcast.ts";
 
 const host = new Hono<{ Variables: AppVariables}>();
@@ -61,11 +62,11 @@ host.post("/podcast",
         if (!result.success) {
             const status = result.error === 'SLUG_TAKEN' ? 409 : 500;
             return c.json({ 
-            success: false, 
-            error: { 
-                message: result.error === 'SLUG_TAKEN' ? "Slug is taken" : "Internal error",
-                code: result.error 
-            } 
+                success: false, 
+                error: { 
+                    message: result.error === 'SLUG_TAKEN' ? "Slug is taken" : "Internal error",
+                    code: result.error 
+                } 
             }, status);
         }
 
@@ -119,5 +120,88 @@ host.get("/podcast/:id",
         return c.json({ success: true, podcast: result.data }, 200);
     }
 );
+
+/**
+ * PATCH /podcast/:id - Update an existing podcast
+ * 
+ * Middleware: `authMiddleware`, `validate("param", podcastPatchParamSchema)`, `validate("form", podcastPatchFormSchema)`
+ * Authorization: `HOST` (owner) or `SUPERUSER`
+ * 
+ * Path Parameters:
+ * - id : UUID of the podcast to update
+ * 
+ * Form:
+ * - title        : string (Optional)
+ * - description  : string (Optional)
+ * - slug         : string (Optional)
+ * - transcript   : string (Optional)
+ * - audio        : File (Optional)
+ * - image        : File (Optional)
+ */
+host.patch("/podcast/:id",
+    authMiddleware,
+    validate("param", podcastPatchParamSchema),
+    validate("form", podcastPatchFormSchema),
+    async (c) => {
+        // Validate User Role
+        const user = c.get("user");
+        if (!user || !["HOST", "SUPERUSER"].includes(user.role)) {
+            return c.json({
+                success: false,
+                error: {
+                    message: "Forbidden",
+                    code: "FORBIDDEN"
+                }
+            }, 403);
+        }
+
+        // Get validated parameters and form data
+        const { id } = c.req.valid("param");
+        const updateData: UpdatePodcastData = c.req.valid("form");
+
+        // all the service layer to handle updates, file replacements, and ownership checks
+        const result: HostServiceResult<PodcastRecord> = await hostService.updatePodcast(user.id, id, updateData);
+
+        // Handle Service Response
+        if (!result.success) {
+            let status: ContentfulStatusCode = 500;
+            let message = "An internal server error occurred";
+
+            switch (result.error) {
+                case 'NOT_FOUND':
+                    status = 404;
+                    message = "Podcast not found";
+                    break;
+                    
+                case 'UNAUTHORIZED':
+                    status = 401;
+                    message = "You are not authorized to update this podcast";
+                    break;
+                    
+                case 'SLUG_TAKEN':
+                    status = 400;
+                    message = "This custom link (slug) is already in use";
+                    break;
+                    
+                case 'INTERNAL_ERROR':
+                default:
+                    status = 500;
+                    message = "An unexpected internal server error occurred";
+                    break;
+            }
+
+            return c.json({ 
+                success: false, 
+                error: { 
+                    message: message,
+                    code: result.error 
+                } 
+            }, status);
+        }
+
+        return c.json({ success: true, podcast: result.data }, 200);
+    }
+);
+
 
 export default host;

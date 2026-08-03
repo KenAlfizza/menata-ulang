@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
 import { PodcastRecord } from "../types/podcast.ts";
-import { CreatePodcastData, HostServiceResult } from "../types/services/host.ts";
+import { CreatePodcastData, HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
 import { getAudioDuration } from "../services/audio.ts";
 
 export const hostService = {
@@ -169,6 +169,108 @@ export const hostService = {
             }
 
             const podcastRecord = await this.buildPodcastRecord(podcast);
+
+            return {
+                success: true,
+                data: podcastRecord
+            };
+        } catch (error) {
+            console.error("Database Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
+     * Updates an existing podcast record based on the provided data.
+     * Handles slug validation, file storage, duration calculation, and database updates.
+     * Ensures the requesting user has permission to update the podcast.
+     * 
+     * @param userId - The identifier of the host user updating the podcast.
+     * @param podcastId - The ID of the podcast to update.
+     * @param updatePodcastData - The payload containing podcast details and files.
+     * @returns A promise resolving to a service result containing the updated PodcastRecord or an error string.
+     */
+    async updatePodcast(
+        userId: number,
+        podcastId: string,
+        updatePodcastData: UpdatePodcastData
+    ) : Promise<HostServiceResult<PodcastRecord>> {
+        try {
+            const { slug, title, description, transcript, published } = updatePodcastData;
+            const { audio, image } = updatePodcastData;
+
+            // Check if slug is available
+            if (slug && (!await this.checkSlugAvailable(slug))) {
+                return { success: false, error: 'SLUG_TAKEN' };
+            }
+
+            // Retrieve current podcast data
+            const currentPodcast = await prisma.podcast.findUnique({
+                where: { id: podcastId },
+                select: { 
+                    hostId: true, 
+                    updatedAt: true, 
+                    published: true, 
+                    publishedAt: true,
+                    imageUrl: true,
+                    audioUrl: true
+                }
+            });
+
+            if (!currentPodcast) {
+                return { success: false, error: 'NOT_FOUND' };
+            }
+
+            // PREMISSION CHECK (Ownership)
+            if (currentPodcast.hostId !== userId) {
+                return { success: false, error: 'UNAUTHORIZED' };
+            }
+
+            // Handle File Uploads
+            let imageUrl: string | undefined;
+            if (image) {
+                await storage.delete(currentPodcast.imageUrl)
+                imageUrl = await storage.save(image, "podcasts");
+            }
+
+            let audioUrl: string | undefined;
+            let duration = 0;
+            
+            if (audio) {
+                await storage.delete(currentPodcast.audioUrl)
+                audioUrl = await storage.save(audio, "podcasts");
+                duration = await getAudioDuration(audioUrl);
+            } else {
+                // Fetch existing duration if no new audio
+                const existing = await prisma.podcast.findUnique({
+                    where: { id: podcastId },
+                    select: { duration: true }
+                });
+                if (existing) {
+                    duration = existing.duration;
+                }
+            }
+
+            // Execute Transaction Update
+            const updatedPodcast = await prisma.$transaction(async (tx) => {
+                return await tx.podcast.update({
+                    where: { id: podcastId },
+                    data: {
+                        title: title,
+                        slug: slug,
+                        description: description,
+                        transcript: transcript,
+                        duration: duration,
+                        published: published,
+                        updatedAt: new Date(), // Optional: explicitly update timestamp
+                        imageUrl: imageUrl ? { set: imageUrl } : undefined,
+                        audioUrl: audioUrl ? { set: audioUrl } : undefined,
+                    },
+                });
+            });
+
+            // Build and Return Result
+            const podcastRecord = await this.buildPodcastRecord(updatedPodcast);
 
             return {
                 success: true,

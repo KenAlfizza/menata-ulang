@@ -103,9 +103,16 @@ export const podcastGetListSchema = z.object({
 });
 
 /** PATCH Schemas **/
-export const podcastPatchFormSchema = podcastPostSchema.partial();
+export const podcastPatchFormSchema = 
+    podcastPostSchema.partial().extend({
+        published: z.preprocess((val) => {
+            if (val === "true" || val === true) return true;
+            if (val === "false" || val === false) return false;
+            return val;
+        }, z.boolean().optional()),
+    });
 export const podcastPatchParamSchema = z.object({
-    id: idRule,
+    id: cuidRule,
 });
 
 /** DELETE Schemas **/
