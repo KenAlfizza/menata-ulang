@@ -24,3 +24,16 @@ export type PodcastRecord = {
 
     heartsCount: number,
 }
+
+/**
+ * Update podcast data similar to the backend update data
+ */
+export interface UpdatePodcastData {
+    title?: string;
+    slug?: string;
+    description?: string;
+    transcript?: string;
+    published?: boolean;
+    image?: File;
+    audio?: File;
+}

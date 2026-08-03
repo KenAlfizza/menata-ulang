@@ -4,8 +4,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { retrievePodcast } from "@/services/host";
-import { PodcastRecord } from "@/types/podcast.ts";
+import { retrievePodcast, updatePodcast } from "@/services/host";
+import { PodcastRecord, UpdatePodcastData } from "@/types/podcast.ts";
 import { useAuth } from "@/context/auth-context.tsx";
 import { ApiError } from "@/types/error.ts";
 import { formatDate } from "@/utils/format-date.ts";
@@ -54,7 +54,13 @@ export function usePodcastWorkspace(podcastId: string) {
 
     const extractErrorMessage = (err: any, defaultMsg: string) => {
         if (err instanceof ApiError) {
-            return err.response?.error?.fields?.image || err.response?.error || defaultMsg;
+            const errorMessage = 
+                err.response?.error?.fields?.audio ||
+                err.response?.error?.fields?.image ||
+                err.response?.error?.message ||
+                defaultMsg;
+
+            return errorMessage;
         }
         return err?.message || defaultMsg;
     };
@@ -148,7 +154,12 @@ export function usePodcastWorkspace(podcastId: string) {
     const handlePublishToggle = async (publishState: boolean) => {
         if (!accessToken) return;
         try {
-            // API call placeholder
+            const updatePayload: UpdatePodcastData = {
+                published: publishState
+            };
+            const podcast = await updatePodcast(accessToken, podcastId, updatePayload);
+            setPodcast(podcast);
+
         } catch (err: any) {
             const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
             showToastError(`Podcast ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}.`);
@@ -168,11 +179,14 @@ export function usePodcastWorkspace(podcastId: string) {
     const onSubmitAbout = async (data: AboutFormValues) => {
         if (!accessToken) return;
         try {
-            const updatePayload: any = {};
+            const updatePayload: UpdatePodcastData = {};
             if (aboutForm.formState.dirtyFields.title) updatePayload.title = data.title;
             if (aboutForm.formState.dirtyFields.description) updatePayload.description = data.description;
             if (aboutForm.formState.dirtyFields.slug) updatePayload.slug = data.slug;
             if (isImageDirty && pendingImageFile) updatePayload.image = pendingImageFile;
+
+            const podcast = await updatePodcast(accessToken, podcastId, updatePayload);
+            setPodcast(podcast);
 
             setPendingImageFile(null);
             setIsImageDirty(false);
@@ -186,6 +200,12 @@ export function usePodcastWorkspace(podcastId: string) {
     const onSubmitTranscript = async (data: TranscriptFormValues) => {
         if (!accessToken) return;
         try {
+            const updatePayload: UpdatePodcastData = {};
+            if (transcriptForm.formState.dirtyFields.transcript) updatePayload.transcript = data.transcript;
+
+            const podcast = await updatePodcast(accessToken, podcastId, updatePayload);
+            setPodcast(podcast);
+
             transcriptForm.reset(data);
         } catch (err: any) {
             const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
@@ -196,6 +216,14 @@ export function usePodcastWorkspace(podcastId: string) {
     const onSubmitAudio = async () => {
         if (!accessToken || !pendingAudioFile) return;
         try {
+
+            const updatePayload: UpdatePodcastData = {
+                audio: pendingAudioFile,
+            };
+
+            const podcast = await updatePodcast(accessToken, podcastId, updatePayload);
+            setPodcast(podcast);
+
             setPendingAudioFile(null);
             setIsAudioDirty(false);
         } catch (err: any) {

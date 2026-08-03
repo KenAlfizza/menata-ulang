@@ -1,7 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 import { ApiError, ApiErrorResponse } from "../types/error.ts";
-import { PodcastRecord } from "../types/podcast.ts";
+import { PodcastRecord, UpdatePodcastData } from "../types/podcast.ts";
 import { getFullFileUrl } from "../utils/url.ts";
 import { authFetch } from "./auth.ts";
 
@@ -72,6 +72,41 @@ export async function retrievePodcast(accessToken: string, id: string): Promise<
 
     const body = await response.json();
     console.log(body)
+
+    if (!response.ok) {
+        throw new ApiError(body as ApiErrorResponse, response.status);
+    }
+
+    return processPodcastResponse(body.podcast);
+}
+
+/**
+ * Updates an existing podcast via the API
+ * @param accessToken - The user's authentication token
+ * @param id - The unique identifier of the podcast to update
+ * @param updateData - Optional podcast fields to update (title, slug, description, transcript, published, image, audio)
+ * @returns The updated podcast object or throws an error
+ */
+export async function updatePodcast(
+    accessToken: string,
+    id: string,
+    updateData: UpdatePodcastData
+): Promise<PodcastRecord> {
+    const formData = new FormData();
+    
+    // Append only the fields that are provided
+    Object.entries(updateData).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+            formData.append(key, val);
+        }
+    });
+
+    const response = await authFetch(`${API_BASE_URL}/host/podcast/${id}`, accessToken, {
+        method: "PATCH",
+        body: formData,
+    });
+
+    const body = await response.json();
 
     if (!response.ok) {
         throw new ApiError(body as ApiErrorResponse, response.status);
