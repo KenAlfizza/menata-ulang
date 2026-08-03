@@ -114,3 +114,27 @@ export async function updatePodcast(
 
     return processPodcastResponse(body.podcast);
 }
+
+
+/**
+ * Deletes a podcast via the API (Soft Delete)
+ * @param accessToken - The user's authentication token
+ * @param id - The unique identifier of the podcast to delete
+ * @returns Resolves to void on success. Throws an ApiError on failure.
+ */
+export async function deletePodcast(
+    accessToken: string,
+    id: string
+): Promise<void> {
+    const response = await authFetch(`${API_BASE_URL}/host/podcast/${id}`, accessToken, {
+        method: "DELETE",
+    });
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(body as ApiErrorResponse, response.status);
+    }
+    
+    return Promise.resolve();
+}

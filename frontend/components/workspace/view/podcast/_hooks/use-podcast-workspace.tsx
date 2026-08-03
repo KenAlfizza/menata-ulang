@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { retrievePodcast, updatePodcast } from "@/services/host";
+import { retrievePodcast, updatePodcast, deletePodcast } from "@/services/host";
 import { PodcastRecord, UpdatePodcastData } from "@/types/podcast.ts";
 import { useAuth } from "@/context/auth-context.tsx";
 import { ApiError } from "@/types/error.ts";
@@ -35,7 +35,7 @@ export function usePodcastWorkspace(podcastId: string) {
     const [isAudioDirty, setIsAudioDirty] = useState(false);
 
     // Error & Loading state
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<ApiError | null>(null);
     const [toastError, setToastError] = useState<string | null>(null);
     const [podcast, setPodcast] = useState<PodcastRecord>();
     const [isLoading, setIsLoading] = useState(true);
@@ -93,9 +93,7 @@ export function usePodcastWorkspace(podcastId: string) {
                 setIsImageDirty(false);
             } catch (err: any) {
                 if (err instanceof ApiError) {
-                    setError(err.response?.error?.message || "Failed to load podcast.");
-                } else {
-                    setError("Failed to load podcast.");
+                    setError(err);
                 }
             } finally {
                 setIsLoading(false);
@@ -169,6 +167,7 @@ export function usePodcastWorkspace(podcastId: string) {
     const handleDeletePodcast = async () => {
         if (!accessToken) return;
         try {
+            await deletePodcast(accessToken, podcastId);
             router.push("/workspace/host"); 
         } catch (err: any) {
             const alertMessage = extractErrorMessage(err, "An unexpected error occurred");

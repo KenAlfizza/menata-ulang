@@ -64,22 +64,26 @@ export function AboutSection({
                         {error && (
                             <div className="p-3 text-sm text-red-600 bg-red-50 rounded border border-red-200">{error}</div>
                         )}
-                        <div className="flex flex-row gap-8 items-center">
-                            <div className="min-w-64 space-y-4">
+                        
+                        {/* Grid Container replacing flex */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                            {/* Column 1: Image Upload Area */}
+                            <div className="space-y-4">
                                 <input id="picture" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                                <label htmlFor="picture" className="cursor-pointer group flex flex-col justify-center items-center w-full min-h-48 border-2 border-dashed rounded-lg bg-slate-50 overflow-hidden relative">
+                                <label htmlFor="picture" className="cursor-pointer group flex flex-col justify-center items-center w-full h-64 border-2 border-dashed border-zinc-300 rounded-lg bg-slate-50 overflow-hidden relative hover:bg-zinc-100/50 transition-colors">
                                     {imagePreview ? (
-                                        <img src={imagePreview} alt="Preview" className="max-h-64 object-contain" />
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="flex flex-col items-center text-zinc-400">
+                                        <div className="flex flex-col items-center text-zinc-400 space-y-2">
                                             <ImageIcon size={48} />
-                                            <span>Click to upload image</span>
+                                            <span className="text-xs font-medium">Click to upload image</span>
                                         </div>
                                     )}
                                 </label>
                             </div>
 
-                            <div className="w-full space-y-4">
+                            {/* Column 2 & 3: Form Inputs */}
+                            <div className="md:col-span-2 space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="title">Title</Label>
                                     <Input className="!text-2xl !leading-tight !h-auto !py-2 bg-transparent" id="title" {...register("title", { required: true })} />

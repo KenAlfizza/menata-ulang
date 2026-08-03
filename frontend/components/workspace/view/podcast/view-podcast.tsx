@@ -10,11 +10,15 @@ import { AudioSection } from "./_components/audio-section";
 import { TranscriptSection } from "./_components/transcript-section";
 import { VisibilitySection } from "./_components/visibility-section";
 import { DeleteSection } from "./_components/delete-section";
+import { Error } from "./_components/error.tsx";
+import { PodcastSkeleton } from "./_components/podcast-skeleton.tsx";
 
 export default function WorkspaceViewPodcast({ podcastId }: { podcastId: string }) {
     const workspace = usePodcastWorkspace(podcastId);
 
-    if (workspace.isLoading) return <main className="m-8">Loading...</main>;
+    if (workspace.error) return <Error statusCode={workspace.error.status} error={workspace.error.response} redirect="/workspace/host"/>
+
+    if (workspace.isLoading) return <main className="min-h-screen bg-zinc-100 relative pb-20"><PodcastSkeleton /></main>
 
     return (
         <main className="min-h-screen bg-zinc-100 relative pb-20">
