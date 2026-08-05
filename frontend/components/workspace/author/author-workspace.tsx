@@ -1,0 +1,20 @@
+"use client";
+
+import { WorkspaceRefreshProvider } from "@/context/workspace/refresh-context.tsx";
+import MyStories from "./my-stories.tsx";
+import RecentStories from "./recent-stories.tsx";
+
+export default function AuthorWorkspace() {
+    return (
+        <WorkspaceRefreshProvider>
+            <div className="px-8 space-y-8 overflow-x-hidden mb-16">
+                <section>
+                    <RecentStories />
+                </section>
+                <section className="w-full">
+                    <MyStories />
+                </section>
+            </div>
+        </WorkspaceRefreshProvider>
+    )
+}

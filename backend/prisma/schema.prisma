@@ -26,10 +26,9 @@ model User {
   // Relationships
   tokens      Token[]
   stories     Story[]
+  researches  Research[]
   podcasts    Podcast[]
   reflections Reflection[]
-
-  storypages  StoryPage[]
   
   /// Hearts given by this user across different content types.
   hearts      Heart[]
@@ -38,7 +37,7 @@ model User {
 enum UserRole {
   SUPERUSER
   AUTHOR
-  MODERATOR
+  HOST
   USER
 }
 
@@ -59,47 +58,90 @@ enum TokenType {
 }
 
 model Story {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
   title       String
   description String
-  text        String
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id])
   imageUrl    String    @default("")
   published   Boolean   @default(false)
-  publishedAt DateTime?   
-  research    Research?
+  publishedAt DateTime?
 
-  // Updated Thread Relation (Strict 1-to-1)
-  // Connects this Story directly to a dedicated Thread container
+  // Hearts relation
+  heartsCount Int        @default(0)
+  hearts      Heart[]
+
+  // Updated Thread Relation
   threadId    String     @unique
   thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  /// Cached counter for total hearts received by this story.
-  heartsCount Int        @default(0)
+  // Story Page
+  page        StoryPage[]
+  @@map("stories")
+}
 
-  /// Relation link to individual heart records.
-  hearts      Heart[]
+model StoryPage {
+  id        String   @id @default(cuid(2))
+  puckData  Json
+  storyId   String   @unique
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  @@map("story_pages")
 }
 
 model Research {
-  id        Int       @id @default(autoincrement())
-  text      String
-  storyId   Int       @unique   
-  story     Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)   
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
+  title       String
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  researcherId    Int
+  researcher      User      @relation(fields: [researcherId], references: [id])
+  imageUrl    String    @default("")
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+
+  // Hearts relation
+  heartsCount Int        @default(0)
+  hearts      Heart[]
+
+  // Updated Thread Relation
+  threadId    String     @unique
+  thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  // Research Page
+  page        ResearchPage[]
+  @@map("researches")
 }
 
+model ResearchPage {
+  id        String          @id @default(cuid(2))
+  puckData  Json
+  researchId   String       @unique
+  research     Research     @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  @@map("research_pages")
+}
+
+// Podcast schema definition
 model Podcast {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
+
   title       String           
-  description String      
+  description String 
+  transcript  String     
   duration    Int
+  
   audioUrl    String    @default("")
   imageUrl    String    @default("")
-  listener    Int       @default(0)
+
   createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
+  updatedAt   DateTime  @updatedAt
+  published   Boolean   @default(false)
+  publishedAt DateTime?
 
   // Host Relation
   hostId      Int
@@ -110,10 +152,8 @@ model Podcast {
   threadId    String    @unique
   thread      Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  /// Cached counter for total hearts received by this podcast.
+  // Hearts relation
   heartsCount Int       @default(0) 
-
-  /// Relation link to individual heart records.
   hearts      Heart[]
 }
 
@@ -125,6 +165,7 @@ model Thread {
   // Inverse 1-to-1 relations mapping back to content types
   podcast     Podcast?
   story       Story?
+  research    Research?
 
   // A Thread owns many individual Reflection comments/replies
   reflections Reflection[]
@@ -186,14 +227,19 @@ model Heart {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// The ID of the target Story (optional).
-  storyId   Int?
+  storyId   String?
   /// Story link relation.
   story     Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  /// The ID of the target Research (optional).
+  researchId   String?
+  /// Research link relation.
+  research     Research?   @relation(fields: [researchId], references: [id], onDelete: Cascade)
   
   /// The ID of the target Podcast (optional).
-  podcastId Int?
+  podcastId     String?
   /// Podcast link relation.
-  podcast   Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  podcast       Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
   
   /// The ID of the target Reflection (optional).
   reflectionId String?
@@ -213,16 +259,4 @@ model Feedback {
   content     String   @db.Text
   resolved    Boolean  @default(false) // Added resolved flag
   createdAt   DateTime @default(now())
-}
-
-model StoryPage {
-  id          String   @id @default(cuid(2)) // Backend-generated CUID
-  title       String
-  slug        String   @unique
-  puckData    Json     // Saves the flexible layout schema from Puck editor
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  authorId    Int
-  author      User     @relation(fields: [authorId], references: [id])
 }

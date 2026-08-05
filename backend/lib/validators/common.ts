@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { isSupportedImageType, SUPPORTED_IMAGE_TYPES, SupportedImageType, verifyMagicBytes } from "../security/files.ts";
+
 /** Zod validation rules reused in multiple validators **/
 
 /**
@@ -28,6 +30,13 @@ export const uuidRule = z.uuidv7();
 
 
 /**
+ * CUID2 ID validation
+ * Assuming your researcher ID is a string (CUID2)
+ */
+export const cuidRule = z.cuid2();;
+
+
+/**
  * Max words validation rule
  * @param max 
  * @param message
@@ -44,3 +53,40 @@ export const maxWordRule = (max: number, message?: string) =>
       message: message || `Must be ${max} words or less`
     }
   );
+
+
+/**
+ * Image validation rule
+ *
+ * Validates uploaded `File` objects:
+ * - Non-empty
+ * - Maximum size 10MB
+ * - MIME type one of JPEG, PNG, WebP
+ *
+ * Note: Runtime must provide `File` (Deno/file API environment compatibility).
+ */
+const IMAGE_MAX_SIZE_MB = 10;
+const IMAGE_MAX_SIZE_BYTES = IMAGE_MAX_SIZE_MB * 1024 * 1024;
+
+export const imageRule = z
+    .instanceof(File, 
+        { message: "Please upload an image file" }
+    )
+    .refine((file) => file.size > 0,
+        "Image file cannot be empty",
+    )
+    .refine((file) => file.size <= IMAGE_MAX_SIZE_BYTES,
+        `Image file must be ${IMAGE_MAX_SIZE_MB}MB or smaller`,
+    )
+    .refine((file) => isSupportedImageType(file.type), `Invalid image type. Accepted types: ${SUPPORTED_IMAGE_TYPES.join(", ")}`)
+    .refine(
+        async (file) => {
+            try {
+                await verifyMagicBytes(file, file.type as SupportedImageType);
+                return true; 
+            } catch {
+                return false;
+            }
+        },
+        { message: "Image content does not match declared MIME type" }
+    );

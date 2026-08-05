@@ -1,46 +1,8 @@
 import { Data } from "@puckeditor/core";
+import { StoryPageRecord } from "@/types/page.ts";
+import { authFetch } from "./auth.ts";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-/**
- * `StoryPage` model returned by the backend.
- * Aligned with the Prisma schema fields in `prisma/schema.prisma`.
- */
-interface StoryPageRecord {
-  id: string;
-  title: string;
-  slug: string;
-  puckData: Data;
-  authorId: string;
-  published: boolean;
-}
-
-/**
- * Authenticated fetch wrapper used by all story service functions.
- *
- * Attaches the two auth artifacts required by the backend on every request:
- * - `credentials: "include"` — sends the httpOnly refresh token cookie.
- * - `Authorization: Bearer <token>` — sends the in-memory access token.
- *
- * Callers pass `accessToken` from `useAuth()` at the call site rather than
- * reading it here, keeping this function free of React context dependencies
- * and safe to call outside of components (e.g. in tests or server actions).
- *
- * @param url - The full endpoint URL to fetch.
- * @param accessToken - The in-memory access token from `useAuth()`.
- * @param options - Standard `RequestInit` options merged on top of the defaults.
- */
-function authFetch(url: string, accessToken: string, options: RequestInit = {}): Promise<Response> {
-  return fetch(url, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...options.headers,
-    },
-  });
-}
 
 /**
  * Creates a new story page record on the backend.

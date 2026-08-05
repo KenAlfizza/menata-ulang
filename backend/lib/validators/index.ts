@@ -16,15 +16,16 @@ import { type ZodType } from "zod";
  * - Middleware function compatible with Hono.
  */
 export const validate = <T extends ZodType>(target: "json" | "query" | "param" | "header" | "form", schema: T) =>
-  zValidator(target, schema, (result, c) => {
-    console.log(result);
+    zValidator(target, schema, (result, c) => {
     if (!result.success) {
-      const error = result.error.issues.reduce((acc, issue) => {
-        const key = issue.path[0] as string;
-        acc[key] = issue.message;
+        const fields = result.error.issues.reduce((acc, issue) => {
+        acc[issue.path[0] as string] = issue.message;
         return acc;
-      }, {} as Record<string, string>);
+        }, {} as Record<string, string>);
 
-      return c.json({ error }, 400);
+        return c.json({ 
+        success: false, 
+        error: { message: "Validation failed", code: "VALIDATION_ERROR", fields } 
+        }, 400);
     }
-  });
+});
