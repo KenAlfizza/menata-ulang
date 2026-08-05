@@ -17,23 +17,23 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorkspacePodcastRecord } from "@/types/workspace";
+import { useWorkspaceRefresh } from "../../../context/workspace/refresh-context.tsx";
 
 interface PodcastDropdownProps {
+    accessToken: string;
     podcast: WorkspacePodcastRecord;
     onPublishToggle: (publishState: boolean) => Promise<void>;
     onDelete: (podcastId: string) => Promise<void>;
-    accessToken: string;
-    triggerRefresh: () => void;
 }
 
 export function PodcastCardDropdown({
     podcast,
     onPublishToggle,
     onDelete,
-    triggerRefresh,
 }: PodcastDropdownProps) {
     const id = podcast.id;
     const isPublished = podcast.published ?? false;
+    const { triggerRefresh } = useWorkspaceRefresh();
 
     const handlePublishToggle = async (publishState: boolean) => {
         try {

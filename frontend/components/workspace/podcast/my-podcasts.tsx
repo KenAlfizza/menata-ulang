@@ -32,7 +32,7 @@ export default function MyPodcasts() {
                 className="transition-opacity duration-300 ease-in-out"
                 style={{ opacity: myPodcasts.isLoading ? 0.4 : 1 }}
             >
-                <div className="grid grid-cols-4 gap-8 py-4">
+                <div className="grid grid-cols-5 gap-2 py-4">
                     {/* If loading, show skeletons. Otherwise, show podcasts. */}
                     {myPodcasts.isLoading
                         ? Array.from({ length: 9 }).map((_, i) => <PodcastCard key={`skeleton-${i}`} isLoading />)

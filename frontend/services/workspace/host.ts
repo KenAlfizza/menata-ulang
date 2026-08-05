@@ -12,11 +12,11 @@ import { getFullFileUrl } from "../../utils/url.ts";
  * @returns The three most recently edited podcasts by the user
  * @throws If the backend returns a non-2xx response.
  */
-export async function fetchRecentPodcasts(
+export async function retrieveRecentPodcasts(
     accessToken: string
-): Promise<WorkspacePodcastRecord[]> {
+): Promise<PaginatedResult<WorkspacePodcastRecord>> {
     const response = await authFetch(
-        `${API_BASE_URL}/host/podcasts/recent`, 
+        `${API_BASE_URL}/host/my-podcasts/recent`, 
         accessToken, 
         { method: "GET" }, 
     );
@@ -25,14 +25,16 @@ export async function fetchRecentPodcasts(
     if (!response.ok) {
         throw new ApiError(body as ApiErrorResponse, response.status);
     }
-
+    // Handle hono wrapper
+    const data = body.data ?? body;
+    
     // Update image URL
-    const transformedItems = body.items.map((item: WorkspacePodcastRecord) => ({
+    const transformedItems = data.items.map((item: WorkspacePodcastRecord) => ({
         ...item,
         imageUrl: item.imageUrl ? getFullFileUrl(item.imageUrl) : null,
         audioUrl: item.audioUrl ? getFullFileUrl(item.audioUrl) : null,
     }));
-
+    console.log("data", transformedItems)
     return transformedItems;
 }
 
@@ -43,7 +45,7 @@ export async function fetchRecentPodcasts(
  * @returns An object containing the list of podcasts and pagination metadata
  * @throws If the backend returns a non-2xx response.
  */
-export async function fetchMyPodcasts(
+export async function retrieveMyPodcasts(
     accessToken: string,
     params: {
         page?: number;
@@ -62,8 +64,6 @@ export async function fetchMyPodcasts(
     if (params.order) queryParams.append("order", params.order);
     if (params.search) queryParams.append("search", params.search);
     if (params.published !== undefined) queryParams.append("published", params.published.toString());
-
-    console.log("Params: ", queryParams.toString());
 
     const queryString = queryParams.toString();
 

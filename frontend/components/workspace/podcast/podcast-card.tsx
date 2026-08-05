@@ -2,32 +2,27 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { PenBox, Play, PlayCircle, Plus } from "lucide-react";
+import { PenBox, Play, Plus } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { WorkspacePodcastRecord } from "@/types/workspace.ts";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card.tsx";
-import { useWorkspaceRefresh } from "@/context/workspace/refresh-context.tsx";
+import { Card, CardContent } from "@/components/ui/card.tsx";
 import { usePodcastWorkspaceCard } from "@/hooks/workpace/podcast/use-podcast-workspace-card.ts";
-import { PodcastCardDropdown } from "./podcast-card-dropdown.tsx"
+import { PodcastCardDropdown } from "./podcast-card-dropdown.tsx";
 import { useAuth } from "../../../context/auth-context.tsx";
+import { PlayButton } from "./play-button.tsx";
 
 interface PodcastCardProps {
     podcast?: WorkspacePodcastRecord;
     isNewPodcast?: boolean;
     isLoading?: boolean;
-    onDelete?: (id: string) => void;
-    onPublish?: (id: string) => void;
 }
 
-export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, onDelete, onPublish }: PodcastCardProps) {
+export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }: PodcastCardProps) {
     const { accessToken } = useAuth();
-    const { triggerRefresh } = useWorkspaceRefresh();
-    const resolvedPodcastId = podcast?.id ?? "";
-    const workspace = usePodcastWorkspaceCard(resolvedPodcastId);
+    
+    // Pass callbacks straight into the hook
+    const workspace = usePodcastWorkspaceCard({ podcast });
     const currentPodcast = workspace.podcast ?? podcast;
 
     const id = currentPodcast?.id ?? podcast?.id ?? "0";
@@ -37,25 +32,8 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
     const description = currentPodcast?.description ?? podcast?.description ?? "A short description describing the main point of the podcast";
     const date = currentPodcast?.updatedAt ? formatDate(new Date(currentPodcast.updatedAt)) : podcast?.updatedAt ? formatDate(new Date(podcast.updatedAt)) : formatDate(new Date());
     const isPublished = currentPodcast?.published ?? podcast?.published ?? false;
-    const isCardLoading = isLoading || (!!resolvedPodcastId && workspace.isLoading);
 
-    const handlePublishToggle = async (publishState: boolean) => {
-        await workspace.handlePublishToggle(publishState);
-        if (onPublish && podcast?.id) {
-            onPublish(podcast.id);
-        }
-        triggerRefresh();
-    };
-
-    const handleDeletePodcast = async (podcastId: string) => {
-        await workspace.handleDeletePodcast();
-        if (onDelete) {
-            onDelete(podcastId);
-        }
-        triggerRefresh();
-    };
-
-    if (isCardLoading) {
+    if (isLoading) {
         return (
             <Card className="w-full h-full min-h-[160px] bg-white/50 border border-zinc-100 rounded-md shadow-sm animate-pulse">
                 <CardContent className="flex flex-row items-start gap-4 h-full">
@@ -77,7 +55,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
 
     if (isNewPodcast) {
         return (
-            <Card className="group relative w-full max-w-[160px] h-full min-h-[160px] bg-white/50 border-dashed border-zinc-200 hover:bg-zinc-200 transition-colors duration-200 flex items-center justify-center p-6 overflow-hidden">
+            <Card className="group relative w-full h-full min-h-[160px] bg-white/50 border-dashed border-zinc-200 hover:bg-zinc-200 transition-colors duration-200 flex items-center justify-center p-6 overflow-hidden">
                 <Link
                     href="/workspace/host/new"
                     className="absolute inset-0 z-0 cursor-pointer"
@@ -89,7 +67,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
     }
 
     return (
-        <Card className="group relative w-full h-full min-h-[320px] bg-white/50 border border-zinc-100 shadow-sm hover:bg-zinc-200/80 transition-colors duration-200 overflow-hidden p-0">
+        <Card className="group relative w-full h-full min-h-[320px] bg-white/50 border border-zinc-100 shadow-sm [&:hover:not(:has([data-play-button]:hover))]:bg-zinc-200/80 transition-colors duration-200 overflow-hidden p-0">
             <Link
                 href={`/workspace/host/view/${id}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
@@ -102,7 +80,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
                         src={imageUrl}
                         alt={alt || ""}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="object-cover transition-transform duration-300 [.group:hover:not(:has([data-play-button]:hover))_&]:scale-105"
                         unoptimized
                     />
                 </div>
@@ -111,7 +89,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
                     <div className="w-full flex flex-col gap-1 items-start">
                         <div className="w-full flex items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-lg text-left tracking-tight font-medium text-zinc-800 break-words group-hover:text-zinc-950 transition-colors line-clamp-2">
+                                <h3 className="text-lg text-left tracking-tight font-medium text-zinc-800 break-words [.group:hover:not(:has([data-play-button]:hover))_&]:text-zinc-950 transition-colors line-clamp-2">
                                     {title}
                                 </h3>
                             </div>
@@ -127,13 +105,10 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
                         <PenBox className="w-3.5 h-3.5" />
                         <span>{date}</span>
                     </div>
-                    <div className="bg-green-300 p-1.5 rounded-full shadow-sm">
-                        <Play size={24} className="text-white"/>
-                    </div>
+                    <PlayButton/>
                 </div>
 
-
-                <div className="flex items-center border-t">
+                <div className="flex items-center border-t pt-2">
                     <div className="flex items-center gap-1.5 text-sm font-medium">
                         {isPublished ? (
                             <>
@@ -152,10 +127,9 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false, 
                         {currentPodcast && accessToken && (
                             <PodcastCardDropdown
                                 accessToken={accessToken}
-                                triggerRefresh={triggerRefresh}
                                 podcast={currentPodcast}
-                                onPublishToggle={handlePublishToggle}
-                                onDelete={handleDeletePodcast}
+                                onPublishToggle={workspace.handlePublishToggle}
+                                onDelete={workspace.handleDeletePodcast}
                             />
                         )}
                     </div>

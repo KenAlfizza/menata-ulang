@@ -1,16 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAuth } from "@/context/auth-context.tsx";
-import { retrievePodcast, updatePodcast, deletePodcast } from "@/services/host.ts";
-import { PodcastRecord, UpdatePodcastData } from "@/types/podcast.ts";
+import { updatePodcast, deletePodcast } from "@/services/host.ts";
+import { UpdatePodcastData } from "@/types/podcast.ts";
 import { ApiError } from "@/types/error.ts";
+import { WorkspacePodcastRecord } from "../../../types/workspace.ts";
+import { useWorkspaceRefresh } from "../../../context/workspace/refresh-context.tsx";
 
-export function usePodcastWorkspaceCard(podcastId: string) {
+interface UsePodcastWorkspaceCardProps {
+    podcast?: WorkspacePodcastRecord;
+}
+
+export function usePodcastWorkspaceCard({ podcast }: UsePodcastWorkspaceCardProps = {}) {
     const { accessToken } = useAuth();
+    const { triggerRefresh } = useWorkspaceRefresh();
 
-    const [podcast, setPodcast] = useState<PodcastRecord | undefined>();
-    const [isLoading, setIsLoading] = useState<boolean>(!!podcastId);
+    const [isLoading, setIsLoading] = useState<boolean>(!!podcast);
     const [error, setError] = useState<ApiError | null>(null);
     const [toastError, setToastError] = useState<string | null>(null);
 
@@ -33,65 +39,41 @@ export function usePodcastWorkspaceCard(podcastId: string) {
 
         if (typeof err === "object" && err !== null && "message" in err) {
             const message = (err as { message?: unknown }).message;
-            if (typeof message === "string") {
-                return message;
-            }
+            if (typeof message === "string") return message;
         }
 
         return defaultMsg;
     };
 
-    useEffect(() => {
-        async function fetchPodcastData() {
-            if (!accessToken || !podcastId) {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                setIsLoading(true);
-                const data = await retrievePodcast(accessToken, podcastId);
-                setPodcast(data);
-            } catch (err: unknown) {
-                if (err instanceof ApiError) {
-                    setError(err);
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchPodcastData();
-    }, [accessToken, podcastId]);
-
     const handlePublishToggle = useCallback(
         async (publishState: boolean) => {
-            if (!accessToken || !podcastId) return;
-
+            if (!accessToken || !podcast?.id) return;
+            
             try {
                 const updatePayload: UpdatePodcastData = { published: publishState };
-                const updatedPodcast = await updatePodcast(accessToken, podcastId, updatePayload);
-                setPodcast(updatedPodcast);
+                await updatePodcast(accessToken, podcast.id, updatePayload);
+                
+                triggerRefresh();
             } catch (err: unknown) {
                 const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
                 showToastError(`Podcast ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}.`);
             }
         },
-        [accessToken, podcastId, extractErrorMessage, showToastError]
+        [accessToken, podcast?.id, triggerRefresh, showToastError]
     );
 
     const handleDeletePodcast = useCallback(
         async () => {
-            if (!accessToken || !podcastId) return;
-
+            if (!accessToken || !podcast?.id) return;
             try {
-                await deletePodcast(accessToken, podcastId);
+                await deletePodcast(accessToken, podcast.id);                
+                triggerRefresh();
             } catch (err: unknown) {
                 const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
                 showToastError(`Podcast deletion failed: ${alertMessage}.`);
             }
         },
-        [accessToken, podcastId, extractErrorMessage, showToastError]
+        [accessToken, podcast?.id, triggerRefresh, showToastError]
     );
 
     return {
