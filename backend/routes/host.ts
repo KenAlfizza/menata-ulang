@@ -6,7 +6,6 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { validate } from "../lib/validators/index.ts";
 import { 
     podcastPostSchema, 
-    podcastGetListSchema, 
     podcastGetByIdSchema,
     podcastPatchParamSchema,
     podcastPatchFormSchema,
@@ -143,6 +142,51 @@ host.get("/podcast/:id",
         return c.json({ success: true, podcast: result.data }, 200);
     }
 );
+
+/**
+ * GET /my-podcasts/recent - Retrieve the 3 most recently updated podcasts for the current host
+ * 
+ * Middleware: `authMiddleware`, `validate("query", podcastListQuerySchema)`
+ * Authorization: `HOST` or `SUPERUSER`
+ * 
+ * Responses:
+ * - 200: recent podcast list payload
+ * - 403: forbidden
+ * - 500: internal server error
+ */
+host.get("/my-podcasts/recent",
+    authMiddleware,
+    async (c) => {
+        // Validate user role
+        const user = c.get("user");
+        if (!user || !["HOST", "SUPERUSER"].includes(user.role)) {
+            return c.json({
+                success: false,
+                error: {
+                    message: "Forbidden",
+                    code: "FORBIDDEN"
+                }
+            }, 403);
+        }
+
+        // Call the service layer to fetch the recent podcasts
+        const result = await hostService.getRecentPodcasts(user.id);
+
+        if (!result.success) {
+            const { status, message } = handleError(result.error);
+            return c.json({
+                success: false,
+                error: {
+                    message,
+                    code: result.error
+                }
+            }, status);
+        }
+
+        return c.json({ success: true, data: result.data }, 200);
+    }
+);
+
 
 /**
  * GET /my-podcasts - Retrieve a paginated list of the current host's podcasts

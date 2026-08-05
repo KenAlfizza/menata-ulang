@@ -266,6 +266,41 @@ export const hostService = {
     },
 
     /**
+     * Retrieves the 3 most recently updated podcasts for a given host.
+     * 
+     * @param userId - The identifier of the host user.
+     * @returns A promise resolving to a service result containing podcast summaries or an error string.
+     */
+    async getRecentPodcasts(userId: number): Promise<HostServiceResult<PaginatedResult<MyPodcastSummary>>> {
+        try {
+            // Fetch the 3 most recent podcasts for the host and the total count of their podcasts
+            const podcasts = await prisma.podcast.findMany({
+                where: { hostId: userId },
+                orderBy: { updatedAt: 'desc' },
+                take: 3
+            });
+        
+            const items: MyPodcastSummary[] = await Promise.all(
+                podcasts.map(podcast => this.buildPodcastSummaryRecord(podcast))
+            );
+
+            return {
+                success: true,
+                data: {
+                    items,
+                    total: 3,
+                    page: 0,
+                    limit: 0,
+                    totalPages: 0
+                }
+            };
+        } catch (error) {
+            console.error("Fetch Recent Podcasts Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
      * Updates an existing podcast record based on the provided data.
      * Handles slug validation, file storage, duration calculation, and database updates.
      * Ensures the requesting user has permission to update the podcast.
