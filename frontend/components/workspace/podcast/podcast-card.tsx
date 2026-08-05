@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { PenBox, Play, Plus } from "lucide-react";
+import { PenBox, Plus } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { WorkspacePodcastRecord } from "@/types/workspace.ts";
@@ -32,6 +32,8 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
     const description = currentPodcast?.description ?? podcast?.description ?? "A short description describing the main point of the podcast";
     const date = currentPodcast?.updatedAt ? formatDate(new Date(currentPodcast.updatedAt)) : podcast?.updatedAt ? formatDate(new Date(podcast.updatedAt)) : formatDate(new Date());
     const isPublished = currentPodcast?.published ?? podcast?.published ?? false;
+    // NOTE: assumes WorkspacePodcastRecord has an `audioUrl` field — rename here if yours differs
+    const audioUrl = currentPodcast?.audioUrl ?? podcast?.audioUrl ?? "";
 
     if (isLoading) {
         return (
@@ -105,7 +107,15 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
                         <PenBox className="w-3.5 h-3.5" />
                         <span>{date}</span>
                     </div>
-                    <PlayButton/>
+                    <PlayButton
+                        track={{
+                            id: String(id),
+                            title,
+                            artist: currentPodcast?.host ?? podcast?.host ?? "Podcast",
+                            src: audioUrl,
+                            imageUrl,
+                        }}
+                    />
                 </div>
 
                 <div className="flex items-center border-t pt-2">

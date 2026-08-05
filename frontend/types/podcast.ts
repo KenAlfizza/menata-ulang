@@ -19,7 +19,7 @@ export type PodcastRecord = {
     published: boolean,
     publishedAt: Date | null,
 
-    hostId: number,
+    host: string,
     threadId: string,
 
     heartsCount: number,
