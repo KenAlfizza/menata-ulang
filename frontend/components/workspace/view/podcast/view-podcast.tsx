@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { usePodcastWorkspace } from "./_hooks/use-podcast-workspace";
+import { usePodcastWorkspaceView } from "@/hooks/workpace/podcast/use-podcast-workspace-view.ts";
 import { AboutSection } from "./_components/about-section";
 import { AudioSection } from "./_components/audio-section";
 import { TranscriptSection } from "./_components/transcript-section";
@@ -14,7 +14,7 @@ import { Error } from "./_components/error.tsx";
 import { PodcastSkeleton } from "./_components/podcast-skeleton.tsx";
 
 export default function WorkspaceViewPodcast({ podcastId }: { podcastId: string }) {
-    const workspace = usePodcastWorkspace(podcastId);
+    const workspace = usePodcastWorkspaceView(podcastId);
 
     if (workspace.error) return <Error statusCode={workspace.error.status} error={workspace.error.response} redirect="/workspace/host"/>
 

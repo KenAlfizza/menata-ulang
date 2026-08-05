@@ -1,3 +1,5 @@
+import { ApiError } from "../types/error.ts";
+
 /**
  * Parses and extracts a user-friendly error message from various error formats,
  * including JSON-serialized error strings, Axios/fetch response objects, and standard Errors.
@@ -32,3 +34,28 @@ export function getErrorMessage(error: unknown, fallbackMessage = "Something wen
 
     return error instanceof Error ? error.message : fallbackMessage;
 }
+
+/**
+ * Extracts a user-friendly error message from an {@link ApiError} instance, 
+ * automatically inspecting validation error fields if present, or falling back 
+ * to standard error messages and defaults.
+ * 
+ * @param err - The caught error object, typically an instance of {@link ApiError}
+ * @param defaultMsg - A fallback message to return if no specific error or field message can be resolved.
+ * @returns A clear, human-readable error message string.
+ */
+export const extractErrorMessage = (err: ApiError, defaultMsg: string) => {
+    const fields = err.response?.error?.fields;
+    
+    // If fields object exists and has entries, grab the first available error message
+    if (fields && typeof fields === "object") {
+        const firstFieldError = Object.values(fields).find(
+            (msg) => typeof msg === "string" && msg.trim() !== ""
+        );
+        if (firstFieldError) {
+            return firstFieldError;
+        }
+    }
+
+    return err.response?.error?.message || defaultMsg;
+};

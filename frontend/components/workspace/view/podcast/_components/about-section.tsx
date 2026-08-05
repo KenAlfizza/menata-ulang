@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PenBox, Save, X, ImageIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { AboutFormValues } from "../_hooks/use-podcast-workspace";
+import { AboutFormValues } from "@/hooks/workpace/podcast/use-podcast-workspace-view.ts";
 
 interface AboutSectionProps {
     aboutForm: UseFormReturn<AboutFormValues>;
@@ -32,16 +32,16 @@ export function AboutSection({
     const { register, handleSubmit, formState: { errors } } = aboutForm;
 
     return (
-        <Card className="shadow-sm">
-            <CardContent className="space-y-4 p-4">
-                <section className="flex flex-col gap-2 px-2">
-                    <div className="w-full h-8 flex items-center justify-between gap-2">
+        <Card className="shadow-sm p-0 p-6">
+            <CardContent className="space-y-4 p-0">
+                <section className="flex flex-col gap-2">
+                    <div className="w-full h-auto flex items-center justify-between gap-2">
                         <div className="flex flex-col">
                             <Label className="text-lg">About Podcast</Label>
                             <span className="text-zinc-500">Update detailed information of your podcast, including its title, description, slug, and cover image.</span>
                         </div>
                         <div className="ml-auto flex items-center gap-1.5 text-xs tracking-tight text-zinc-400">
-                            <PenBox className="w-3.5 h-3.5" /> 
+                            <PenBox className="w-3.5 h-3.5" />
                             <span>Updated: {updatedAt}</span>
                         </div>
                         <div className="flex items-center">
@@ -64,43 +64,68 @@ export function AboutSection({
                         {error && (
                             <div className="p-3 text-sm text-red-600 bg-red-50 rounded border border-red-200">{error}</div>
                         )}
-                        
-                        {/* Grid Container replacing flex */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                            {/* Column 1: Image Upload Area */}
-                            <div className="space-y-4">
-                                <input id="picture" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                                <label htmlFor="picture" className="cursor-pointer group flex flex-col justify-center items-center w-full h-64 border-2 border-dashed border-zinc-300 rounded-lg bg-slate-50 overflow-hidden relative hover:bg-zinc-100/50 transition-colors">
+
+                        <div className="flex flex-row gap-8 items-start">
+
+                            <div className="flex w-64 h-64">
+                                <input
+                                    id="picture"
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                                <label
+                                    htmlFor="picture"
+                                    className="flex-1 cursor-pointer group relative overflow-hidden rounded-lg border-2 border-dashed border-zinc-300 bg-slate-50 hover:bg-zinc-100/50 transition-colors"
+                                >
                                     {imagePreview ? (
-                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
-                                        <div className="flex flex-col items-center text-zinc-400 space-y-2">
-                                            <ImageIcon size={48} />
+                                        <div className="flex flex-col items-center justify-center text-zinc-400 space-y-2 px-4 py-4 w-full h-full">
+                                            <ImageIcon size={64} />
                                             <span className="text-xs font-medium">Click to upload image</span>
                                         </div>
                                     )}
                                 </label>
                             </div>
 
-                            {/* Column 2 & 3: Form Inputs */}
-                            <div className="md:col-span-2 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Title</Label>
-                                    <Input className="!text-2xl !leading-tight !h-auto !py-2 bg-transparent" id="title" {...register("title", { required: true })} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea id="description" {...register("description")} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="slug">URL Slug:</Label>
-                                    <Input id="slug" {...register("slug", { required: true })} className={errors.slug ? "text-red-500" : ""} />
+
+                            {/* Form Inputs (Full width of remaining space) */}
+                            <div className="flex-1">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title">Title</Label>
+                                        <Input
+                                            className="!text-2xl !leading-tight !h-auto !py-2 bg-transparent"
+                                            id="title"
+                                            {...register("title", { required: true })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="description">Description</Label>
+                                        <Textarea id="description" {...register("description")} />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="slug">URL Slug:</Label>
+                                        <Input
+                                            id="slug"
+                                            {...register("slug", { required: true })}
+                                            className={errors.slug ? "text-red-500" : ""}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </form>
                 </section>
             </CardContent>
-        </Card>
+        </Card >
     );
 }

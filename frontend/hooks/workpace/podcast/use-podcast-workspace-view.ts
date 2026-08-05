@@ -20,7 +20,7 @@ export interface TranscriptFormValues {
     transcript: string;
 }
 
-export function usePodcastWorkspace(podcastId: string) {
+export function usePodcastWorkspaceView(podcastId: string) {
     const router = useRouter();
     const { accessToken } = useAuth();
 
@@ -68,7 +68,10 @@ export function usePodcastWorkspace(podcastId: string) {
     // Fetch on mount
     useEffect(() => {
         async function fetchPodcastData() {
-            if (!accessToken || !podcastId) return;
+            if (!accessToken || !podcastId) {
+                setIsLoading(false);
+                return;
+            }
 
             try {
                 setIsLoading(true);

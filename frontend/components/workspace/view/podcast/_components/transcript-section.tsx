@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { TranscriptFormValues } from "../_hooks/use-podcast-workspace";
+import { TranscriptFormValues } from "@/hooks/workpace/podcast/use-podcast-workspace-view.ts";
 
 interface TranscriptSectionProps {
     transcriptForm: UseFormReturn<TranscriptFormValues>;
@@ -26,7 +26,7 @@ export function TranscriptSection({
         <Card className="shadow-sm">
             <CardContent className="space-y-4">
                 <section className="flex flex-col gap-4 p-2">
-                    <div className="w-full h-8 flex items-center justify-between gap-2">
+                    <div className="w-full flex items-center justify-between gap-2">
                         <div className="flex flex-col">
                             <Label className="text-lg" htmlFor="transcript">Transcript</Label>
                             <span className="text-zinc-500">Add or edit the full-text transcript for this podcast episode.</span>
@@ -50,9 +50,9 @@ export function TranscriptSection({
                     <form onSubmit={handleSubmit(onSubmitTranscript)} className="space-y-4">
                         <Textarea 
                             id="transcript" 
-                            rows={8}
+                            rows={10}
                             placeholder="Enter podcast transcript here..."
-                            className="bg-transparent font-mono text-sm"
+                            className="bg-transparent font-mono text-sm min-h-[16lh]"
                             {...register("transcript")} 
                         />
                     </form>
