@@ -96,11 +96,18 @@ export const podcastGetByIdSchema = z.object({
     id: cuidRule,
 });
 
-export const podcastGetListSchema = z.object({
-    page: z.coerce.number().int().min(1).max(1000).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-    search: z.string().max(100, "Search keyword must be 100 characters or fewer").optional(),
+/**
+ * Podcast list query schema
+ * Validates pagination and filtering for /my-podcasts/
+ */
+export const podcastListQuerySchema = z.object({
+    search: z.string().max(100).optional(),
+    sort: z.enum(["title", "updatedAt"]).default("updatedAt").optional(),
+    order: z.enum(["asc", "desc"]).default("desc").optional(),
+    page: z.coerce.number().int().min(1).default(1).optional(),
+    limit: z.coerce.number().int().min(1).max(50).default(10).optional(),
 });
+
 
 /** PATCH Schemas **/
 export const podcastPatchFormSchema = 

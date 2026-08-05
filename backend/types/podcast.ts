@@ -24,3 +24,16 @@ export type PodcastRecord = {
 
     heartsCount: number,
 }
+
+/**
+ * Defines the criteria for filtering and paginating podcasts.
+ * All fields are optional to allow for flexible, partial filtering.
+ */
+export interface PodcastFilter {
+    published?: boolean;
+    search?: string;
+    limit: number;
+    page: number;
+    sort?: "title" | "updatedAt";
+    order?: "asc" | "desc";
+}

@@ -39,3 +39,19 @@ export interface UpdatePodcastData extends Partial<Pick<
     audio?: File,
     image?: File
 }
+
+/**
+ * MyPodcastSummary: My podcast items
+ * Use this for list/search endpoints.
+ */
+export type MyPodcastSummary = Pick<
+    PodcastRecord, 
+    'id' |
+    'title'|
+    'description' |
+    'updatedAt' |
+    'imageUrl' |
+    'audioUrl' |
+    'published' |
+    'heartsCount'
+>;

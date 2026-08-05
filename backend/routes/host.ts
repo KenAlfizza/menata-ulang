@@ -10,12 +10,13 @@ import {
     podcastGetByIdSchema,
     podcastPatchParamSchema,
     podcastPatchFormSchema,
-    podcastDeleteParamSchema
+    podcastDeleteParamSchema,
+    podcastListQuerySchema
 } from "../lib/validators/host.ts";
 import { authMiddleware } from "../middleware/auth.ts";
 import { hostService } from "../services/hostService.ts";
 import { HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
-import { PodcastRecord } from "../types/podcast.ts";
+import { PodcastFilter, PodcastRecord } from "../types/podcast.ts";
 
 // Helper function to map internal error codes to HTTP status codes and messages
 function handleError(
@@ -140,6 +141,62 @@ host.get("/podcast/:id",
         }
 
         return c.json({ success: true, podcast: result.data }, 200);
+    }
+);
+
+/**
+ * GET /my-podcasts - Retrieve a paginated list of the current host's podcasts
+ * 
+ * Middleware: `authMiddleware`, `validate("query", podcastListQuerySchema)`
+ * Authorization: `HOST` or `SUPERUSER`
+ * 
+ * Query Parameters:
+ * - search    : string (optional) - Filter by title
+ * - published : boolean (optional) - Filter by publication status
+ * - sort      : "title" | "updatedAt" (optional) - Sort field
+ * - order     : "asc" | "desc" (optional) - Sort direction
+ * - page      : number (optional) - Page number
+ * - limit     : number (optional) - Items per page
+ * 
+ * Responses:
+ * - 200: paginated podcast list payload
+ * - 403: forbidden
+ * - 500: internal server error
+ */
+host.get("/my-podcasts",
+    authMiddleware,
+    validate("query", podcastListQuerySchema),
+    async (c) => {
+        // Validate user role
+        const user = c.get("user");
+        if (!user || !["HOST", "SUPERUSER"].includes(user.role)) {
+            return c.json({
+                success: false,
+                error: {
+                    message: "Forbidden",
+                    code: "FORBIDDEN"
+                }
+            }, 403);
+        }
+
+        // Get validated query filter parameters
+        const filter = c.req.valid("query") as PodcastFilter;
+
+        // Call the service layer to fetch the paginated list
+        const result = await hostService.getMyPodcasts(user.id, filter);
+
+        if (!result.success) {
+            const { status, message } = handleError(result.error);
+            return c.json({
+                success: false,
+                error: {
+                    message,
+                    code: result.error
+                }
+            }, status);
+        }
+
+        return c.json({ success: true, data: result.data }, 200);
     }
 );
 

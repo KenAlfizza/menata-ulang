@@ -1,8 +1,10 @@
 import { prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
-import { PodcastRecord } from "../types/podcast.ts";
+import { PodcastFilter, PodcastRecord } from "../types/podcast.ts";
+import { MyPodcastSummary } from "../types/services/host.ts";
 import { CreatePodcastData, HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
 import { getAudioDuration } from "../services/audio.ts";
+import { PaginatedResult } from "../types/common.ts";
 
 export const hostService = {
     /**
@@ -67,6 +69,38 @@ export const hostService = {
             heartsCount: podcast.heartsCount,
         };
         return podcastRecord;
+    },
+
+    /**
+     * Builds and returns a concise PodcastSummaryRecord object using the provided podcast source data.
+     * 
+     * @param podcast - The source object from prisma containing the podcast summary properties.
+     * @returns A promise that resolves to the fully constructed PodcastSummaryRecord.
+     */
+    async buildPodcastSummaryRecord(
+        podcast: {
+            id: string;
+            title: string;
+            description: string;
+            imageUrl: string;
+            audioUrl: string;
+            duration: number;
+            updatedAt: Date | null;
+            published: boolean;
+            heartsCount: number;
+        }
+    ): Promise<MyPodcastSummary> {
+        const summaryRecord: MyPodcastSummary = {
+            id: podcast.id,
+            title: podcast.title,
+            description: podcast.description,
+            imageUrl: podcast.imageUrl,
+            audioUrl: podcast.audioUrl,
+            updatedAt: podcast.updatedAt,
+            published: podcast.published,
+            heartsCount: podcast.heartsCount,
+        };
+        return summaryRecord;
     },
 
     /**
@@ -181,6 +215,57 @@ export const hostService = {
     },
 
     /**
+     * Retrieves a paginated list of podcasts for a host with optional search and filtering.
+     * 
+     * @param userId - The identifier of the host user.
+     * @param filter - The filtering, pagination, and sorting criteria.
+     * @returns A promise resolving to a service result containing paginated podcast summaries or an error string.
+     */
+    async getMyPodcasts(
+        userId: number,
+        filter: PodcastFilter
+    ): Promise<HostServiceResult<PaginatedResult<MyPodcastSummary>>> {
+        try {
+            const { search, published, limit, page, sort = 'updatedAt', order = 'desc' } = filter;
+            const skip = (page - 1) * limit;
+
+            const where = {
+                hostId: userId,
+                ...(published !== undefined && { published }),
+                ...(search && { title: { contains: search, mode: 'insensitive' as const } })
+            };
+
+            const [podcasts, total] = await prisma.$transaction([
+                prisma.podcast.findMany({
+                    where,
+                    take: limit,
+                    skip,
+                    orderBy: { [sort]: order }
+                }),
+                prisma.podcast.count({ where })
+            ]);
+
+            const items: MyPodcastSummary[] = await Promise.all(
+                podcasts.map(podcast => this.buildPodcastRecord(podcast))
+            );
+
+            return { 
+                success: true, 
+                data: { 
+                    items, 
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                } 
+            };
+        } catch (error) {
+            console.error("Fetch Podcasts Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    },
+
+    /**
      * Updates an existing podcast record based on the provided data.
      * Handles slug validation, file storage, duration calculation, and database updates.
      * Ensures the requesting user has permission to update the podcast.
@@ -229,7 +314,7 @@ export const hostService = {
             // Handle File Uploads
             let imageUrl: string | undefined;
             if (image) {
-                await storage.delete(currentPodcast.imageUrl)
+                if (currentPodcast.imageUrl) await storage.delete(currentPodcast.imageUrl)
                 imageUrl = await storage.save(image, "podcasts");
             }
 
@@ -237,7 +322,7 @@ export const hostService = {
             let duration = 0;
             
             if (audio) {
-                await storage.delete(currentPodcast.audioUrl)
+                if (currentPodcast.audioUrl) await storage.delete(currentPodcast.audioUrl)
                 audioUrl = await storage.save(audio, "podcasts");
                 duration = await getAudioDuration(audioUrl);
             } else {
