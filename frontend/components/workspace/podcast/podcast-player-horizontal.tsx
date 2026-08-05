@@ -23,7 +23,11 @@ function formatTime(seconds: number): string {
     return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function PodcastPlayerHorizontal() {
+interface podcastPlayerHorizontalProps {
+    showHost: boolean;
+}
+
+export function PodcastPlayerHorizontal({ showHost }: podcastPlayerHorizontalProps) {
     const {
         currentTrack,
         isActive,
@@ -54,10 +58,10 @@ export function PodcastPlayerHorizontal() {
 
     return (
         <div className="w-full rounded-md border border-zinc-100 bg-white/50 shadow-sm px-3 sm:px-4 py-3">
-            <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+            <div className="flex flex-col lg:flex-row items-center gap-3 lg:gap-4">
                 
                 {/* Top Row on Mobile / Left Section on Desktop: Track Info + Close Button */}
-                <div className="flex items-center justify-between w-full md:w-64 shrink-0 min-w-0">
+                <div className="flex items-center justify-between w-full lg:w-64 shrink-0 min-w-0">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="relative w-11 h-11 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                             <Image
@@ -70,7 +74,7 @@ export function PodcastPlayerHorizontal() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-zinc-800 line-clamp-[2lh]">{currentTrack.title}</p>
-                            <p className="truncate text-xs text-zinc-500">{currentTrack.artist}</p>
+                            {showHost && <p className="truncate text-xs text-zinc-500">{currentTrack.artist}</p> }
                         </div>
                     </div>
                     
@@ -79,14 +83,14 @@ export function PodcastPlayerHorizontal() {
                         type="button"
                         onClick={closePlayer}
                         aria-label="Close player"
-                        className="md:hidden text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 ml-2"
+                        className="lg:hidden text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 ml-2"
                     >
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 {/* Transport + progress */}
-                <div className="flex-1 w-full md:w-auto min-w-0 flex flex-col items-center gap-1.5">
+                <div className="flex-1 w-full lg:w-auto min-w-0 flex flex-col items-center gap-1.5">
                     <div className="flex items-center gap-4">
                         <button
                             type="button"
@@ -204,7 +208,7 @@ export function PodcastPlayerHorizontal() {
                 </div>
 
                 {/* Volume & Desktop Close */}
-                <div className="hidden md:flex items-center gap-4 shrink-0 justify-end w-64">
+                <div className="hidden lg:flex items-center gap-4 shrink-0 justify-end w-64">
                     <div className="flex items-center gap-2">
                         <button
                             type="button"

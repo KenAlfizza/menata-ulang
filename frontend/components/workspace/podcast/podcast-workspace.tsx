@@ -3,7 +3,6 @@
 import { WorkspaceRefreshProvider } from "@/context/workspace/refresh-context.tsx";
 import MyPodcasts from "./my-podcasts.tsx";
 import RecentPodcasts from "./recent-podcast.tsx";
-import { PodcastPlayer } from "./podcast-player.tsx";
 import { PodcastPlayerHorizontal } from "./podcast-player-horizontal.tsx";
 import { PlayerProvider } from "../../../context/podcast/player-context.tsx";
 
@@ -19,6 +18,7 @@ export default function PodcastWorkspace() {
 
                 <div className="sticky z-10 bottom-0 px-8 pb-4 pt-3 bg-gradient-to-t from-zinc-100 from-60% to-transparent">
                     <PodcastPlayerHorizontal
+                        showHost={false}
                     />
                 </div>
             </div>
