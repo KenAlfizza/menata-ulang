@@ -116,7 +116,7 @@ export async function updatePodcast(
 
 
 /**
- * Deletes a podcast via the API (Soft Delete)
+ * Deletes a podcast via the API
  * @param accessToken - The user's authentication token
  * @param id - The unique identifier of the podcast to delete
  * @returns Resolves to void on success. Throws an ApiError on failure.

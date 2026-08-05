@@ -7,6 +7,7 @@ import { UpdatePodcastData } from "@/types/podcast.ts";
 import { ApiError } from "@/types/error.ts";
 import { WorkspacePodcastRecord } from "../../../types/workspace.ts";
 import { useWorkspaceRefresh } from "../../../context/workspace/refresh-context.tsx";
+import { extractErrorMessage } from "../../../lib/error.ts";
 
 interface UsePodcastWorkspaceCardProps {
     podcast?: WorkspacePodcastRecord;
@@ -27,24 +28,6 @@ export function usePodcastWorkspaceCard({ podcast }: UsePodcastWorkspaceCardProp
         }, 6000);
     }, []);
 
-    const extractErrorMessage = (err: unknown, defaultMsg: string) => {
-        if (err instanceof ApiError) {
-            return (
-                err.response?.error?.fields?.audio ||
-                err.response?.error?.fields?.image ||
-                err.response?.error?.message ||
-                defaultMsg
-            );
-        }
-
-        if (typeof err === "object" && err !== null && "message" in err) {
-            const message = (err as { message?: unknown }).message;
-            if (typeof message === "string") return message;
-        }
-
-        return defaultMsg;
-    };
-
     const handlePublishToggle = useCallback(
         async (publishState: boolean) => {
             if (!accessToken || !podcast?.id) return;
@@ -54,7 +37,7 @@ export function usePodcastWorkspaceCard({ podcast }: UsePodcastWorkspaceCardProp
                 await updatePodcast(accessToken, podcast.id, updatePayload);
                 
                 triggerRefresh();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
                 showToastError(`Podcast ${publishState ? "publishing" : "unpublishing"} failed: ${alertMessage}.`);
             }
@@ -68,7 +51,7 @@ export function usePodcastWorkspaceCard({ podcast }: UsePodcastWorkspaceCardProp
             try {
                 await deletePodcast(accessToken, podcast.id);                
                 triggerRefresh();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
                 showToastError(`Podcast deletion failed: ${alertMessage}.`);
             }

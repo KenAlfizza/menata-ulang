@@ -20,7 +20,7 @@ interface PodcastCardProps {
 
 export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }: PodcastCardProps) {
     const { accessToken } = useAuth();
-    const workspace = usePodcastWorkspaceCard();
+    const workspaceCard = usePodcastWorkspaceCard({ podcast });
     
     // Pass callbacks straight into the hook
     const currentPodcast = podcast;
@@ -138,8 +138,8 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
                             <PodcastCardDropdown
                                 accessToken={accessToken}
                                 podcast={currentPodcast}
-                                onPublishToggle={workspace.handlePublishToggle}
-                                onDelete={workspace.handleDeletePodcast}
+                                onPublishToggle={workspaceCard.handlePublishToggle}
+                                onDelete={workspaceCard.handleDeletePodcast}
                             />
                         )}
                     </div>

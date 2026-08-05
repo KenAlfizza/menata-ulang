@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { WorkspacePodcastRecord } from "@/types/workspace";
 import { useWorkspaceRefresh } from "../../../context/workspace/refresh-context.tsx";
+import { usePodcastWorkspaceCard } from "../../../hooks/workpace/podcast/use-podcast-workspace-card.ts";
 
 interface PodcastDropdownProps {
     accessToken: string;
@@ -47,7 +48,6 @@ export function PodcastCardDropdown({
     const handleDelete = async () => {
         try {
             await onDelete(id);
-            triggerRefresh();
         } catch (error) {
             console.error("Failed to delete podcast:", error);
         }
