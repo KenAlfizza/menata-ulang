@@ -1,9 +1,10 @@
 "use client";
 
-import AuthGuard from "@/components/auth-guard";
+import AuthGuard from "@/components/auth-guard.tsx";
 import { use } from "react";
-import ResearcherWorkspace from "@/components/workspace/research/researcher-workspace";
-import AuthorWorkspace from "@/components/workspace/author/author-workspace";
+import ResearcherWorkspace from "@/components/workspace/research/researcher-workspace.tsx";
+import AuthorWorkspace from "@/components/workspace/author/author-workspace.tsx";
+import PodcastWorkspace from "@/components/workspace/podcast/podcast-workspace.tsx";
 
 
 type Role = "author" | "host" | "researcher" ;
@@ -21,6 +22,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 return <AuthorWorkspace/>
             case "researcher":
                 return <ResearcherWorkspace/>
+            case "host":
+                return <PodcastWorkspace/>
             default:
                 return "Workspace View"
         }

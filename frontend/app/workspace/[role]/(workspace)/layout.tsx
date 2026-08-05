@@ -12,9 +12,9 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         <div className="bg-zinc-100 min-h-screen">
             <SidebarProvider>
                 <WorkspaceSidebar />
-                <main className="w-full">
+                <main className="w-full h-screen overflow-y-auto flex flex-col">
                     <SidebarTrigger />
-                        {children}
+                    {children}
                 </main>
             </SidebarProvider>
         </div>

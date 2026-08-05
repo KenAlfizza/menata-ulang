@@ -7,14 +7,14 @@ import { ResearcherRefreshProvider } from "@/context/workspace/researcher-refres
 export default function ResearcherWorkspace() {
     return (
         <ResearcherRefreshProvider>
-            <main className="px-8 space-y-8 overflow-x-hidden mb-16">
+            <div className="px-8 space-y-8 overflow-x-hidden mb-16">
                 <section className="w-full">
                     <RecentReseaches />
                 </section>
                 <section className="w-full">
                     <MyResearches />
                 </section>
-            </main>
+            </div>
         </ResearcherRefreshProvider>
     )
 }

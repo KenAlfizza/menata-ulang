@@ -1,7 +1,7 @@
 /** Zod validation schemas for podcast endpoints **/
 
-import { z } from 'zod';
-import { idRule } from "./common.ts";
+import { cuid2, z } from 'zod';
+import { cuidRule, idRule } from "./common.ts";
 import { SupportedAudioType, SUPPORTED_AUDIO_TYPES, isSupportedAudioType, SupportedImageType, SUPPORTED_IMAGE_TYPES, isSupportedImageType, verifyMagicBytes } from "../security/files.ts";
 
 const PODCAST_MAX_SIZE_MB = 25;
@@ -93,22 +93,36 @@ export const podcastPostSchema = z.object({
 
 /** GET Schemas **/
 export const podcastGetByIdSchema = z.object({
-    id: idRule,
+    id: cuidRule,
 });
 
-export const podcastGetListSchema = z.object({
-    page: z.coerce.number().int().min(1).max(1000).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-    search: z.string().max(100, "Search keyword must be 100 characters or fewer").optional(),
+/**
+ * Podcast list query schema
+ * Validates pagination and filtering for /my-podcasts/
+ */
+export const podcastListQuerySchema = z.object({
+    search: z.string().max(100).optional(),
+    sort: z.enum(["title", "updatedAt"]).default("updatedAt").optional(),
+    order: z.enum(["asc", "desc"]).default("desc").optional(),
+    page: z.coerce.number().int().min(1).default(1).optional(),
+    limit: z.coerce.number().int().min(1).max(50).default(10).optional(),
 });
+
 
 /** PATCH Schemas **/
-export const podcastPatchFormSchema = podcastPostSchema.partial();
+export const podcastPatchFormSchema = 
+    podcastPostSchema.partial().extend({
+        published: z.preprocess((val) => {
+            if (val === "true" || val === true) return true;
+            if (val === "false" || val === false) return false;
+            return val;
+        }, z.boolean().optional()),
+    });
 export const podcastPatchParamSchema = z.object({
-    id: idRule,
+    id: cuidRule,
 });
 
 /** DELETE Schemas **/
 export const podcastDeleteParamSchema = z.object({
-    id:idRule,
+    id: cuidRule,
 })

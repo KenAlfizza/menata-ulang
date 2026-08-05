@@ -7,14 +7,14 @@ import RecentStories from "./recent-stories.tsx";
 export default function AuthorWorkspace() {
     return (
         <WorkspaceRefreshProvider>
-            <main className="px-8 space-y-8 overflow-x-hidden mb-16">
+            <div className="px-8 space-y-8 overflow-x-hidden mb-16">
                 <section>
                     <RecentStories />
                 </section>
                 <section className="w-full">
                     <MyStories />
                 </section>
-            </main>
+            </div>
         </WorkspaceRefreshProvider>
     )
 }

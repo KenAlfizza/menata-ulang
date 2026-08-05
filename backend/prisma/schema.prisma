@@ -125,16 +125,23 @@ model ResearchPage {
   @@map("research_pages")
 }
 
+// Podcast schema definition
 model Podcast {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid(2))
+  slug        String    @unique
+
   title       String           
-  description String      
+  description String 
+  transcript  String     
   duration    Int
+  
   audioUrl    String    @default("")
   imageUrl    String    @default("")
-  listener    Int       @default(0)
+
   createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
+  updatedAt   DateTime  @updatedAt
+  published   Boolean   @default(false)
+  publishedAt DateTime?
 
   // Host Relation
   hostId      Int
@@ -145,10 +152,8 @@ model Podcast {
   threadId    String    @unique
   thread      Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  /// Cached counter for total hearts received by this podcast.
+  // Hearts relation
   heartsCount Int       @default(0) 
-
-  /// Relation link to individual heart records.
   hearts      Heart[]
 }
 
@@ -232,9 +237,9 @@ model Heart {
   research     Research?   @relation(fields: [researchId], references: [id], onDelete: Cascade)
   
   /// The ID of the target Podcast (optional).
-  podcastId Int?
+  podcastId     String?
   /// Podcast link relation.
-  podcast   Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  podcast       Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
   
   /// The ID of the target Reflection (optional).
   reflectionId String?
