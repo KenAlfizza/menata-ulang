@@ -12,6 +12,7 @@ import { useAuth } from "@/context/auth-context.tsx";
 import { ApiError } from "@/types/error.ts";
 
 import Image from "next/image";
+import { extractErrorMessage } from "../../../lib/error.ts";
 
 export default function NewPodcast() {
     const router = useRouter();
@@ -37,19 +38,6 @@ export default function NewPodcast() {
         setTimeout(() => {
             setToastError((current) => (current === message ? null : current));
         }, 6000);
-    };
-
-    // Helper to extract message from ApiError or fallback using the correct response structure
-    const extractErrorMessage = (err: any, defaultMsg: string) => {
-        if (err instanceof ApiError) {
-            if (typeof err.response?.error === "string") {
-                return err.response.error;
-            }
-            if (err.response?.error?.message) {
-                return err.response.error.message;
-            }
-        }
-        return err?.message || defaultMsg;
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,9 +93,7 @@ export default function NewPodcast() {
             router.push(`/workspace/host/view/${data.id}`);
         } catch (err: any) {
             const alertMessage = extractErrorMessage(err, "An unexpected error occurred");
-            showToastError(`Podcast creation failed: ${alertMessage}. Please try again.`);
-            console.error(err);
-            
+            showToastError(`Podcast creation failed: ${alertMessage}.`);           
             if (err instanceof ApiError && err.response?.error?.fields) {
                 setFieldErrors(err.response.error.fields);
             }

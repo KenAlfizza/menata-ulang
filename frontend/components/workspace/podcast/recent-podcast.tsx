@@ -7,7 +7,7 @@ export default function RecentPodcasts() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center">
                 <h2 className="text-2xl tracking-tight text-zinc-600">Recent Podcasts</h2>
             </div>
 

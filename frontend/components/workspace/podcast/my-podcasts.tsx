@@ -10,7 +10,7 @@ export default function MyPodcasts() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center">
                 <h2 className="text-2xl tracking-tight text-zinc-600">My Podcasts ({myPodcasts.totalCount})</h2>
 
                 <div className="flex gap-2 ml-auto">

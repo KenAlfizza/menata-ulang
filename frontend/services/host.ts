@@ -55,7 +55,6 @@ export async function createPodcast(accessToken: string, podcastData: {
     if (!response.ok) {
         throw new ApiError(body as ApiErrorResponse, response.status);
     }
-
     return processPodcastResponse(body.podcast);
 }
 

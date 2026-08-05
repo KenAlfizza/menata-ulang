@@ -92,7 +92,7 @@ host.post("/podcast",
             }, status);
         }
 
-        return c.json({ success: true, story: result.data }, 201);
+        return c.json({ success: true, podcast: result.data }, 201);
     }
 );
 
