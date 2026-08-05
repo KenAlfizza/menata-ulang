@@ -37,7 +37,7 @@ export function useMyPodcasts() {
             }
             try {
                 setIsLoading(true);
-                const result = await retrieveMyPodcasts(accessToken);
+                const result = await retrieveMyPodcasts(accessToken, { search, page, limit: 10});
 
                 setPodcasts(result.items);
                 setTotalCount(result.total);

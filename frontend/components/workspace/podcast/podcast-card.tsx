@@ -20,19 +20,19 @@ interface PodcastCardProps {
 
 export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }: PodcastCardProps) {
     const { accessToken } = useAuth();
+    const workspace = usePodcastWorkspaceCard();
     
     // Pass callbacks straight into the hook
-    const workspace = usePodcastWorkspaceCard({ podcast });
-    const currentPodcast = workspace.podcast ?? podcast;
+    const currentPodcast = podcast;
 
     const id = currentPodcast?.id ?? podcast?.id ?? "0";
-    const title = currentPodcast?.title ?? podcast?.title ?? "Untitled Podcast";
+    const title = currentPodcast?.title ?? "Untitled Podcast";
     const imageUrl = (currentPodcast?.imageUrl && currentPodcast.imageUrl.trim() !== "") ? `${currentPodcast.imageUrl}` : (podcast?.imageUrl && podcast.imageUrl.trim() !== "") ? `${podcast.imageUrl}` : "/logo-icon.svg";
-    const alt = currentPodcast?.title ?? podcast?.title ?? "Podcast Image";
+    const host = currentPodcast?.host ?? "Menata Ulang";
+    const alt = currentPodcast?.title ?? "Podcast Image";
     const description = currentPodcast?.description ?? podcast?.description ?? "A short description describing the main point of the podcast";
     const date = currentPodcast?.updatedAt ? formatDate(new Date(currentPodcast.updatedAt)) : podcast?.updatedAt ? formatDate(new Date(podcast.updatedAt)) : formatDate(new Date());
     const isPublished = currentPodcast?.published ?? podcast?.published ?? false;
-    // NOTE: assumes WorkspacePodcastRecord has an `audioUrl` field — rename here if yours differs
     const audioUrl = currentPodcast?.audioUrl ?? podcast?.audioUrl ?? "";
 
     if (isLoading) {
@@ -111,7 +111,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
                         track={{
                             id: String(id),
                             title,
-                            artist: currentPodcast?.host ?? podcast?.host ?? "Podcast",
+                            artist: host,
                             src: audioUrl,
                             imageUrl,
                         }}

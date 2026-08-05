@@ -53,27 +53,40 @@ export function PodcastPlayerHorizontal() {
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <div className="w-full rounded-md border border-zinc-100 bg-white/50 shadow-sm px-4 py-3">
-            <div className="flex items-center gap-4">
-                {/* Track info */}
-                <div className="flex items-center gap-3 w-48 shrink-0 min-w-0">
-                    <div className="relative w-11 h-11 shrink-0 overflow-hidden rounded-md bg-zinc-100">
-                        <Image
-                            src={currentTrack.imageUrl && currentTrack.imageUrl.trim() !== "" ? currentTrack.imageUrl : "/logo-icon.svg"}
-                            alt={currentTrack.title}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                        />
+        <div className="w-full rounded-md border border-zinc-100 bg-white/50 shadow-sm px-3 sm:px-4 py-3">
+            <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+                
+                {/* Top Row on Mobile / Left Section on Desktop: Track Info + Close Button */}
+                <div className="flex items-center justify-between w-full md:w-64 shrink-0 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative w-11 h-11 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                            <Image
+                                src={currentTrack.imageUrl && currentTrack.imageUrl.trim() !== "" ? currentTrack.imageUrl : "/logo-icon.svg"}
+                                alt={currentTrack.title}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-zinc-800 line-clamp-[2lh]">{currentTrack.title}</p>
+                            <p className="truncate text-xs text-zinc-500">{currentTrack.artist}</p>
+                        </div>
                     </div>
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-800">{currentTrack.title}</p>
-                        <p className="truncate text-xs text-zinc-500">{currentTrack.artist}</p>
-                    </div>
+                    
+                    {/* Close button for mobile view (hidden on md, shown on right inline) */}
+                    <button
+                        type="button"
+                        onClick={closePlayer}
+                        aria-label="Close player"
+                        className="md:hidden text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 ml-2"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
 
                 {/* Transport + progress */}
-                <div className="flex-1 min-w-0 flex flex-col items-center gap-1.5">
+                <div className="flex-1 w-full md:w-auto min-w-0 flex flex-col items-center gap-1.5">
                     <div className="flex items-center gap-4">
                         <button
                             type="button"
@@ -144,9 +157,9 @@ export function PodcastPlayerHorizontal() {
                             onMouseUp={() => setIsSeeking(false)}
                             onChange={(e) => seek(Number(e.target.value))}
                             /* 
-                               ========================================
-                               PROGRESS BAR STYLING (Webkit-specific pseudo-elements)
-                               ========================================
+                                ========================================
+                                PROGRESS BAR STYLING (Webkit-specific pseudo-elements)
+                                ========================================
                             */
                             className="flex-1 h-1.5 appearance-none bg-transparent cursor-pointer
                                 
@@ -181,7 +194,6 @@ export function PodcastPlayerHorizontal() {
                                 [&::-moz-range-thumb]:cursor-pointer
                                 [&::-moz-range-thumb]:transition-transform
                                 [&::-moz-range-thumb]:hover:scale-150"
-
                             style={{ "--progress": `${progressPct}%` } as React.CSSProperties}
                             aria-label="Seek"
                         />
@@ -191,36 +203,38 @@ export function PodcastPlayerHorizontal() {
                     </div>
                 </div>
 
-                {/* Volume */}
-                <div className="hidden sm:flex items-center gap-2 w-32 shrink-0 justify-end">
+                {/* Volume & Desktop Close */}
+                <div className="hidden md:flex items-center gap-4 shrink-0 justify-end w-64">
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={toggleMute}
+                            aria-label={isMuted ? "Unmute" : "Mute"}
+                            className="text-zinc-500 hover:text-zinc-700 transition-colors"
+                        >
+                            <VolumeIcon className="w-4 h-4" />
+                        </button>
+                        <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={isMuted ? 0 : volume}
+                            onChange={(e) => setVolume(Number(e.target.value))}
+                            className="w-20 h-1.5 appearance-none rounded-full bg-zinc-200 accent-green-500 cursor-pointer"
+                            aria-label="Volume"
+                        />
+                    </div>
+
                     <button
                         type="button"
-                        onClick={toggleMute}
-                        aria-label={isMuted ? "Unmute" : "Mute"}
-                        className="text-zinc-500 hover:text-zinc-700 transition-colors"
+                        onClick={closePlayer}
+                        aria-label="Close player"
+                        className="text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
                     >
-                        <VolumeIcon className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                     </button>
-                    <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={isMuted ? 0 : volume}
-                        onChange={(e) => setVolume(Number(e.target.value))}
-                        className="w-20 h-1.5 appearance-none rounded-full bg-zinc-200 accent-green-500 cursor-pointer"
-                        aria-label="Volume"
-                    />
                 </div>
-
-                <button
-                    type="button"
-                    onClick={closePlayer}
-                    aria-label="Close player"
-                    className="text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
-                >
-                    <X className="w-4 h-4" />
-                </button>
             </div>
         </div>
     );

@@ -15,12 +15,6 @@ export default function PodcastWorkspace() {
                 <div className="flex-1 px-8 space-y-8 overflow-x-hidden pb-4">
                     <RecentPodcasts />
                     <MyPodcasts />
-                    <PodcastPlayer
-                        tracks={[
-                            { id: "1", title: "Episode 1", artist: "My Podcast", src: "/audio/ep1.mp3", imageUrl: "/covers/ep1.jpg" },
-                            { id: "2", title: "Episode 2", artist: "My Podcast", src: "/audio/ep2.mp3" },
-                        ]}
-                    />
                 </div>
 
                 <div className="sticky z-10 bottom-0 px-8 pb-4 pt-3 bg-gradient-to-t from-zinc-100 from-60% to-transparent">
