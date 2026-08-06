@@ -4,6 +4,8 @@ import { PaginatedResult } from "../types/common.ts";
 import { defaultPuckData, PuckOutputData } from "../types/puck.ts";
 import { ResearcherServiceResult, CreateResearchData, MyResearchSummary, UpdateResearchData, UpdateResearchPageData } from "../types/services/researcher.ts";
 import { ResearchRecord, ResearchFilter, ResearchPageRecord } from "../types/research.ts";
+import { researchService } from "./researchService.ts";
+import { unknown } from "zod";
 
 export const researcherService = {
    /**
@@ -61,34 +63,24 @@ export const researcherService = {
                         researcherId: userId,
                         imageUrl: imageUrl || "",
                         threadId: thread.id,
+                    },
+                    include: {
+                        researcher: { select: { name: true } }
                     }
                 });
 
                 const page = await tx.researchPage.create({
                     data: {
                         researchId: research.id,
-                        puckData: defaultPuckData(title),
+                        puckData: defaultPuckData(),
                     }
                 });
 
-                const researchRecord: ResearchRecord = {
-                    id: research.id,
-                    slug: research.slug,
-                    title: research.title,
-                    description: research.description,
-                    createdAt: research.createdAt,
-                    updatedAt: research.updatedAt,
-                    researcherId: research.researcherId,
-                    imageUrl: research.imageUrl,
-                    published: research.published,
-                    publishedAt: research.publishedAt,
-                    heartsCount: research.heartsCount,
-                    threadId: research.threadId,
-                    page: {
-                        id: page.id,
-                        puckData: page.puckData as PuckOutputData,
+                const researchRecord = await researchService.buildResearchRecord(
+                    {...research,
+                        page: page,
                     }
-                }
+                )
 
                 return {
                     success: true,
@@ -122,7 +114,10 @@ export const researcherService = {
         try {
             const research = await prisma.research.findUnique({
                 where: { id: researchId },
-                include: { page: true }
+                include: { 
+                    researcher: { select: {name: true}},
+                    page: true 
+                }
             });
 
             if (!research) return { success: false, error: 'NOT_FOUND' };
@@ -131,16 +126,13 @@ export const researcherService = {
             if (research.researcherId !== userId) return { success: false, error: 'UNAUTHORIZED' };
 
             // Map to ResearchRecord (ensure imageUrl is normalized for URLs)
-            const researchRecord: ResearchRecord = {
+            const researchRecord = {
                 ...research,
                 imageUrl: research.imageUrl.replace(/\\/g, '/'),
-                page: {
-                    id: research.page[0].id,
-                    puckData: research.page[0].puckData as PuckOutputData
-                }
+                page: research.page as unknown as ResearchPageRecord
             };
 
-            return { success: true, data: researchRecord };
+            return { success: true, data: await researchService.buildResearchRecord(researchRecord) };
         } catch (error) {
             console.error("Database Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
@@ -252,6 +244,7 @@ export const researcherService = {
                 where: { id: researchId },
                 data: updatePayload,
                 include: { 
+                    researcher: { select: { name: true } },
                     page: {
                         select: { id: true, puckData: true }
                     } 
@@ -259,13 +252,12 @@ export const researcherService = {
             });
 
             // 4. Create a record object
-            const researchRecord: ResearchRecord = {
-                ...updated,
-                page: {
-                    id: updated.page[0].id,
-                    puckData: updated.page[0].puckData as PuckOutputData,
+            const researchRecord: ResearchRecord = await researchService.buildResearchRecord(
+                {...updated,
+                    page: updated.page as unknown as ResearchPageRecord
                 }
-            };
+            )
+
 
             return { success: true, data: researchRecord}
 
@@ -361,6 +353,7 @@ export const researcherService = {
                     publishedAt: published ? (existing.publishedAt || new Date()) : null
                 },
                 include: { 
+                    researcher: { select: { name: true }},
                     page: {
                         select: { id: true, puckData: true }
                     } 
@@ -368,13 +361,11 @@ export const researcherService = {
             });
 
             // Create a record object
-            const researchRecord: ResearchRecord = {
-                ...updated,
-                page: {
-                    id: updated.page[0].id,
-                    puckData: updated.page[0].puckData as PuckOutputData,
+            const researchRecord: ResearchRecord = await researchService.buildResearchRecord(
+                {...updated,
+                    page: updated.page as unknown as ResearchPageRecord
                 }
-            };
+            )
 
             return { success: true, data: researchRecord };
 

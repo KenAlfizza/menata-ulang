@@ -79,7 +79,7 @@ model Story {
   thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   // Story Page
-  page        StoryPage[]
+  page        StoryPage?
   @@map("stories")
 }
 
@@ -113,7 +113,7 @@ model Research {
   thread      Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   // Research Page
-  page        ResearchPage[]
+  page        ResearchPage?
   @@map("researches")
 }
 

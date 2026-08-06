@@ -1,5 +1,5 @@
 import { PuckOutputData } from "../types/puck.ts";
-import { StoryRecord } from "../types/story.ts";
+import { StoryPageRecord, StoryRecord } from "../types/story.ts";
 
 export const storyService = {
     /**
@@ -24,7 +24,7 @@ export const storyService = {
             publishedAt: Date | null;
             heartsCount: number;
             threadId: string;
-            page: { id: string; puckData: unknown }[];
+            page: StoryPageRecord;
         }
     ): Promise<StoryRecord> {
         const storyRecord: StoryRecord = {
@@ -42,10 +42,13 @@ export const storyService = {
             heartsCount: story.heartsCount,
             threadId: story.threadId,
             page: {
-                id: story.page[0].id,
-                puckData: story.page[0].puckData as PuckOutputData,
+                id: story.page.id,
+                puckData: story.page.puckData as PuckOutputData,
             }
         };
         return storyRecord;
     },
+
+
+    
 }
