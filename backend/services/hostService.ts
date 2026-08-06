@@ -5,6 +5,7 @@ import { MyPodcastSummary } from "../types/services/host.ts";
 import { CreatePodcastData, HostServiceResult, UpdatePodcastData } from "../types/services/host.ts";
 import { getAudioDuration } from "../services/audio.ts";
 import { PaginatedResult } from "../types/common.ts";
+import { podcastService } from "./podcastService.ts";
 
 export const hostService = {
     /**
@@ -23,52 +24,6 @@ export const hostService = {
             select: { id: true }
         })
         return podcast ? false : true
-    },
-
-    /**
-     * Builds and returns a complete PodcastRecord object using the provided podcast source data.
-     * 
-     * @param podcast - The source object from prisma containing the podcast properties.
-     * @returns A promise that resolves to the fully constructed PodcastRecord.
-     */
-    async buildPodcastRecord(
-        podcast: {
-            id: string;
-            slug: string;
-            title: string;
-            description: string;
-            transcript: string;
-            duration: number;
-            audioUrl: string;
-            imageUrl: string;
-            createdAt: Date;
-            updatedAt: Date | null;
-            published: boolean;
-            publishedAt: Date | null;
-            hostId: number;
-            threadId: string;
-            heartsCount: number;
-        }
-    ) : Promise<PodcastRecord>
-    {
-        const podcastRecord: PodcastRecord = {
-            id: podcast.id,
-            slug: podcast.slug,
-            title: podcast.title,
-            description: podcast.description,
-            transcript: podcast.transcript,
-            duration: podcast.duration,
-            audioUrl: podcast.audioUrl,
-            imageUrl: podcast.imageUrl,
-            createdAt: podcast.createdAt,
-            updatedAt: podcast.updatedAt,
-            published: podcast.published,
-            publishedAt: podcast.publishedAt,
-            hostId: podcast.hostId,
-            threadId: podcast.threadId,
-            heartsCount: podcast.heartsCount,
-        };
-        return podcastRecord;
     },
 
     /**
@@ -153,7 +108,8 @@ export const hostService = {
 
                         hostId: userId,
                         threadId: thread.id,
-                    }
+                    },
+                    include: { host: {select: {name: true}}}
                 });
 
                 return podcast
@@ -161,7 +117,7 @@ export const hostService = {
 
             return {
                 success: true,
-                data: await this.buildPodcastRecord(podcast)
+                data: await podcastService.buildPodcastRecord(podcast)
             };
         } catch (error) {
             console.error("Database Error:", error);
@@ -179,30 +135,14 @@ export const hostService = {
         try {
             const podcast = await prisma.podcast.findUnique({
                 where: { id },
-                select: {
-                    id: true,
-                    slug: true,
-                    title: true,
-                    description: true,
-                    transcript: true,
-                    duration: true,
-                    audioUrl: true,
-                    imageUrl: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    published: true,
-                    publishedAt: true,
-                    hostId: true,
-                    threadId: true,
-                    heartsCount: true,
-                }
+                include: { host: {select: {name: true}}}
             });
 
             if (!podcast) {
                 return { success: false, error: 'NOT_FOUND' };
             }
 
-            const podcastRecord = await this.buildPodcastRecord(podcast);
+            const podcastRecord = await podcastService.buildPodcastRecord(podcast);
 
             return {
                 success: true,
@@ -240,13 +180,14 @@ export const hostService = {
                     where,
                     take: limit,
                     skip,
-                    orderBy: { [sort]: order }
+                    orderBy: { [sort]: order },
+                    include: { host: {select: {name: true}}}
                 }),
                 prisma.podcast.count({ where })
             ]);
 
             const items: MyPodcastSummary[] = await Promise.all(
-                podcasts.map(podcast => this.buildPodcastRecord(podcast))
+                podcasts.map(podcast => podcastService.buildPodcastRecord(podcast))
             );
 
             return { 
@@ -386,11 +327,12 @@ export const hostService = {
                         imageUrl: imageUrl ? { set: imageUrl } : undefined,
                         audioUrl: audioUrl ? { set: audioUrl } : undefined,
                     },
+                    include: { host: {select: {name: true}}}
                 });
             });
 
             // Build and Return Result
-            const podcastRecord = await this.buildPodcastRecord(updatedPodcast);
+            const podcastRecord = await podcastService.buildPodcastRecord(updatedPodcast);
 
             return {
                 success: true,
