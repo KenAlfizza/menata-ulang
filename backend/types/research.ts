@@ -10,6 +10,7 @@ export type ResearchRecord = {
     description: string,
     createdAt: Date,
     updatedAt: Date | null,
+    researcherName: string,
     researcherId: number,
     imageUrl: string,
     published: boolean,
