@@ -2,7 +2,8 @@
   "tasks": {
     "dev": "deno serve --watch --allow-net=localhost:8000,localhost:5432 --allow-read --allow-env --allow-sys=hostname,networkInterfaces --env -R main.ts --allow-run --allow-read /services/audio.ts",
     "test": "deno test --allow-net",
-    "prisma": "deno run -A npm:prisma"
+    "prisma": "deno run -A npm:prisma",
+    "seed": "deno run --env prisma/seed.ts"
   },
   "imports": {
     "@hono/zod-validator": "npm:@hono/zod-validator@^0.8.0",
