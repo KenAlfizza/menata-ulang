@@ -10,6 +10,7 @@ export type StoryRecord = {
     description: string,
     createdAt: Date,
     updatedAt: Date | null,
+    authorName: string,
     authorId: number,
     imageUrl: string,
     published: boolean,
