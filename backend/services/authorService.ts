@@ -77,7 +77,7 @@ export const authorService = {
 
                 const storyRecord = await storyService.buildStoryRecord({
                     ...story,
-                    page: [page],
+                    page: page,
                 });
 
                 return {
@@ -126,6 +126,7 @@ export const authorService = {
             // Build record (ensure imageUrl is normalized for URLs)
             const storyRecord = await storyService.buildStoryRecord({
                 ...story,
+                page: story.page as unknown as StoryPageRecord,
                 imageUrl: story.imageUrl.replace(/\\/g, '/'),
             });
 
@@ -249,7 +250,10 @@ export const authorService = {
                 }
             });
 
-            const storyRecord = await storyService.buildStoryRecord(updated);
+            const storyRecord = await storyService.buildStoryRecord({
+                ...updated,
+                page: updated.page as unknown as StoryPageRecord,
+            });
 
             return { success: true, data: storyRecord}
 
@@ -353,7 +357,10 @@ export const authorService = {
                 }
             });
 
-            const storyRecord = await storyService.buildStoryRecord(updated);
+            const storyRecord = await storyService.buildStoryRecord({
+                ...updated,
+                page: updated.page as unknown as StoryPageRecord,
+            });
 
             return { success: true, data: storyRecord };
 
