@@ -1,12 +1,13 @@
 import { prisma } from "../lib/prisma.ts";
 import { storage } from "../lib/storage.ts";
 import { PaginatedResult } from "../types/common.ts";
-import { defaultPuckData, PuckOutputData } from "../types/puck.ts";
+import { defaultPuckData } from "../types/puck.ts";
 import { AuthorServiceResult, CreateStoryData, MyStorySummary, UpdateStoryData, UpdateStoryPageData } from "../types/services/author.ts";
 import { StoryRecord, StoryFilter, StoryPageRecord } from "../types/story.ts";
+import { storyService } from "./storyService.ts";
 
 export const authorService = {
-   /**
+    /**
      * Creates a new story, its associated thread, and an initial story page within a single database transaction.
      * @description
      * 1. Validates slug uniqueness before proceeding.
@@ -61,34 +62,23 @@ export const authorService = {
                         authorId: userId,
                         imageUrl: imageUrl || "",
                         threadId: thread.id,
+                    },
+                    include: {
+                        author: { select: { name: true } }
                     }
                 });
 
                 const page = await tx.storyPage.create({
                     data: {
                         storyId: story.id,
-                        puckData: defaultPuckData(title),
+                        puckData: defaultPuckData(),
                     }
                 });
 
-                const storyRecord: StoryRecord = {
-                    id: story.id,
-                    slug: story.slug,
-                    title: story.title,
-                    description: story.description,
-                    createdAt: story.createdAt,
-                    updatedAt: story.updatedAt,
-                    authorId: story.authorId,
-                    imageUrl: story.imageUrl,
-                    published: story.published,
-                    publishedAt: story.publishedAt,
-                    heartsCount: story.heartsCount,
-                    threadId: story.threadId,
-                    page: {
-                        id: page.id,
-                        puckData: page.puckData as PuckOutputData,
-                    }
-                }
+                const storyRecord = await storyService.buildStoryRecord({
+                    ...story,
+                    page: [page],
+                });
 
                 return {
                     success: true,
@@ -122,7 +112,10 @@ export const authorService = {
         try {
             const story = await prisma.story.findUnique({
                 where: { id: storyId },
-                include: { page: true }
+                include: {
+                    page: true,
+                    author: { select: { name: true } }
+                }
             });
 
             if (!story) return { success: false, error: 'NOT_FOUND' };
@@ -130,15 +123,11 @@ export const authorService = {
             // Authorization check: Ensure only the author can fetch this story
             if (story.authorId !== userId) return { success: false, error: 'UNAUTHORIZED' };
 
-            // Map to StoryRecord (ensure imageUrl is normalized for URLs)
-            const storyRecord: StoryRecord = {
+            // Build record (ensure imageUrl is normalized for URLs)
+            const storyRecord = await storyService.buildStoryRecord({
                 ...story,
                 imageUrl: story.imageUrl.replace(/\\/g, '/'),
-                page: {
-                    id: story.page[0].id,
-                    puckData: story.page[0].puckData as PuckOutputData
-                }
-            };
+            });
 
             return { success: true, data: storyRecord };
         } catch (error) {
@@ -255,18 +244,12 @@ export const authorService = {
                 include: { 
                     page: {
                         select: { id: true, puckData: true }
-                    } 
+                    },
+                    author: { select: { name: true } }
                 }
             });
 
-            // 4. Create a record object
-            const storyRecord: StoryRecord = {
-                ...updated,
-                page: {
-                    id: updated.page[0].id,
-                    puckData: updated.page[0].puckData as PuckOutputData,
-                }
-            };
+            const storyRecord = await storyService.buildStoryRecord(updated);
 
             return { success: true, data: storyRecord}
 
@@ -365,18 +348,12 @@ export const authorService = {
                 include: { 
                     page: {
                         select: { id: true, puckData: true }
-                    } 
+                    },
+                    author: { select: { name: true } }
                 }
             });
 
-            // Create a story record object (adjust type to match your StoryRecord definition)
-            const storyRecord: StoryRecord = {
-                ...updated,
-                page: {
-                    id: updated.page[0].id,
-                    puckData: updated.page[0].puckData as PuckOutputData,
-                }
-            };
+            const storyRecord = await storyService.buildStoryRecord(updated);
 
             return { success: true, data: storyRecord };
 

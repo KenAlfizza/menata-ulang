@@ -51,7 +51,7 @@ author.post("/story", authMiddleware, validate("form", storyCreateSchema), async
         }, status);
     }
     
-    return c.json({ success: true, story: result.data }, 201);
+    return c.json({ success: true, story: { "id": result.data.id } }, 201);
 });
 
 /**
