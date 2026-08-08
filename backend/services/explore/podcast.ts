@@ -27,6 +27,7 @@ export class ExplorePodcastService implements IExploreService {
                 podcast.host.name,
                 podcast.hostId,
                 podcast.threadId,
+                podcast.publishedAt,
                 podcast.heartsCount
             );
 

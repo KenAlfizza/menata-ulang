@@ -1,6 +1,5 @@
 import { PodcastRecord } from "../../podcast.ts";
 
-// 1. Data Structure Classes using type brackets []
 export class ExplorePodcast {
   constructor(
     public slug: PodcastRecord['slug'],
@@ -13,6 +12,7 @@ export class ExplorePodcast {
     public hostName: PodcastRecord['hostName'],
     public hostId: PodcastRecord['hostId'],
     public threadId: PodcastRecord['threadId'],
+    public publishedAt: PodcastRecord['publishedAt'],
     public heartsCount: PodcastRecord['heartsCount']
   ) { }
 }

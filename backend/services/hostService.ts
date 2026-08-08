@@ -46,6 +46,7 @@ export const hostService = {
             published: boolean;
             publishedAt: Date | null;
             hostId: number;
+            host: {name: string}
             threadId: string;
             heartsCount: number;
         }
@@ -64,6 +65,7 @@ export const hostService = {
             updatedAt: podcast.updatedAt,
             published: podcast.published,
             publishedAt: podcast.publishedAt,
+            hostName: podcast.host.name,
             hostId: podcast.hostId,
             threadId: podcast.threadId,
             heartsCount: podcast.heartsCount,
@@ -153,6 +155,9 @@ export const hostService = {
 
                         hostId: userId,
                         threadId: thread.id,
+                    },
+                    include: {
+                        host: {select : { name : true}}
                     }
                 });
 
@@ -195,7 +200,9 @@ export const hostService = {
                     hostId: true,
                     threadId: true,
                     heartsCount: true,
-                }
+                    host: {select : { name : true } }
+                },
+                
             });
 
             if (!podcast) {
@@ -240,7 +247,8 @@ export const hostService = {
                     where,
                     take: limit,
                     skip,
-                    orderBy: { [sort]: order }
+                    orderBy: { [sort]: order },
+                    include: {host:{select:{name:true}}}
                 }),
                 prisma.podcast.count({ where })
             ]);
@@ -383,9 +391,11 @@ export const hostService = {
                         duration: duration,
                         published: published,
                         updatedAt: new Date(), // Optional: explicitly update timestamp
+                        publishedAt: published ? new Date() : undefined,
                         imageUrl: imageUrl ? { set: imageUrl } : undefined,
                         audioUrl: audioUrl ? { set: audioUrl } : undefined,
                     },
+                    include: {host:{select:{name:true}}}
                 });
             });
 
