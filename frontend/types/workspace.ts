@@ -36,7 +36,6 @@ export type WorkspacePodcastRecord = Pick<
     "id" | 
     "title" | 
     "description" |
-    "host" |
     "imageUrl" | 
     "audioUrl" |
     "published" | 

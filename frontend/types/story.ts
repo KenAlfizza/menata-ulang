@@ -13,6 +13,7 @@ export interface StoryRecord {
     publishedAt: Date | string;
     createdAt: Date | string;
     updatedAt: Date | string;
+    authorName: string
     authorId: number;
     page: StoryPageRecord;
 }

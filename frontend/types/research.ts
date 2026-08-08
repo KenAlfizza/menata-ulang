@@ -13,7 +13,8 @@ export interface ResearchRecord {
     publishedAt: Date;
     createdAt: Date | string;
     updatedAt: Date | string;
-    authorId: number;
+    researcherName: string;
+    researcherId: number;
     page: ResearchPageRecord;
 }
 

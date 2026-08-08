@@ -31,7 +31,7 @@ export function PlayButton({ track }: PlayButtonProps) {
             onClick={handleClick}
             disabled={isDisabled}
             aria-label={isCurrentTrack && isPlaying ? "Pause" : "Play"}
-            className="relative z-50 pointer-events-auto bg-green-300 p-2 rounded-full shadow-sm transition-all duration-200 hover:bg-green-400 hover:scale-110 hover:shadow-md hover:cursor-pointer disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed"
+            className="relative z-50 pointer-events-auto bg-yellow-300 p-2 rounded-full shadow-sm cursor-default transition-all duration-200 hover:bg-yellow-400 hover:scale-110 hover:shadow-md hover:cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:bg-zinc-300 disabled:cursor-default disabled:hover:shadow-sm"
         >
             {isCurrentTrack && isPlaying ? (
                 <Pause size={20} className="text-white" fill="currentColor" />
