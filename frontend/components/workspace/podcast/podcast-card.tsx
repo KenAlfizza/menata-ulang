@@ -28,7 +28,6 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
     const id = currentPodcast?.id ?? podcast?.id ?? "0";
     const title = currentPodcast?.title ?? "Untitled Podcast";
     const imageUrl = (currentPodcast?.imageUrl && currentPodcast.imageUrl.trim() !== "") ? `${currentPodcast.imageUrl}` : (podcast?.imageUrl && podcast.imageUrl.trim() !== "") ? `${podcast.imageUrl}` : "/logo-icon.svg";
-    const host = currentPodcast?.host ?? "Menata Ulang";
     const alt = currentPodcast?.title ?? "Podcast Image";
     const description = currentPodcast?.description ?? podcast?.description ?? "A short description describing the main point of the podcast";
     const date = currentPodcast?.updatedAt ? formatDate(new Date(currentPodcast.updatedAt)) : podcast?.updatedAt ? formatDate(new Date(podcast.updatedAt)) : formatDate(new Date());
@@ -111,7 +110,7 @@ export function PodcastCard({ podcast, isNewPodcast = false, isLoading = false }
                         track={{
                             id: String(id),
                             title,
-                            artist: host,
+                            artist: "",
                             src: audioUrl,
                             imageUrl,
                         }}
