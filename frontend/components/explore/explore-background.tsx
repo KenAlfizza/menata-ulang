@@ -38,7 +38,7 @@ export function ExploreBackground({ children, page }: ExploreBackgroundProps) {
                 </ViewSection>
             }
 
-            <div className="relative z-10 w-full h-full overflow-y-auto">
+            <div className="relative z-10 w-full h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {children}
             </div>
         </div>

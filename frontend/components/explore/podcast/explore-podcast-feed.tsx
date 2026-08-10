@@ -2,17 +2,17 @@
 import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
 import { useExplorePodcast } from "@/hooks/explore/use-explore-podcast.ts";
 
-export function ExplorePodcastRecent() {
+export function ExplorePodcastFeed() {
     const explorePodcast = useExplorePodcast();
-    const isLoading = explorePodcast.isLoadingFeatured;
-    const podcasts = explorePodcast.recentPodcasts;
+    const isLoading = explorePodcast.isLoadingFeed;
+    const podcasts = explorePodcast.feedPodcast;
     return (
         <div className="flex flex-col gap-2">
-            <span className="font-medium text-lg">Recently Added</span>
-            <div className="grid grid-cols-3 gap-8">
+            <span className="font-medium text-lg">Podcast Feed</span>
+            <div className="flex flex-row gap-8">
                 {isLoading ? (
                     // Render 3 skeleton / placeholder cards when loading
-                    Array.from({ length: 3 }).map((_, index) => (
+                    Array.from({ length: 5 }).map((_, index) => (
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
                             isLoading={isLoading}

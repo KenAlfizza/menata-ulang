@@ -6,7 +6,7 @@ import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
-import { ExplorePodcastRecord } from "@/types/explore.ts";
+import { ExplorePodcastRecord } from "@/types/explore/podcast.ts";
 import { PodcastPlayer } from "./explore-podcast-player.tsx"
 import { usePlayer } from "@/context/podcast/player-context.tsx";
 
@@ -15,7 +15,7 @@ interface PodcastCardProps {
     isLoading?: boolean;
 }
 
-export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardProps) {
+export function ExplorePodcastView({ podcast, isLoading = false }: PodcastCardProps) {
     const { currentTrack, playTrack } = usePlayer();
     const currentPodcast = podcast;
 

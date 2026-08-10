@@ -8,10 +8,10 @@ import { formatDate } from "@/utils/format-date.ts";
 import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { PlayButton } from "../../workspace/podcast/play-button.tsx";
-import { ExplorePodcastRecord } from "../../../types/explore.ts";
+import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 
 interface PodcastCardProps {
-    podcast?: ExplorePodcastRecord;
+    podcast?: ExplorePodcastSummary;
     isLoading?: boolean;
 }
 
@@ -26,24 +26,24 @@ export function ExplorePodcastCard({ podcast, isLoading = false }: PodcastCardPr
     const hostName = currentPodcast?.hostName ?? "Menata Ulang";
     const alt = currentPodcast?.title ?? "Podcast Image";
     const description = currentPodcast?.description ?? "A short description describing the main point of the podcast";
-    const date = currentPodcast?.updatedAt ? formatDate(new Date(currentPodcast.updatedAt)) : formatDate(new Date());
+    const date = currentPodcast?.publishedAt ? formatDate(new Date(currentPodcast.publishedAt)) : formatDate(new Date());
     const audioUrl = currentPodcast?.audioUrl ?? "";
     const duration = currentPodcast?.duration ? formatTime(currentPodcast?.duration) : formatTime(0);
     const heartsCount = currentPodcast?.heartsCount ?? 0;
 
     if (isLoading) {
         return (
-            <Card className="w-full h-full min-h-[160px] bg-white/50 rounded-md shadow-sm animate-pulse">
-                <CardContent className="flex flex-row items-start gap-4 h-full">
-                    <div className="w-32 h-32 bg-zinc-200 rounded-md shrink-0" />
-                    <div className="flex-1 flex flex-col h-32 justify-between">
+            <Card className="w-full h-full w-[240px] h-[360px] bg-white/50 animate-pulse ring-0 oppacity/50">
+                <CardContent className="flex flex-col items-center gap-4 h-full w-full">
+                    <div className="w-full h-40 bg-zinc-200 rounded-md shrink-0" />
+                    <div className="flex-1 flex flex-col w-full h-32 justify-between">
                         <div className="w-full flex flex-col gap-2">
                             <div className="w-2/3 h-6 bg-zinc-200 rounded" />
-                            <div className="w-full h-4 bg-zinc-200 rounded" />
+                            <div className="w-1/3 h-6 bg-zinc-200 rounded" />
                         </div>
-                        <div className="pt-2 flex items-center justify-between w-full border-t border-zinc-200/50">
-                            <div className="w-1/4 h-3 bg-zinc-200 rounded" />
-                            <div className="w-14 h-3 bg-zinc-200 rounded" />
+                        <div className="pt-2 flex items-center justify-between w-full border-zinc-200/50">
+                            <div className="w-8 h-4 bg-zinc-200 rounded" />
+                            <div className="w-10 h-10 bg-zinc-200 rounded-full" />
                         </div>
                     </div>
                 </CardContent>
@@ -52,9 +52,9 @@ export function ExplorePodcastCard({ podcast, isLoading = false }: PodcastCardPr
     }
 
     return (
-        <Card className="group relative w-full h-full min-h-[320px] bg-white/50 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0">
+        <Card className="group relative w-[240px] h-[360px] bg-white/50 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0">
             <Link
-                href={`/explore/podcasts/${slug}`}
+                href={`/explore/podcast/${slug}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
                 aria-label={`View ${title}`}
             />

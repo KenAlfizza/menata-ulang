@@ -70,16 +70,20 @@ export class ExplorePodcastService implements IExploreService {
                 prisma.podcast.count({ where })
             ]);
 
-            const items = podcasts.map(p => new ExplorePodcastSummary(
-                p.slug,
-                p.title,
-                p.description,
-                p.host.name,
-                p.hostId,
-                p.imageUrl,
-                p.audioUrl,
-                p.publishedAt,
-                p.heartsCount
+            const items = podcasts.map(podcast => new ExplorePodcastSummary(
+                podcast.slug,
+                podcast.title,
+                podcast.description,
+                podcast.duration,
+
+                podcast.host.name,
+                podcast.hostId,
+
+                podcast.audioUrl,
+                podcast.imageUrl,
+            
+                podcast.publishedAt,
+                podcast.heartsCount
             ));
 
             return { 
@@ -94,6 +98,41 @@ export class ExplorePodcastService implements IExploreService {
             };
         } catch (error) {
             console.error("Fetch Explore Feed Error:", error);
+            return { success: false, error: 'INTERNAL_ERROR' };
+        }
+    }
+
+    async getExplorePopular(): Promise<ExploreServiceResult<ExplorePodcastSummary>> {
+        try {
+            const podcast = await prisma.podcast.findFirst({
+                orderBy: {
+                    heartsCount: 'desc', 
+                },
+                include: { host: { select: { name: true } } }
+            });
+
+            if (!podcast) return { success: false, error: 'NOT_FOUND' };
+
+            // Storing fetched data into the data class structure
+            const data = new ExplorePodcastSummary(
+                podcast.slug,
+                podcast.title,
+                podcast.description,
+                podcast.duration,
+
+                podcast.host.name,
+                podcast.hostId,
+
+                podcast.audioUrl,
+                podcast.imageUrl,
+            
+                podcast.publishedAt,
+                podcast.heartsCount
+            );
+
+            return { success: true, data };
+        } catch (error) {
+            console.error("Database Error:", error);
             return { success: false, error: 'INTERNAL_ERROR' };
         }
     }

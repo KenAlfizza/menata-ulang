@@ -38,6 +38,39 @@ function handleError(
 }
 
 /**
+ * GET /podcast/popular - Fetch the  popular podcasts
+ * Authorization: Public route
+ * 
+ * Query Params:
+ * - page (number), limit (number), search (string), sort (string), order (string)
+ * 
+ * Responses:
+ * - 200: podcast feed payload
+ * - 400: validation error
+ * - 500: internal server error
+ */
+explore.get("/podcast/popular",
+    async (c) => {
+        const exploreService = new ExplorePodcastService();
+        const result = await exploreService.getExplorePopular()
+        console.log(result);
+
+        if (!result.success) {
+            const { status, message } = handleError(result.error);
+            return c.json({
+                success: false,
+                error: {
+                    message,
+                    code: result.error
+                }
+            }, status);
+        }
+
+        return c.json({ success: true, data: result.data }, 200);
+    }
+);
+
+/**
  * GET /story/:slug - Fetch a published story by its slug
  * 
  * Middleware: `validate("param", exploreParamSchema)`.
@@ -206,6 +239,7 @@ explore.get("/podcast",
         return c.json({ success: true, ...result.data }, 200);
     }
 );
+
 
 /**
  * GET /story - Fetch the explore feed for stories with pagination and search

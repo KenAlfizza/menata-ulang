@@ -9,6 +9,15 @@ import { ExploreStorySummary } from "./story.ts";
 import { ExploreResearch } from "./research.ts";
 import { ExploreResearchSummary } from "./research.ts";
 
+export type ExploreType =  
+    ExplorePodcast |
+    ExploreStory |
+    ExploreResearch
+
+export type ExploreSummaryType =  
+    ExplorePodcastSummary |
+    ExploreStorySummary |
+    ExploreResearchSummary
 
 export interface ExplorePaginatedResult<T> {
     /** The paginated slice of data */
@@ -23,25 +32,23 @@ export interface ExplorePaginatedResult<T> {
     totalPages: number;
 }
 
-
 export interface ExploreFilter {
     search?: string;
     limit: number;
     page: number;
-    sort?: "" | "title" | "updatedAt";
+    sort?: "title" | "updatedAt";
     order?: "asc" | "desc";
 }
 
 export interface IExploreService {
     // Explore podcast methods
     get(slug: string): Promise<ExploreServiceResult<
-        ExplorePodcast
-        | ExploreStory
-        | ExploreResearch
+       ExploreType
     >>;
     getExploreFeed(filter: ExploreFilter): Promise<ExploreServiceResult<ExplorePaginatedResult<
-        ExplorePodcastSummary
-        | ExploreStorySummary
-        | ExploreResearchSummary
+        ExploreSummaryType
     >>>;
+    getExplorePopular(): Promise<ExploreServiceResult<
+        ExploreSummaryType
+    >>;
 }

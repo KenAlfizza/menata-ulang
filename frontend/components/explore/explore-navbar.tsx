@@ -18,7 +18,7 @@ interface ExploreNavbarProps {
     show?: boolean;
     page?: PageType;
     route?: 'explore' | 'resources';
-    bgColor?: string; // Add this prop
+    bgColor?: string;
 }
 
 const navbarBackgroundMap = {
