@@ -11,7 +11,6 @@ import {
     NavigationMenuItem, 
     NavigationMenuLink,
 } from "@/components/ui/navigation-menu.tsx";
-import { PageType } from "@/types/explore/explore.ts";
 import { useExplore } from "@/hooks/explore/use-explore.ts";
 
 
@@ -37,7 +36,7 @@ export function ExploreNavbar({
     const bgColor = navbarBackgroundMap[page];
 
     return (show && (
-        <header className="fixed top-0 z-50 w-full">
+        <header className="fixed top-0 z-50 w-full bg-gradient-to-b from-white/100 via-white/75 to-transparent">
             {/* Dynamically apply the background string and transition colors smoothly */}
             <div className={`w-full mx-auto py-2 px-4 h-16 flex items-start justify-start transition-colors duration-300 ${bgColor}`}>
                 {/* Animated Logo & Navigation Target Area */}

@@ -1,30 +1,30 @@
 "use client"
 import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
-import { useExplorePodcast } from "@/hooks/explore/use-explore-podcast.ts";
+import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 
-export function ExplorePodcastRecent() {
-    const explorePodcast = useExplorePodcast();
-    const isLoading = explorePodcast.isLoadingFeatured;
-    const podcasts = explorePodcast.recentPodcasts;
+interface ExplorePodcastRecentProps {
+    recentPodcasts: ExplorePodcastSummary[];
+    isLoadingFeatured: boolean;
+}
+
+export function ExplorePodcastRecent({ recentPodcasts, isLoadingFeatured }: ExplorePodcastRecentProps) {
     return (
         <div className="flex flex-col gap-2">
             <span className="font-medium text-lg">Recently Added</span>
             <div className="grid grid-cols-3 gap-8">
-                {isLoading ? (
-                    // Render 3 skeleton / placeholder cards when loading
+                {isLoadingFeatured ? (
                     Array.from({ length: 3 }).map((_, index) => (
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
-                            isLoading={isLoading}
+                            isLoading={isLoadingFeatured}
                         />
                     ))
                 ) : (
-                    // Render actual podcast cards when data is ready
-                    podcasts.map((podcast) => (
+                    recentPodcasts.map((podcast) => (
                         <ExplorePodcastCard
                             key={podcast.slug}
                             podcast={podcast}
-                            isLoading={isLoading}
+                            isLoading={isLoadingFeatured}
                         />
                     ))
                 )}

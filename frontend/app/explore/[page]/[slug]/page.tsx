@@ -55,7 +55,7 @@ export default function ExploreSlugPage({ params }: ExploreSlugPageProps) {
 
     return (
         <div className="relative w-full">
-            <ExploreBackground page="podcast">
+            <ExploreBackground>
                 <div className="pt-20 p-8 space-y-8 pb-28">
                     {errorMessage ? (
                         <div className="w-full p-6 bg-red-50 border border-red-200 rounded-md text-red-700 flex flex-col gap-2">

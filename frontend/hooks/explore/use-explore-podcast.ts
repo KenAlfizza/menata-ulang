@@ -20,6 +20,10 @@ export function useExplorePodcast() {
     const [totalPages, setTotalPages] = useState(0);
 
     const [search, setSearch] = useState("");
+    const [isSearching, setIsSearching] = useState(false);
+
+    const [sort, setSort] = useState<ExploreFilter["sort"]>("title");
+    const [order, setOrder] = useState<ExploreFilter["order"]>("asc");
 
     useEffect(() => {
         async function loadFeaturedData() {
@@ -27,9 +31,9 @@ export function useExplorePodcast() {
                 setIsLoadingFeatured(true);
                 const recentFilter: ExploreFilter = {
                     page: 1,
+                    limit: 3,
                     sort: "updatedAt",
                     order: "desc",
-                    limit: 3,
                 };
                 
                 const [recentResult, popularResult] = await Promise.all([
@@ -58,11 +62,11 @@ export function useExplorePodcast() {
                 const feedFilter: ExploreFilter = {
                     search,
                     page,
-                    sort: "title",
-                    order: "asc",
                     limit: 5,
+                    sort,
+                    order,
                 };
-                
+
                 const feedResult = await getPodcasts(feedFilter);
 
                 setFeedPodcast(feedResult.items);
@@ -78,7 +82,7 @@ export function useExplorePodcast() {
         }
 
         loadFeedData();
-    }, [search, page]);
+    }, [search, page, sort, order]);
 
     return {
         isLoadingFeatured,
@@ -92,6 +96,12 @@ export function useExplorePodcast() {
         setPage,
         totalPages,
         search,
-        setSearch
+        setSearch,
+        isSearching,
+        setIsSearching,
+        sort,
+        setSort,
+        order,
+        setOrder,
     };
 }

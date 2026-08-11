@@ -1,30 +1,41 @@
 "use client"
+import { ExploreFilterBar } from "../explore-filter.tsx";
 import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
-import { useExplorePodcast } from "@/hooks/explore/use-explore-podcast.ts";
+import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
+import { ExploreFilter } from "@/types/explore/explore.ts";
 
-export function ExplorePodcastFeed() {
-    const explorePodcast = useExplorePodcast();
-    const isLoading = explorePodcast.isLoadingFeed;
-    const podcasts = explorePodcast.feedPodcast;
+interface ExplorePodcastFeedProps {
+    feedPodcast: ExplorePodcastSummary[];
+    isLoadingFeed: boolean;
+    feedFilter: ExploreFilter;
+    onSortChange: (sort: ExploreFilter["sort"], order: ExploreFilter["order"]) => void;
+}
+
+export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onSortChange }: ExplorePodcastFeedProps) {
     return (
         <div className="flex flex-col gap-2">
-            <span className="font-medium text-lg">Podcast Feed</span>
+            <div className="flex flex-row justify-between items-center">
+                <span className="font-medium text-lg">Podcast Feed</span>
+                <ExploreFilterBar 
+                    sort={feedFilter.sort ?? "title"} 
+                    order={feedFilter.order ?? "asc"} 
+                    onSortChange={onSortChange}
+                />
+            </div>
             <div className="flex flex-row gap-8">
-                {isLoading ? (
-                    // Render 3 skeleton / placeholder cards when loading
+                {isLoadingFeed ? (
                     Array.from({ length: 5 }).map((_, index) => (
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
-                            isLoading={isLoading}
+                            isLoading={isLoadingFeed}
                         />
                     ))
                 ) : (
-                    // Render actual podcast cards when data is ready
-                    podcasts.map((podcast) => (
+                    feedPodcast.map((podcast) => (
                         <ExplorePodcastCard
                             key={podcast.slug}
                             podcast={podcast}
-                            isLoading={isLoading}
+                            isLoading={isLoadingFeed}
                         />
                     ))
                 )}

@@ -7,7 +7,6 @@ import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 import { formatDate } from "@/utils/format-date.ts";
 import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
-import { PlayButton } from "../../workspace/podcast/play-button.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 

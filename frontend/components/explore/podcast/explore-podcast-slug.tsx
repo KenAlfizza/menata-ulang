@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
@@ -117,7 +117,8 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                         />
                     </CardContent>
                 </Card>
-                <Card className="group relative w-full h-full bg-white/50 ring-0 p-0">
+                <Card className="group relative w-full h-full bg-white/70 ring-0 p-0">
+                    <div className="w-full h-full bg-yellow-100/50">
                     <CardContent className="p-6 w-full flex flex-col h-full relative z-10">
                         <div className="w-full flex-1 flex flex-col gap-2 min-h-0">
                             <div>
@@ -159,9 +160,11 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                             setHidePlayer(inView);
                         }}/>
                     </CardContent>
+                    </div>
                 </Card>
             </div>
-            <Card className="group relative w-full h-full bg-white/50 ring-0 p-0">
+            <Card className="group relative w-full h-full bg-white/70 ring-0 p-0">
+                <div className="w-full h-full bg-yellow-100/50">
                 <CardContent className="p-6 w-full flex flex-col h-full justify-between relative z-10">
                     <div className="flex-1 flex flex-col justify-between">
                         <div className="w-full flex flex-col gap-1 items-start">
@@ -174,6 +177,7 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                         </div>
                     </div>
                 </CardContent>
+                </div>
             </Card>
         </div>
     );

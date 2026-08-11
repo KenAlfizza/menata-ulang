@@ -1,16 +1,17 @@
 "use client"
 import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
-import { useExplorePodcast } from "@/hooks/explore/use-explore-podcast.ts";
+import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 
-export function ExplorePodcastPopular() {
-    const explorePodcast = useExplorePodcast();
-    const isLoading = explorePodcast.isLoadingFeatured;
-    const podcast = explorePodcast.popularPodcast;
-    
+interface ExplorePodcastPopularProps {
+    popularPodcast?: ExplorePodcastSummary;
+    isLoadingFeatured: boolean;
+}
+
+export function ExplorePodcastPopular({ popularPodcast, isLoadingFeatured }: ExplorePodcastPopularProps) {
     return (
         <div className="flex flex-col gap-2">
             <span className="font-medium text-lg">Most Listened</span>
-            <ExplorePodcastCard podcast={podcast} isLoading={isLoading}/>
+            <ExplorePodcastCard podcast={popularPodcast} isLoading={isLoadingFeatured}/>
         </div>
     )
 }
