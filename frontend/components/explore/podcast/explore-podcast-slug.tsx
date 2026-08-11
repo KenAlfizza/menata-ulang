@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
@@ -9,14 +9,15 @@ import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastRecord } from "@/types/explore/podcast.ts";
 import { PodcastPlayer } from "./explore-podcast-player.tsx"
 import { usePlayer } from "@/context/podcast/player-context.tsx";
+import { ScrollTrigger } from "../../common/scroll-trigger.tsx";
 
 interface PodcastCardProps {
     podcast?: ExplorePodcastRecord;
     isLoading?: boolean;
 }
 
-export function ExplorePodcastView({ podcast, isLoading = false }: PodcastCardProps) {
-    const { currentTrack, playTrack } = usePlayer();
+export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardProps) {
+    const { currentTrack, playTrack, setHidePlayer } = usePlayer();
     const currentPodcast = podcast;
 
     const slug = currentPodcast?.slug ?? "";
@@ -45,7 +46,7 @@ export function ExplorePodcastView({ podcast, isLoading = false }: PodcastCardPr
                 });
             }
         }
-    }, [slug, audioUrl, title, hostName, imageUrl, durationSeconds, currentTrack, playTrack]);
+    }, [slug, audioUrl, title, hostName, imageUrl, durationSeconds, currentTrack ]);
 
     if (isLoading) {
         return (
@@ -141,7 +142,9 @@ export function ExplorePodcastView({ podcast, isLoading = false }: PodcastCardPr
                                 {description}
                             </p>
                             <div className="w-full flex-1 flex items-center">
-                                <div className="w-full"><PodcastPlayer/></div>
+                                <div className="w-full">
+                                    <PodcastPlayer/>
+                                </div>
                             </div>
                         </div>
                         
@@ -151,6 +154,10 @@ export function ExplorePodcastView({ podcast, isLoading = false }: PodcastCardPr
                                 <p className="text-md">{heartsCount}</p>
                             </div>
                         </div>
+
+                        <ScrollTrigger onViewportChange={(inView) => {
+                            setHidePlayer(inView);
+                        }}/>
                     </CardContent>
                 </Card>
             </div>

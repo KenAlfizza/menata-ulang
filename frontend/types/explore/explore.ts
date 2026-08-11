@@ -1,3 +1,5 @@
+export type PageType = 'story' | 'podcast' | 'research';
+
 export interface ExploreFilter {
     search?: string;
     limit: number;

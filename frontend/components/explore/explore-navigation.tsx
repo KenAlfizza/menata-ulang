@@ -2,11 +2,11 @@ import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useExplore } from "@/hooks/explore/use-explore.ts";
 
 type PageType = 'story' | 'podcast' | 'research';
 
 interface ExploreNavigationProps {
-    page: PageType;
     onNavigate: (newPage: PageType) => void;
 }
 
@@ -27,7 +27,9 @@ const variants = {
     }),
 };
 
-export function ExploreNavigation({ page, onNavigate }: ExploreNavigationProps) {
+export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
+    const page = useExplore();
+
     const [prevPage, setPrevPage] = useState(page);
     const [direction, setDirection] = useState(1);
 

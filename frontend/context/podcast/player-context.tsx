@@ -47,6 +47,8 @@ interface PlayerContextValue {
     toggleShuffle: () => void;
     cycleRepeatMode: () => void;
     closePlayer: () => void;
+    hidePlayer: boolean;
+    setHidePlayer: (hide: boolean) => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -66,6 +68,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const [isMuted, setIsMuted] = useState(false);
     const [isShuffled, setIsShuffled] = useState(false);
     const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
+    const [hidePlayer, setHidePlayer] = useState(false);
 
     const currentTrack = tracks[currentIndex] ?? null;
 
@@ -202,11 +205,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const closePlayer = useCallback(() => {
         const audio = audioRef.current;
-        if (audio) audio.pause();
+        if (audio) {
+            audio.pause();
+            audio.removeAttribute("src");
+            audio.load();
+        }
         setIsPlaying(false);
         setIsActive(false);
         setTracks([]);
         setCurrentIndex(0);
+        setCurrentTime(0);
+        setDuration(0);
+    }, []);
+
+    const handleSetHidePlayer = useCallback((hide: boolean) => {
+        setHidePlayer(hide);
     }, []);
 
     return (
@@ -238,6 +251,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 toggleShuffle,
                 cycleRepeatMode,
                 closePlayer,
+                hidePlayer,
+                setHidePlayer: handleSetHidePlayer,
             }}
         >
             {children}

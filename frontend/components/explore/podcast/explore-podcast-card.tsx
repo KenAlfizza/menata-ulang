@@ -9,6 +9,7 @@ import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { PlayButton } from "../../workspace/podcast/play-button.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
+import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 
 interface PodcastCardProps {
     podcast?: ExplorePodcastSummary;
@@ -107,7 +108,7 @@ export function ExplorePodcastCard({ podcast, isLoading = false }: PodcastCardPr
                     </div>
                     <div className="flex items-center gap-2">
                         <p className="text-sm text-zinc-500">{duration}</p>
-                        <PlayButton
+                        <ExplorePodcastPlayButton
                             track={{
                                 id: String(slug),
                                 title,

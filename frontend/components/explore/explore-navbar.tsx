@@ -11,28 +11,29 @@ import {
     NavigationMenuItem, 
     NavigationMenuLink,
 } from "@/components/ui/navigation-menu.tsx";
+import { PageType } from "@/types/explore/explore.ts";
+import { useExplore } from "@/hooks/explore/use-explore.ts";
 
-type PageType = 'story' | 'podcast' | 'research';
+
 
 interface ExploreNavbarProps {
     show?: boolean;
-    page?: PageType;
     route?: 'explore' | 'resources';
     bgColor?: string;
 }
 
 const navbarBackgroundMap = {
     story: "bg-gradient-to-b from-red-400 via-red-400/50 to-transparent",
-    podcast: "bg-gradient-to-b from-yellow-500 via-yellow-400/50 to-transparent",
-    research: "bg-gradient-to-b from-blue-500 via-blue-400/50 to-transparent",
+    podcast: "bg-gradient-to-b from-yellow-500 via-yellow-500/50 to-transparent",
+    research: "bg-gradient-to-b from-blue-500 via-blue-500/50 to-transparent",
 };
 
 export function ExploreNavbar({
     show = true, 
-    page = 'story',
     route = 'explore',
 }: ExploreNavbarProps) {
     const [logoAnimationDone, setLogoAnimationDone] = useState(false);
+    const page = useExplore();
     const bgColor = navbarBackgroundMap[page];
 
     return (show && (

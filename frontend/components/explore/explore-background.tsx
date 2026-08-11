@@ -2,12 +2,10 @@
 import React from "react";
 import { DecorativeRope } from "../common/decorative-rope";
 import { ViewSection } from "../common/view-section.tsx";
-
-type PageType = 'story' | 'podcast' | 'research';
+import { useExplore } from "@/hooks/explore/use-explore.ts";
 
 interface ExploreBackgroundProps {
-  children: React.ReactNode;
-  page: PageType;
+    children: React.ReactNode;
 }
 
 // Map each page to its corresponding background class
@@ -17,7 +15,8 @@ const backgroundMap = {
     research: "bg-blue-200/75",
 };
 
-export function ExploreBackground({ children, page }: ExploreBackgroundProps) {
+export function ExploreBackground({ children }: ExploreBackgroundProps) {
+    const page = useExplore()
     const currentBgColor = backgroundMap[page];
     return (
         <div className={`fixed inset-0 h-full min-h-screen transition-colors duration-300 ${currentBgColor}`}>
