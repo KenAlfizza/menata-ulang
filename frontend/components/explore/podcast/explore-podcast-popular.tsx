@@ -11,7 +11,7 @@ export function ExplorePodcastPopular({ popularPodcast, isLoadingFeatured }: Exp
     return (
         <div className="flex flex-col gap-2">
             <span className="font-medium text-lg">Most Listened</span>
-            <ExplorePodcastCard podcast={popularPodcast} isLoading={isLoadingFeatured}/>
+            <ExplorePodcastCard podcast={popularPodcast} isLoading={isLoadingFeatured} feature/>
         </div>
     )
 }

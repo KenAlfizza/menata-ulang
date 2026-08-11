@@ -3,17 +3,21 @@ import { ExploreFilterBar } from "../explore-filter.tsx";
 import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExploreFilter } from "@/types/explore/explore.ts";
+import { ExplorePagination } from "../explore-pagination.tsx";
 
 interface ExplorePodcastFeedProps {
     feedPodcast: ExplorePodcastSummary[];
     isLoadingFeed: boolean;
     feedFilter: ExploreFilter;
     onSortChange: (sort: ExploreFilter["sort"], order: ExploreFilter["order"]) => void;
+    feedPage: number;
+    feedTotalPages: number;
+    onPageChange: (feedPage: number) => void;
 }
 
-export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onSortChange }: ExplorePodcastFeedProps) {
+export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onSortChange, feedPage, feedTotalPages, onPageChange }: ExplorePodcastFeedProps) {
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
                 <span className="font-medium text-lg">Podcast Feed</span>
                 <ExploreFilterBar 
@@ -22,9 +26,9 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                     onSortChange={onSortChange}
                 />
             </div>
-            <div className="flex flex-row gap-8">
+            <div className="flex flex-row flex-wrap justify-between gap-y-8">
                 {isLoadingFeed ? (
-                    Array.from({ length: 5 }).map((_, index) => (
+                    Array.from({ length: 10 }).map((_, index) => (
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
                             isLoading={isLoadingFeed}
@@ -40,6 +44,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                     ))
                 )}
             </div>
+            <ExplorePagination currentPage={feedPage} totalPages={feedTotalPages} onPageChange={onPageChange}/>
         </div>
     );
 }

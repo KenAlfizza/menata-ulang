@@ -26,7 +26,7 @@ export function ExplorePodcast() {
                 />        
 
                 {!explore.isSearching && (
-                    <div className="flex flex-row gap-24">
+                    <div className="flex flex-row gap-16">
                         <ExplorePodcastPopular 
                             popularPodcast={explore.popularPodcast}
                             isLoadingFeatured={explore.isLoadingFeatured}
@@ -44,7 +44,7 @@ export function ExplorePodcast() {
                     feedFilter={{
                         search: explore.search,
                         page: explore.page,
-                        limit: 5,
+                        limit: 10,
                         sort: explore.sort,
                         order: explore.order,
                     }}
@@ -52,6 +52,11 @@ export function ExplorePodcast() {
                         explore.setSort(sortField ?? "title");
                         explore.setOrder(sortOrder ?? "asc");
                         explore.setPage(1);
+                    }}
+                    feedPage={explore.page}
+                    feedTotalPages={explore.totalPages}
+                    onPageChange={(feedPage) => {
+                        explore.setPage(feedPage);
                     }}
                 />
             </section>

@@ -1,8 +1,8 @@
 export function formatTime(totalSeconds: number) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    
+    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "0:00";
+    const safeSeconds = Math.round(totalSeconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const seconds = safeSeconds % 60;
+
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
-
-// Output: 30:05

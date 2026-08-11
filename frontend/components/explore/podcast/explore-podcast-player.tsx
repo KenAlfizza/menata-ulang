@@ -1,101 +1,79 @@
 "use client";
 
 import {
-    Play,
-    Pause,
     Volume2,
     Volume1,
     VolumeX,
 } from "lucide-react";
-import { usePlayer } from "@/context/podcast/player-context.tsx";
-
-export interface Track {
-    id: string;
-    title: string;
-    artist: string;
-    src: string;
-    imageUrl?: string;
-    duration?: number;
-}
+import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
+import { formatTime } from "@/utils/format-time.ts";
+import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 
 interface PodcastPlayerProps {
+    track: PlayerTrack;
     showHost?: boolean;
 }
 
-function formatTime(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-export function PodcastPlayer({ showHost = true }: PodcastPlayerProps) {
+export function PodcastPlayer({ track, showHost = true }: PodcastPlayerProps) {
     const {
         currentTrack,
         isActive,
-        isPlaying,
         currentTime,
         duration,
         volume,
         isMuted,
-        togglePlayPause,
         seek,
         setIsSeeking,
         setVolume,
         toggleMute,
     } = usePlayer();
 
-    if (!isActive || !currentTrack) {
-        return (
-            <div className="w-full rounded-md border border-zinc-100 bg-white/50 p-4 text-center text-sm text-zinc-400">
-                No tracks available
-            </div>
-        );
-    }
+    // This page's track is only "live" — has an <audio> element behind it,
+    // a real currentTime/duration, etc — once the play button has actually
+    // loaded it into the global player. Before that, we show a static
+    // shell with just the play button, so nothing loads or plays until
+    // the person presses it.
+    const isLive = isActive && currentTrack?.id === track.id;
 
     const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-    const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
+    const displayDuration = isLive ? duration : (track.duration ?? 0);
+    const displayCurrentTime = isLive ? currentTime : 0;
+    const progressPct = displayDuration > 0 ? (displayCurrentTime / displayDuration) * 100 : 0;
 
     return (
         <div className="w-full rounded-md bg-white/50 px-4 py-3 flex flex-col gap-2">
-            {/* Top Row: Play/Pause, Skip, Scrubber, Time, and Volume */}
+            {showHost && track.artist && (
+                <div className="text-xs text-zinc-500 truncate">
+                    {track.title} · {track.artist}
+                </div>
+            )}
+            {/* Top Row: Play/Pause, Scrubber, Time, and Volume */}
             <div className="flex items-center gap-4 w-full">
                 {/* Play Controls */}
                 <div className="flex items-center gap-2 shrink-0">
-
-                    <button
-                        type="button"
-                        onClick={togglePlayPause}
-                        aria-label={isPlaying ? "Pause" : "Play"}
-                        className="relative z-50 pointer-events-auto bg-yellow-300 p-2 rounded-full shadow-sm cursor-default transition-all duration-200 hover:bg-yellow-400 hover:scale-110 hover:shadow-md hover:cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:bg-zinc-300 disabled:cursor-default disabled:hover:shadow-sm"
-                    >
-                        {isPlaying ? (
-                            <Pause className="w-4 h-4 fill-current text-white" />
-                        ) : (
-                            <Play className="w-4 h-4 fill-current text-white ml-0.5" />
-                        )}
-                    </button>
+                    <ExplorePodcastPlayButton track={track} />
                 </div>
                 {/* Progress Bar & Times */}
                 <div className="w-full flex-1 flex items-center gap-2">
                     <span className="text-[11px] tabular-nums text-zinc-400 w-8 text-right shrink-0">
-                        {formatTime(currentTime)}
+                        {formatTime(displayCurrentTime)}
                     </span>
                     <input
                         type="range"
                         min={0}
-                        max={duration || 0}
+                        max={displayDuration || 0}
                         step={0.1}
-                        value={currentTime}
-                        onMouseDown={() => setIsSeeking(true)}
-                        onMouseUp={() => setIsSeeking(false)}
-                        onChange={(e) => seek(Number(e.target.value))}
+                        value={displayCurrentTime}
+                        disabled={!isLive}
+                        onMouseDown={() => isLive && setIsSeeking(true)}
+                        onMouseUp={() => isLive && setIsSeeking(false)}
+                        onChange={(e) => isLive && seek(Number(e.target.value))}
                         /* 
                         ========================================
                         PROGRESS BAR STYLING (Webkit-specific pseudo-elements)
                         ========================================
                         */
-                        className="flex-1 h-1.5 appearance-none bg-transparent cursor-pointer
+                        className="flex-1 h-1.5 appearance-none bg-transparent cursor-pointer disabled:cursor-default
                             [&::-webkit-slider-runnable-track]:h-1.5 
                             [&::-webkit-slider-runnable-track]:rounded-full
                             [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,_theme(colors.yellow.400)_0%,_theme(colors.yellow.300)_var(--progress),_theme(colors.zinc.200)_var(--progress))]
@@ -136,7 +114,7 @@ export function PodcastPlayer({ showHost = true }: PodcastPlayerProps) {
                         aria-label="Seek"
                     />
                     <span className="text-[11px] tabular-nums text-zinc-400 w-8 shrink-0">
-                        {formatTime(duration)}
+                        {formatTime(displayDuration)}
                     </span>
                 </div>
                 {/* Volume Controls */}
@@ -144,8 +122,9 @@ export function PodcastPlayer({ showHost = true }: PodcastPlayerProps) {
                     <button
                         type="button"
                         onClick={toggleMute}
+                        disabled={!isLive}
                         aria-label={isMuted ? "Unmute" : "Mute"}
-                        className="text-zinc-500 hover:text-zinc-700 transition-colors"
+                        className="text-zinc-500 hover:text-zinc-700 transition-colors disabled:opacity-40 disabled:hover:text-zinc-500"
                     >
                         <VolumeIcon className="w-4 h-4" />
                     </button>
@@ -155,8 +134,9 @@ export function PodcastPlayer({ showHost = true }: PodcastPlayerProps) {
                         max={1}
                         step={0.01}
                         value={isMuted ? 0 : volume}
-                        onChange={(e) => setVolume(Number(e.target.value))}
-                        className="w-20 h-1.5 appearance-none bg-transparent cursor-pointer
+                        disabled={!isLive}
+                        onChange={(e) => isLive && setVolume(Number(e.target.value))}
+                        className="w-20 h-1.5 appearance-none bg-transparent cursor-pointer disabled:cursor-default
                             [&::-webkit-slider-runnable-track]:h-1.5
                             [&::-webkit-slider-runnable-track]:rounded-full
                             [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,_theme(colors.yellow.400)_0%,_theme(colors.yellow.300)_var(--volume-progress),_theme(colors.zinc.200)_var(--volume-progress))]

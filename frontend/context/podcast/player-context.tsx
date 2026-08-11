@@ -35,7 +35,8 @@ interface PlayerContextValue {
     isShuffled: boolean;
     repeatMode: RepeatMode;
     audioRef: RefObject<HTMLAudioElement | null>;
-    playTrack: (track: PlayerTrack) => void;
+    playTrack: (track: PlayerTrack, options?: { autoplay?: boolean }) => void;
+    loadTrack: (track: PlayerTrack) => void;
     playQueue: (tracks: PlayerTrack[], startIndex?: number) => void;
     togglePlayPause: () => void;
     next: () => void;
@@ -56,6 +57,12 @@ const PlayerContext = createContext<PlayerContextValue | null>(null);
 export function PlayerProvider({ children }: { children: ReactNode }) {
     const audioRef = useRef<HTMLAudioElement>(null);
     const isSeekingRef = useRef(false);
+    // Whether the *next* time currentTrack.src changes, playback should
+    // start automatically. Defaults to true so playQueue/next/previous
+    // keep their existing "always plays" behavior; only explicit
+    // loadTrack() calls (or playTrack(track, { autoplay: false })) flip
+    // this off for a single load.
+    const pendingAutoPlayRef = useRef(true);
 
     const [tracks, setTracks] = useState<PlayerTrack[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -83,8 +90,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         audio.load();
         setCurrentTime(0);
         setDuration(currentTrack.duration ?? 0);
-        audio.play().catch(() => setIsPlaying(false));
-        setIsPlaying(true);
+
+        const shouldAutoPlay = pendingAutoPlayRef.current;
+        // Reset for the next load; every subsequent track change
+        // (next/previous/playQueue/playTrack) defaults back to autoplaying
+        // unless explicitly opted out again.
+        pendingAutoPlayRef.current = true;
+
+        if (shouldAutoPlay) {
+            audio.play().catch(() => setIsPlaying(false));
+            setIsPlaying(true);
+        } else {
+            setIsPlaying(false);
+        }
     }, [currentTrack?.src]);
 
     useEffect(() => {
@@ -94,6 +112,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }, [volume, isMuted]);
 
     const playQueue = useCallback((newTracks: PlayerTrack[], startIndex = 0) => {
+        pendingAutoPlayRef.current = true;
         setTracks(newTracks);
         setCurrentIndex(
             Math.min(Math.max(startIndex, 0), Math.max(newTracks.length - 1, 0))
@@ -101,15 +120,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setIsActive(true);
     }, []);
 
-    const playTrack = useCallback((track: PlayerTrack) => {
+    const playTrack = useCallback((track: PlayerTrack, options?: { autoplay?: boolean }) => {
+        const autoplay = options?.autoplay ?? true;
+        pendingAutoPlayRef.current = autoplay;
         setTracks((prev) => {
             const existingIndex = prev.findIndex((t) => t.id === track.id);
             if (existingIndex !== -1) {
                 setCurrentIndex(existingIndex);
-                const audio = audioRef.current;
-                if (audio) {
-                    audio.play().catch(() => setIsPlaying(false));
-                    setIsPlaying(true);
+                // Track is already loaded (src won't change, so the
+                // src-change effect above won't fire) — start playback
+                // here directly, respecting the autoplay flag.
+                if (autoplay) {
+                    const audio = audioRef.current;
+                    if (audio) {
+                        audio.play().catch(() => setIsPlaying(false));
+                        setIsPlaying(true);
+                    }
                 }
                 return prev;
             }
@@ -118,6 +144,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         });
         setIsActive(true);
     }, []);
+
+    // Load a track into the player (making it visible/ready) without
+    // starting playback.
+    const loadTrack = useCallback((track: PlayerTrack) => {
+        playTrack(track, { autoplay: false });
+    }, [playTrack]);
 
     const togglePlayPause = useCallback(() => {
         const audio = audioRef.current;
@@ -133,6 +165,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const next = useCallback(() => {
         if (tracks.length === 0) return;
+        pendingAutoPlayRef.current = true;
         if (isShuffled) {
             let nextIndex = Math.floor(Math.random() * tracks.length);
             if (tracks.length > 1) {
@@ -154,6 +187,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             setCurrentTime(0);
             return;
         }
+        pendingAutoPlayRef.current = true;
         setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
     }, [tracks.length]);
 
@@ -238,6 +272,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 repeatMode,
                 audioRef,
                 playTrack,
+                loadTrack,
                 playQueue,
                 togglePlayPause,
                 next,

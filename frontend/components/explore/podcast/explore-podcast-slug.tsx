@@ -17,7 +17,7 @@ interface PodcastCardProps {
 }
 
 export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardProps) {
-    const { currentTrack, playTrack, setHidePlayer } = usePlayer();
+    const { currentTrack, setHidePlayer } = usePlayer();
     const currentPodcast = podcast;
 
     const slug = currentPodcast?.slug ?? "";
@@ -31,22 +31,6 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
     const durationSeconds = currentPodcast?.duration ?? 0;
     const heartsCount = currentPodcast?.heartsCount ?? 100;
     const transcript = currentPodcast?.transcript ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget odio varius, rutrum mauris sed, auctor enim. Sed consequat, quam ut volutpat imperdiet, nunc sem pulvinar nulla, in mollis nisl odio vitae metus. Cras a eleifend sapien. Quisque blandit ante odio. Vivamus fringilla elit ac consequat vehicula. Vivamus laoreet rhoncus turpis in commodo. Pellentesque fermentum nisl in sagittis euismod. Integer vel vehicula dolor. Nam a urna vel sem tempus ultricies. Vestibulum ut tortor interdum, pharetra libero eget, commodo ipsum. Pellentesque posuere sem at arcu hendrerit, eget porta elit posuere. Nullam sagittis pulvinar nunc, a fermentum lectus egestas in.";
-
-    // Automatically register and load the podcast into the global player state on mount
-    useEffect(() => {
-        if (slug && audioUrl) {
-            if (!currentTrack || currentTrack.id !== slug) {
-                playTrack({
-                    id: slug,
-                    title,
-                    artist: hostName,
-                    src: audioUrl,
-                    imageUrl,
-                    duration: durationSeconds,
-                });
-            }
-        }
-    }, [slug, audioUrl, title, hostName, imageUrl, durationSeconds, currentTrack ]);
 
     if (isLoading) {
         return (
@@ -144,7 +128,16 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                             </p>
                             <div className="w-full flex-1 flex items-center">
                                 <div className="w-full">
-                                    <PodcastPlayer/>
+                                    <PodcastPlayer
+                                        track={{
+                                            id: slug,
+                                            title,
+                                            artist: hostName,
+                                            src: audioUrl,
+                                            imageUrl,
+                                            duration: durationSeconds,
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -157,7 +150,11 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                         </div>
 
                         <ScrollTrigger onViewportChange={(inView) => {
-                            setHidePlayer(inView);
+                            if (!currentTrack || currentTrack.id !== slug) {
+                                setHidePlayer(false);
+                            } else {
+                                setHidePlayer(inView);
+                            }
                         }}/>
                     </CardContent>
                     </div>

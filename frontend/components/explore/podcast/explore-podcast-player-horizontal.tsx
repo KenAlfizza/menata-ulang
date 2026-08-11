@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { formatTime } from "@/utils/format-time.ts";
 import {
     Play,
     Pause,
@@ -16,13 +17,6 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/context/podcast/player-context.tsx";
 import { PageType } from "@/types/explore/explore.ts";
-
-function formatTime(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 interface ExplorePodcastPlayerHorizontalProps {
     page: PageType;
@@ -41,9 +35,9 @@ const thumbColorMap = {
 };
 
 const playButtonBgMap = {
-    story: "bg-red-400 hover:bg-red-500",
-    podcast: "bg-yellow-400 hover:bg-yellow-500",
-    research: "bg-blue-400 hover:bg-blue-500",
+    story: "bg-red-300 hover:bg-red-400",
+    podcast: "bg-yellow-300 hover:bg-yellow-400",
+    research: "bg-blue-300 hover:bg-blue-400",
 };
 
 const backgroundColorMap = {

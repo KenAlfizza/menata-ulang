@@ -5,7 +5,7 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-} from "@/components/ui/pagination";
+} from "@/components/ui/pagination.tsx";
 
 export function ExplorePagination({
     currentPage,
@@ -35,7 +35,7 @@ export function ExplorePagination({
                 {[...Array(totalPages)].map((_, i) => {
                     const page = i + 1;
                     return (
-                        <PaginationItem key={page}>
+                        <PaginationItem key={page} className="ring-0 border-none">
                             <PaginationLink
                                 href="#"
                                 isActive={currentPage === page}
@@ -43,6 +43,7 @@ export function ExplorePagination({
                                     e.preventDefault();
                                     onPageChange(page);
                                 }}
+                                className="ring-0 border-none bg-white/75"
                             >
                                 {page}
                             </PaginationLink>

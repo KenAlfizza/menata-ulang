@@ -9,9 +9,9 @@ interface ExplorePodcastRecentProps {
 
 export function ExplorePodcastRecent({ recentPodcasts, isLoadingFeatured }: ExplorePodcastRecentProps) {
     return (
-        <div className="flex flex-col gap-2">
+        <div className="w-full flex flex-col gap-2">
             <span className="font-medium text-lg">Recently Added</span>
-            <div className="grid grid-cols-3 gap-8">
+            <div className="flex flex-row justify-between gap-4">
                 {isLoadingFeatured ? (
                     Array.from({ length: 3 }).map((_, index) => (
                         <ExplorePodcastCard
@@ -25,6 +25,7 @@ export function ExplorePodcastRecent({ recentPodcasts, isLoadingFeatured }: Expl
                             key={podcast.slug}
                             podcast={podcast}
                             isLoading={isLoadingFeatured}
+                            feature
                         />
                     ))
                 )}

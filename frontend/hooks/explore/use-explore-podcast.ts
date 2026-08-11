@@ -62,7 +62,7 @@ export function useExplorePodcast() {
                 const feedFilter: ExploreFilter = {
                     search,
                     page,
-                    limit: 5,
+                    limit: 10,
                     sort,
                     order,
                 };
