@@ -69,7 +69,7 @@ export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
             case 'story':
                 return (
                     <div className={currentClassProperty}>
-                        <div className="w-6 h-6"/>
+                        {isMobile && (<div className="w-6 h-6"/>)}
                         <span className="text-2xl font-medium">Short Stories</span>
                         <Button 
                             variant="ghost" 
@@ -119,7 +119,7 @@ export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
                             <ChevronsLeft className="!w-6 !h-6" />
                         </Button>
                         <span className="text-2xl font-medium">Research Articles</span>
-                        <div className="w-6 h-6"/>
+                        {isMobile && (<div className="w-6 h-6"/>)}
                     </div>
                 );
             default:
