@@ -15,7 +15,7 @@ export function ExplorePodcastPopular({ popularPodcast, isLoadingFeatured }: Exp
     if (isMobile) {
         return (
             <div className="w-full flex flex-col gap-2">
-            <span className="font-medium text-lg">Most Listened</span>
+            <span className="font-medium text-xl">Most Listened</span>
             <ExplorePodcastMobileCard podcast={popularPodcast} isLoading={isLoadingFeatured}/>
         </div>
         )
@@ -23,7 +23,7 @@ export function ExplorePodcastPopular({ popularPodcast, isLoadingFeatured }: Exp
 
     return (
         <div className="w-full flex flex-col gap-2">
-            <span className="font-medium text-lg">Most Listened</span>
+            <span className="font-medium text-xl">Most Listened</span>
             <ExplorePodcastCard podcast={popularPodcast} isLoading={isLoadingFeatured} feature/>
         </div>
     )

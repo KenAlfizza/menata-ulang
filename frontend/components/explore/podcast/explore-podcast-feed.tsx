@@ -24,7 +24,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
         <div className="w-full flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
                 <span className="font-medium text-xl">Podcast Feed</span>
-                <ExploreMobileFilter sort={feedFilter.sort} order={feedFilter.order} onSortChange={onSortChange}/>
+                <ExploreMobileFilter page="podcast" sort={feedFilter.sort} order={feedFilter.order} onSortChange={onSortChange}/>
             </div>
             <div className="w-full grid gap-1">
                 {isLoadingFeed ? (
@@ -52,6 +52,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
             <div className="flex flex-row justify-between items-center">
                 <span className="font-medium text-xl">Podcast Feed</span>
                 <ExploreFilterBar 
+                    page="podcast"
                     sort={feedFilter.sort ?? "title"} 
                     order={feedFilter.order ?? "asc"} 
                     onSortChange={onSortChange}

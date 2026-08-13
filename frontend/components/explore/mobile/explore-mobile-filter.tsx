@@ -49,20 +49,19 @@ export function ExploreMobileFilter({ sort, order, onSortChange }: ExploreFilter
                 <div className="flex flex-col gap-2 py-2">
                     <Button
                         variant="ghost"
-                        onClick={() => handleSelect("title", isAZ ? "desc" : "asc")}
-                        className={`justify-start gap-2 ${isAZ || isZA ? "bg-yellow-300/40 font-semibold" : ""}`}
+                        onClick={() => handleSelect("title", "asc")}
+                        className={`justify-start gap-2 ${isAZ ? "bg-yellow-300/40 font-semibold" : ""}`}
                     >
-                        {isZA ? (
-                            <>
-                                <ArrowUpZA className="h-4 w-4" />
-                                Title (Z-A)
-                            </>
-                        ) : (
-                            <>
-                                <ArrowDownAZ className="h-4 w-4" />
-                                Title (A-Z)
-                            </>
-                        )}
+                        <ArrowDownAZ className="h-4 w-4" />
+                        Title (A-Z)
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        onClick={() => handleSelect("title", "desc")}
+                        className={`justify-start gap-2 ${isZA ? "bg-yellow-300/40 font-semibold" : ""}`}
+                    >
+                        <ArrowUpZA className="h-4 w-4" />
+                        Title (Z-A)
                     </Button>
                     <Button
                         variant="ghost"
