@@ -31,7 +31,7 @@ export function ExploreSearchBar({ placeholder = "Enter a search...", onSearch, 
     };
 
     return (
-        <div className="relative flex items-center w-full max-w-sm">
+        <div className="relative flex items-center w-full">
             <Input
                 type="text"
                 placeholder={placeholder}

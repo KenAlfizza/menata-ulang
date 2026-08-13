@@ -3,7 +3,7 @@ import { ArrowDownAZ, ArrowUpZA, RotateCcw, RotateCw } from "lucide-react";
 import { Button } from "../ui/button.tsx";
 import { ExploreFilter } from "../../types/explore/explore.ts";
 
-interface ExploreFilterBarProps {
+export interface ExploreFilterBarProps {
     sort: ExploreFilter["sort"];
     order: ExploreFilter["order"];
     onSortChange: (sort: ExploreFilter["sort"], order: ExploreFilter["order"]) => void;

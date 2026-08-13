@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useExplore } from "@/hooks/explore/use-explore.ts";
+import { useIsMobile } from "@/hooks/use-mobile.ts";
 
 type PageType = 'story' | 'podcast' | 'research';
 
@@ -27,8 +28,17 @@ const variants = {
     }),
 };
 
+const classProperty = {
+    regular: "navigation flex flex-row items-center gap-2",
+    mobile: "navigation flex flex-row items-center gap-2 justify-between w-full",
+}
+
 export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
     const page = useExplore();
+    const isMobile = useIsMobile();
+    let currentClassProperty = classProperty["regular"];
+    if (isMobile) currentClassProperty = classProperty["mobile"];
+    
 
     const [prevPage, setPrevPage] = useState(page);
     const [direction, setDirection] = useState(1);
@@ -58,7 +68,7 @@ export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
         switch (page) {
             case 'story':
                 return (
-                    <div className="navigation flex flex-row items-center gap-2">
+                    <div className={currentClassProperty}>
                         <span className="text-2xl font-medium">Short Stories</span>
                         <Button 
                             variant="ghost" 
@@ -73,7 +83,7 @@ export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
                 );
             case 'podcast':
                 return (
-                    <div className="navigation flex flex-row items-center gap-2">
+                    <div className={currentClassProperty}>
                         <Button 
                             variant="ghost" 
                             size="icon" 
@@ -97,7 +107,7 @@ export function ExploreNavigation({ onNavigate }: ExploreNavigationProps) {
                 );
             case 'research':
                 return (
-                    <div className="navigation flex flex-row items-center gap-2">
+                    <div className={currentClassProperty}>
                         <Button 
                             variant="ghost" 
                             size="icon" 

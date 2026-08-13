@@ -10,10 +10,6 @@ import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 
-const widthMap = {
-    feature: "w-full",
-    regular: "w-full",
-}
 
 interface PodcastCardProps {
     podcast?: ExplorePodcastSummary;
@@ -22,7 +18,6 @@ interface PodcastCardProps {
 }
 
 export function ExplorePodcastCard({ podcast, isLoading = false, feature = false }: PodcastCardProps) {
-    const currentWidth = feature ? widthMap["feature"] : widthMap["regular"]; 
     
     // Pass callbacks straight into the hook
     const currentPodcast = podcast;
@@ -40,7 +35,7 @@ export function ExplorePodcastCard({ podcast, isLoading = false, feature = false
 
     if (isLoading) {
         return (
-            <Card className={`h-full ${currentWidth} h-[360px] bg-white/50 animate-pulse ring-0 oppacity/50`}>
+            <Card className={`h-full w-full h-[360px] bg-white/50 animate-pulse ring-0 oppacity/50`}>
                 <CardContent className="flex flex-col items-center gap-4 h-full w-full">
                     <div className="w-full h-40 bg-zinc-200 rounded-md shrink-0" />
                     <div className="flex-1 flex flex-col w-full h-32 justify-between">
@@ -59,7 +54,7 @@ export function ExplorePodcastCard({ podcast, isLoading = false, feature = false
     }
 
     return (
-        <Card className={`group relative ${currentWidth} h-[360px] bg-white/50 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0`}>
+        <Card className={`group relative w-full h-[360px] bg-white/50 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0`}>
             <Link
                 href={`/explore/podcast/${slug}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
