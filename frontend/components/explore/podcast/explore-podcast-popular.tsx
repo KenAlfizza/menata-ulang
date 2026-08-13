@@ -9,7 +9,7 @@ interface ExplorePodcastPopularProps {
 
 export function ExplorePodcastPopular({ popularPodcast, isLoadingFeatured }: ExplorePodcastPopularProps) {
     return (
-        <div className="flex flex-col gap-2 w-2/3">
+        <div className="flex flex-col gap-2">
             <span className="font-medium text-lg">Most Listened</span>
             <ExplorePodcastCard podcast={popularPodcast} isLoading={isLoadingFeatured} feature/>
         </div>

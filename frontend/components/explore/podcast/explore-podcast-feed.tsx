@@ -17,7 +17,7 @@ interface ExplorePodcastFeedProps {
 
 export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onSortChange, feedPage, feedTotalPages, onPageChange }: ExplorePodcastFeedProps) {
     return (
-        <div className="flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
                 <span className="font-medium text-lg">Podcast Feed</span>
                 <ExploreFilterBar 
@@ -26,7 +26,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                     onSortChange={onSortChange}
                 />
             </div>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="w-full grid grid-cols-5 gap-8">
                 {isLoadingFeed ? (
                     Array.from({ length: 10 }).map((_, index) => (
                         <ExplorePodcastCard

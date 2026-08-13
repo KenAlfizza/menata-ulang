@@ -23,7 +23,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
         <ExploreBackground>
             <ExploreNavbar route="explore"/>
             <div className="w-full flex justify-center items-center">
-                <div className="max-w-x8l pt-20 p-12 flex flex-col">
+                <div className="max-w-8xl pt-20 p-12 flex flex-col">
                     <ExploreNavigation 
                         onNavigate={handleNavigate} 
                     />

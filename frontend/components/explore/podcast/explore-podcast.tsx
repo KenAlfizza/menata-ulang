@@ -26,15 +26,19 @@ export function ExplorePodcast() {
                 />        
 
                 {!explore.isSearching && (
-                    <div className="flex flex-row gap-16">
+                    <div className="grid grid-cols-5 gap-16">
+                        <div className="col-span-2">
                         <ExplorePodcastPopular 
                             popularPodcast={explore.popularPodcast}
                             isLoadingFeatured={explore.isLoadingFeatured}
                         />
+                        </div>
+                        <div className="col-span-3">
                         <ExplorePodcastRecent 
                             recentPodcasts={explore.recentPodcasts}
                             isLoadingFeatured={explore.isLoadingFeatured}
                         />  
+                        </div>
                     </div>
                 )}
                 

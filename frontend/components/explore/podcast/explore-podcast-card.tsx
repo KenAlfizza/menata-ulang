@@ -12,7 +12,7 @@ import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 
 const widthMap = {
     feature: "w-full",
-    regular: "w-[240px]",
+    regular: "w-full",
 }
 
 interface PodcastCardProps {

@@ -137,3 +137,7 @@
 .puck-dropzone * {
   font-family: var(--font-rem), sans-serif !important;
 }
+
+@theme {
+  --container-8xl: 96rem;
+}
