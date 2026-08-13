@@ -26,7 +26,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                     onSortChange={onSortChange}
                 />
             </div>
-            <div className="flex flex-row flex-wrap justify-between gap-y-8">
+            <div className="grid grid-cols-5 gap-4">
                 {isLoadingFeed ? (
                     Array.from({ length: 10 }).map((_, index) => (
                         <ExplorePodcastCard

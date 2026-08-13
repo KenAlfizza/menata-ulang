@@ -12,7 +12,7 @@ import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
 
 const widthMap = {
     feature: "w-full",
-    regular: "w-[238px]",
+    regular: "w-[240px]",
 }
 
 interface PodcastCardProps {
@@ -40,7 +40,7 @@ export function ExplorePodcastCard({ podcast, isLoading = false, feature = false
 
     if (isLoading) {
         return (
-            <Card className={`w-full h-full ${currentWidth} h-[360px] bg-white/50 animate-pulse ring-0 oppacity/50`}>
+            <Card className={`h-full ${currentWidth} h-[360px] bg-white/50 animate-pulse ring-0 oppacity/50`}>
                 <CardContent className="flex flex-col items-center gap-4 h-full w-full">
                     <div className="w-full h-40 bg-zinc-200 rounded-md shrink-0" />
                     <div className="flex-1 flex flex-col w-full h-32 justify-between">

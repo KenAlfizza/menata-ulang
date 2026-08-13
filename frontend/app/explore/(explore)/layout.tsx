@@ -22,14 +22,14 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
     return (
         <ExploreBackground>
             <ExploreNavbar route="explore"/>
-            <div className="pt-20 p-12">
-                <section className="flex flex-col gap-2">
+            <div className="w-full flex justify-center items-center">
+                <div className="max-w-x8l pt-20 p-12 flex flex-col">
                     <ExploreNavigation 
                         onNavigate={handleNavigate} 
-                    />   
-                </section>
-                {children}
-                {isActive && <div className="w-full h-20"></div>}
+                    />
+                    {children}
+                    {isActive && <div className="w-full h-20"></div>}
+                </div>
             </div>
         </ExploreBackground>
     );
