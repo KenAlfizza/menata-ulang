@@ -7,7 +7,7 @@ import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 import { formatDate } from "@/utils/format-date.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastRecord } from "@/types/explore/podcast.ts";
-import { PodcastPlayer } from "./explore-podcast-player.tsx"
+import { PodcastPlayerInline } from "@/components/explore/podcast/player/explore-podcast-player-inline.tsx"
 import { usePlayer } from "@/context/podcast/player-context.tsx";
 import { ScrollTrigger } from "../../common/scroll-trigger.tsx";
 
@@ -128,7 +128,7 @@ export function ExplorePodcastSlug({ podcast, isLoading = false }: PodcastCardPr
                             </p>
                             <div className="w-full flex-1 flex items-center">
                                 <div className="w-full">
-                                    <PodcastPlayer
+                                    <PodcastPlayerInline
                                         track={{
                                             id: slug,
                                             title,

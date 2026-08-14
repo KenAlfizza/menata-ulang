@@ -26,7 +26,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                 <span className="font-medium text-xl">Podcast Feed</span>
                 <ExploreMobileFilter page="podcast" sort={feedFilter.sort} order={feedFilter.order} onSortChange={onSortChange}/>
             </div>
-            <div className="w-full grid gap-1">
+            <div className="w-full grid gap-2">
                 {isLoadingFeed ? (
                     Array.from({ length: 10 }).map((_, index) => (
                         <ExplorePodcastMobileCard

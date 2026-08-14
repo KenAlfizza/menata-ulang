@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
+import { ArrowUpRightFromSquare, Clock, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
+import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
 
 
 interface PodcastCardProps {
@@ -56,48 +57,62 @@ export function ExplorePodcastMobileCard({ podcast, isLoading = false }: Podcast
                 aria-label={`View ${title}`}
             />
 
-            <CardContent className="p-4 w-full flex flex-row h-full gap-2 relative z-10 pointer-events-none">
-                <div className="m-auto relative w-20 h-20 shrink-0 overflow-hidden rounded-md bg-zinc-50 flex items-center justify-center">
-                    <Image
-                        src={imageUrl}
-                        alt={alt || ""}
-                        fill
-                        className="object-cover transition-transform duration-300 [.group:hover:not(:has([data-play-button]:hover))_&]:scale-105"
-                        unoptimized
-                    />
-                </div>
-                <div className="w-full flex flex-col justify-center">
-                    <h3 className="text-lg text-left tracking-tight font-medium text-zinc-800 break-words transition-colors line-clamp-1">
-                        {title}
-                    </h3>
-                    <div className="flex flex-row gap-2 items-center">
+            <CardContent className="p-4 w-full flex flex-col gap-2 relative z-10 pointer-events-none justify-between">
+                <div className="flex flex-row h-full gap-2">
+                    <div className="m-auto relative w-16 h-16 shrink-0 overflow-hidden rounded-md bg-zinc-50 flex items-center justify-center">
+                        <Image
+                            src={imageUrl}
+                            alt={alt || ""}
+                            fill
+                            className="object-cover transition-transform duration-300 [.group:hover:not(:has([data-play-button]:hover))_&]:scale-105"
+                            unoptimized
+                        />
+                    </div>
+                    <div className="w-full flex flex-col justify-center">
+                        <div className="flex flex-row justify-between">
+                            <h3 className="text-lg text-left tracking-tight font-medium text-zinc-800 break-words transition-colors line-clamp-1">
+                                {title}
+                            </h3>
+                        </div>
+
                         <p className="flex items-center gap-1 text-xs text-left tracking-tight text-zinc-400 break-words max-w-prose">
                             <Podcast size={12}/>
                             {hostName}
                         </p>
 
-                        <span className="text-zinc-400">|</span>
 
                         <div className="flex items-center gap-1 text-xs text-zinc-400">
                             <ArrowUpRightFromSquare size={12} />
                             <span>{date}</span>
                         </div>
-                    </div>
 
-                    <p className="text-xs text-left tracking-tight text-zinc-600 break-words max-w-prose line-clamp-2 min-h-[2lh]">
-                        {description}
-                    </p>
-                </div>
-            
-                <div className="flex flex-row items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                        <div className="text-zinc-400 flex gap-1">
-                            <div className="flex flex-row items-center gap-1">
-                                <Heart size={20}/>
-                            </div>
+                        <div className="flex items-center gap-1 text-xs text-zinc-400">
+                            <Clock size={12}/>
+                            <span>{duration}</span>
                         </div>
                     </div>
                 </div>
+
+                <div className="flex flex-row justify-between gap-4">
+                    <p className="text-xs text-left tracking-tight text-zinc-600 break-words max-w-prose line-clamp-2 max-h-[2lh] min-h-[2lh]">
+                        {description}
+                    </p>
+                    <div className="flex flex-row justify-between gap-2">
+                        <div className="flex flex-row items-center gap-1">
+                            <Heart size={30} className="text-zinc-300"/>
+                        </div>
+                        <ExplorePodcastPlayButton
+                            track={{
+                                id: String(slug),
+                                title,
+                                artist: hostName,
+                                src: audioUrl,
+                                imageUrl,
+                            }}
+                        />
+                    </div>
+                </div>
+                
             </CardContent>
         </Card>
     );

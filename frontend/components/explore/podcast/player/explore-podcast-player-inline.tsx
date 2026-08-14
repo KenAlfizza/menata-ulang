@@ -7,14 +7,14 @@ import {
 } from "lucide-react";
 import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
 import { formatTime } from "@/utils/format-time.ts";
-import { ExplorePodcastPlayButton } from "./explore-podcast-play.tsx";
+import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
 
 interface PodcastPlayerProps {
     track: PlayerTrack;
     showHost?: boolean;
 }
 
-export function PodcastPlayer({ track, showHost = true }: PodcastPlayerProps) {
+export function PodcastPlayerInline({ track, showHost = true }: PodcastPlayerProps) {
     const {
         currentTrack,
         isActive,
@@ -80,6 +80,7 @@ export function PodcastPlayer({ track, showHost = true }: PodcastPlayerProps) {
                             
                             [&::-webkit-slider-thumb]:appearance-none
                             [&::-webkit-slider-thumb]:-mt-0.25
+                            [&::-webkit-slider-thumb]:-ml-0.25
                             [&::-webkit-slider-thumb]:w-2
                             [&::-webkit-slider-thumb]:h-2
                             [&::-webkit-slider-thumb]:bg-yellow-500

@@ -14,7 +14,7 @@ export function ExplorePodcastRecent({ recentPodcasts, isLoadingFeatured }: Expl
     if (isMobile) return (
         <div className="w-full flex flex-col gap-2">
             <span className="w-full font-medium text-xl">Recently Added</span>
-            <div className="w-full flex flex-col gap-1">
+            <div className="w-full flex flex-col gap-2">
                 {isLoadingFeatured ? (
                     Array.from({ length: 3 }).map((_, index) => (
                         <ExplorePodcastMobileCard
