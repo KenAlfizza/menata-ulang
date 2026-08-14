@@ -3,10 +3,11 @@
 import { motion } from "framer-motion";
 
 interface ScrollTriggerProps {
-  onViewportChange: (inView: boolean) => void;
+    children?: React.ReactNode;
+    onViewportChange: (inView: boolean) => void;
 }
 
-export function ScrollTrigger({ onViewportChange }: ScrollTriggerProps) {
+export function ScrollTrigger({ children, onViewportChange }: ScrollTriggerProps) {
   return (
     <motion.div
       onViewportEnter={() => onViewportChange(true)}
@@ -15,7 +16,7 @@ export function ScrollTrigger({ onViewportChange }: ScrollTriggerProps) {
         once: false,
         margin: "-64px 0px 0px 0px",
       }}
-      className="h-px w-full pointer-events-none"
-    />
+      className={`h-full w-full`}
+    >{children}</motion.div>
   );
 }

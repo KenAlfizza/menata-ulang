@@ -53,7 +53,7 @@ export function ExplorePodcastPlayerDesktop({
     return (
         <div className={`flex items-center gap-4 p-2 w-full ${backgroundColorMap[page]}`}>
             {/* Track Info Section */}
-            <div className="flex items-center justify-between w-80 shrink-0 min-w-0">
+            <div className="flex items-center justify-between w-1/4 shrink-0 min-w-0">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                         <Image
@@ -72,7 +72,7 @@ export function ExplorePodcastPlayerDesktop({
             </div>
 
             {/* Transport + progress */}
-            <div className="flex-1 min-w-0 flex flex-col items-center gap-2">
+            <div className="flex-1 min-w-0 flex flex-col w-2/4 items-center gap-2">
                 <div className="w-full flex items-center gap-2">
                     <span className="text-[11px] tabular-nums text-zinc-400 w-9 text-right">
                         {formatTime(currentTime)}
@@ -127,7 +127,7 @@ export function ExplorePodcastPlayerDesktop({
             </div>
 
             {/* Volume & Desktop Close */}
-            <div className="flex items-center gap-4 shrink-0 justify-end w-80">
+            <div className="flex items-center gap-4 shrink-0 justify-end w-1/4">
                 <div className="flex items-center gap-2">
                     <button onClick={toggleMute} className="text-zinc-500">
                         <VolumeIcon className="w-4 h-4" />

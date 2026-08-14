@@ -6,10 +6,11 @@ import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.ts
 
 interface ExplorePodcastPlayButtonProps {
     track: PlayerTrack;
+    hidePlayer?: boolean
 }
 
-export function ExplorePodcastPlayButton({ track }: ExplorePodcastPlayButtonProps) {
-    const { currentTrack, isPlaying, playTrack, togglePlayPause } = usePlayer();
+export function ExplorePodcastPlayButton({ track, hidePlayer }: ExplorePodcastPlayButtonProps) {
+    const { currentTrack, isPlaying, playTrack, togglePlayPause, setHidePlayer } = usePlayer();
     const isCurrentTrack = currentTrack?.id === track.id;
     const isDisabled = !track.src;
 
@@ -17,10 +18,17 @@ export function ExplorePodcastPlayButton({ track }: ExplorePodcastPlayButtonProp
         e.preventDefault();
         e.stopPropagation();
         if (isDisabled) return;
+
         if (isCurrentTrack) {
             togglePlayPause();
         } else {
             playTrack(track);
+        }
+
+        if (hidePlayer) {
+            setHidePlayer(true);
+        } else {
+            setHidePlayer(false);
         }
     };
 

@@ -1,11 +1,11 @@
 "use client"
 import { ExploreFilterBar } from "../explore-filter.tsx";
-import { ExplorePodcastCard } from "./explore-podcast-card.tsx";
+import { ExplorePodcastCard } from "./card/explore-podcast-card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExploreFilter } from "@/types/explore/explore.ts";
 import { ExplorePagination } from "../explore-pagination.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
-import { ExplorePodcastMobileCard } from "./mobile/explore-podcast-mobile-card.tsx";
+import { ExplorePodcastMobileCard } from "./card/explore-podcast-mobile-card.tsx";
 import { ExploreMobileFilter } from "../mobile/explore-mobile-filter.tsx";
 
 interface ExplorePodcastFeedProps {

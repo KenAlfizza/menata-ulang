@@ -1,24 +1,29 @@
 "use client"
-import { useParams } from "next/navigation";
 import { ExploreNavbar } from "@/components/explore/explore-navbar.tsx";
-
-type PageType = 'story' | 'podcast' | 'research';
-
-
-const isValidPageType = (value: string | undefined): value is PageType =>
-    value === 'story' || value === 'podcast' || value === 'research';
+import { ExploreBackground } from "@/components/explore/explore-background.tsx"; 
+import { useIsMobile } from "@/hooks/use-mobile.ts";
+import { usePlayer } from "@/context/podcast/player-context.tsx";
 
 export default function ExploreSlugLayout({ children }: { children: React.ReactNode }) {
-
-    const params = useParams<{ page?: string }>();
-    const currentPage: PageType = isValidPageType(params.page) ? params.page : 'story';
-    
+    const isMobile = useIsMobile();
+    const { hidePlayer, isActive } = usePlayer();
     return (
-        <div className="w-full">
-            <div className="pt-20 space-y-8">
-                <ExploreNavbar page={currentPage} route="explore"/>
-                {children}
+        <ExploreBackground>
+            <ExploreNavbar route="explore"/>
+            <div className="w-full flex justify-center items-center">
+                {isMobile
+                ? 
+                    <div className="w-full pt-20 p-6 space-y-8">
+                        {children}
+                        {!hidePlayer && isActive && <div className="w-full h-10"></div>}
+                    </div>
+                :  
+                    <div className="w-8xl pt-20 p-8 space-y-8">
+                        {children}
+                        {!hidePlayer && isActive && <div className="w-full h-10"></div>}
+                    </div>
+                }
             </div>
-        </div>
+        </ExploreBackground>
     );
 }

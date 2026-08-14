@@ -4,8 +4,6 @@ import Image from "next/image";
 import {
     Play,
     Pause,
-    Repeat,
-    Repeat1,
 } from "lucide-react";
 import { 
     backgroundColorMap, 
@@ -36,7 +34,6 @@ export function ExplorePodcastPlayerMobile({
     const activeThumbColor = thumbColorMap[page] || thumbColorMap.story;
     const activePlayButtonBg = playButtonBgMap[page] || playButtonBgMap.story;
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
-    const RepeatIcon = repeatMode === "one" ? Repeat1 : Repeat;
 
     return (
         <div className={`flex flex-col items-center gap-2 p-2 w-full ${backgroundColorMap[page]}`}>

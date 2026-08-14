@@ -16,7 +16,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
         router.push(`/explore/${newPage}`, { scroll: false });
     }, [router]);
 
-    const { setHidePlayer, isActive } = usePlayer();
+    const { setHidePlayer, hidePlayer, isActive } = usePlayer();
     useEffect(() => {
         setHidePlayer(false);
     })
@@ -30,7 +30,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
                         onNavigate={handleNavigate} 
                     />
                     {children}
-                    {isActive && <div className="w-full h-20"></div>}
+                    {!hidePlayer && isActive && <div className="w-full h-10"></div>}
                 </div>
             </div>
         </ExploreBackground>
@@ -45,7 +45,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
                         onNavigate={handleNavigate} 
                     />
                     {children}
-                    {isActive && <div className="w-full h-20"></div>}
+                    {!hidePlayer && isActive && <div className="w-full h-10"></div>}
                 </div>
             </div>
         </ExploreBackground>
