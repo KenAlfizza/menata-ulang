@@ -9,6 +9,7 @@ import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
+import { usePlayer } from "@/context/podcast/player-context.tsx";
 
 
 interface PodcastCardProps {
@@ -18,7 +19,8 @@ interface PodcastCardProps {
 }
 
 export function ExplorePodcastCard({ podcast, isLoading = false, feature = false }: PodcastCardProps) {
-    
+    const { buildPlayerTrack } = usePlayer();
+
     // Pass callbacks straight into the hook
     const currentPodcast = podcast;
 
@@ -29,7 +31,6 @@ export function ExplorePodcastCard({ podcast, isLoading = false, feature = false
     const alt = currentPodcast?.title ?? "Podcast Image";
     const description = currentPodcast?.description ?? "A short description describing the main point of the podcast";
     const date = currentPodcast?.publishedAt ? formatDate(new Date(currentPodcast.publishedAt)) : formatDate(new Date());
-    const audioUrl = currentPodcast?.audioUrl ?? "";
     const duration = currentPodcast?.duration ? formatTime(currentPodcast?.duration) : formatTime(0);
     const heartsCount = currentPodcast?.heartsCount ?? 0;
 
@@ -109,15 +110,11 @@ export function ExplorePodcastCard({ podcast, isLoading = false, feature = false
                     </div>
                     <div className="flex items-center gap-2">
                         <p className="text-sm text-zinc-500">{duration}</p>
-                        <ExplorePodcastPlayButton
-                            track={{
-                                id: String(slug),
-                                title,
-                                artist: hostName,
-                                src: audioUrl,
-                                imageUrl,
-                            }}
-                        />
+                        {podcast && 
+                            <ExplorePodcastPlayButton
+                                track={buildPlayerTrack(podcast)}
+                            />
+                        }
                     </div>
                 </div>
             </CardContent>

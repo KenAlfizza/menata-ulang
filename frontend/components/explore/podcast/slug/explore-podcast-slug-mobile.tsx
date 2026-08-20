@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowUpRightFromSquare, Clock, Heart, Podcast } from "lucide-react";
+import { ArrowUpRightFromSquare, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";

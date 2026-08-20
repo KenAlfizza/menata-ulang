@@ -11,6 +11,11 @@ import {
     type RefObject,
 } from "react";
 
+import { PodcastRecord } from "../../types/podcast.ts";
+import { ExplorePodcastRecord, ExplorePodcastSummary } from "../../types/explore/podcast.ts";
+
+// --- Types & Interfaces ---
+
 export interface PlayerTrack {
     id: string;
     title: string;
@@ -22,7 +27,12 @@ export interface PlayerTrack {
 
 type RepeatMode = "off" | "all" | "one";
 
+/**
+ * Defines all available state and actions exposed to components via usePlayer().
+ * This interface ensures type safety for any component consuming the audio player.
+ */
 interface PlayerContextValue {
+    // State
     tracks: PlayerTrack[];
     currentTrack: PlayerTrack | null;
     currentIndex: number;
@@ -35,9 +45,17 @@ interface PlayerContextValue {
     isShuffled: boolean;
     repeatMode: RepeatMode;
     audioRef: RefObject<HTMLAudioElement | null>;
+    hidePlayer: boolean;
+    isViewPlaylist: boolean;
+
+    // Actions (State Modifiers)
+    buildPlayerTrack: (track: ExplorePodcastRecord | ExplorePodcastSummary) => PlayerTrack;
     playTrack: (track: PlayerTrack, options?: { autoplay?: boolean }) => void;
     loadTrack: (track: PlayerTrack) => void;
-    playQueue: (tracks: PlayerTrack[], startIndex?: number) => void;
+    setQueue: (queue: PlayerTrack[]) => void;
+    playQueue: (startIndex?: number) => void;
+    addToQueue: (track: PlayerTrack, additionalTracks: PlayerTrack[], options?: { autoplay?: boolean }) => void;
+    replaceQueue: (tracks: PlayerTrack[], startIndex?: number) => void;
     togglePlayPause: () => void;
     next: () => void;
     previous: () => void;
@@ -48,39 +66,50 @@ interface PlayerContextValue {
     toggleShuffle: () => void;
     cycleRepeatMode: () => void;
     closePlayer: () => void;
-    hidePlayer: boolean;
     setHidePlayer: (hide: boolean) => void;
+    toggleViewPlaylist: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
-export function PlayerProvider({ children }: { children: ReactNode }) {
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const isSeekingRef = useRef(false);
-    // Whether the *next* time currentTrack.src changes, playback should
-    // start automatically. Defaults to true so playQueue/next/previous
-    // keep their existing "always plays" behavior; only explicit
-    // loadTrack() calls (or playTrack(track, { autoplay: false })) flip
-    // this off for a single load.
-    const pendingAutoPlayRef = useRef(true);
+// --- Provider Component ---
 
+export function PlayerProvider({ children }: { children: ReactNode }) {
+    // --- Refs ---
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const isSeekingRef = useRef(false); // Tracks user interaction to prevent time jumps during drag
+    const pendingAutoPlayRef = useRef(true); // Controls if a track change should automatically start playback
+
+    // --- State ---
     const [tracks, setTracks] = useState<PlayerTrack[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isActive, setIsActive] = useState(false);
+    const [isActive, setIsActive] = useState(false); // Is the player currently the active view?
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [volume, setVolumeState] = useState(0.8);
-    const [previousVolume, setPreviousVolume] = useState(0.8);
+    const [previousVolume, setPreviousVolume] = useState(0.8); // Stores last volume before mute
     const [isMuted, setIsMuted] = useState(false);
     const [isShuffled, setIsShuffled] = useState(false);
     const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
     const [hidePlayer, setHidePlayer] = useState(false);
+    const [isViewPlaylist, setIsViewPlaylist] = useState(false);
 
+    // Derived state: Get the current track object safely
     const currentTrack = tracks[currentIndex] ?? null;
 
-    // Reload the audio element whenever the *actual* track changes (by src,
-    // not by index) so swapping the queue out from under it can't go stale.
+    // --- Effects ---
+
+    /**
+     * Effect: Handles reloading the audio element when the source changes.
+     * Triggers: When currentTrack.src changes.
+     * Logic:
+     * 1. Check if the audio element exists and the track exists.
+     * 2. If the src hasn't changed, do nothing (optimization).
+     * 3. Update src, load, reset time/duration.
+     * 4. Check the 'pendingAutoPlayRef' flag to decide whether to play immediately.
+     * 5. Reset the flag for the next load so subsequent changes default to autoplay.
+     */
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio || !currentTrack) return;
@@ -92,9 +121,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setDuration(currentTrack.duration ?? 0);
 
         const shouldAutoPlay = pendingAutoPlayRef.current;
-        // Reset for the next load; every subsequent track change
-        // (next/previous/playQueue/playTrack) defaults back to autoplaying
-        // unless explicitly opted out again.
         pendingAutoPlayRef.current = true;
 
         if (shouldAutoPlay) {
@@ -105,31 +131,36 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
     }, [currentTrack?.src]);
 
+    /**
+     * Effect: Synchronizes the HTMLAudioElement volume and mute state with React state.
+     * Triggers: When volume or isMuted state changes.
+     */
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = isMuted ? 0 : volume;
     }, [volume, isMuted]);
 
-    const playQueue = useCallback((newTracks: PlayerTrack[], startIndex = 0) => {
-        pendingAutoPlayRef.current = true;
-        setTracks(newTracks);
-        setCurrentIndex(
-            Math.min(Math.max(startIndex, 0), Math.max(newTracks.length - 1, 0))
-        );
-        setIsActive(true);
-    }, []);
+    // --- Core Actions ---
 
+    /**
+     * Plays a specific track.
+     * Options:
+     * - autoplay: If true (default), the track will start playing immediately.
+     *            If false, it will load but pause, waiting for user interaction.
+     * Behavior:
+     * - If the track already exists in the queue, it moves to that index.
+     * - If not, it resets the queue to contain only this track.
+     */
     const playTrack = useCallback((track: PlayerTrack, options?: { autoplay?: boolean }) => {
         const autoplay = options?.autoplay ?? true;
         pendingAutoPlayRef.current = autoplay;
+
         setTracks((prev) => {
             const existingIndex = prev.findIndex((t) => t.id === track.id);
             if (existingIndex !== -1) {
                 setCurrentIndex(existingIndex);
-                // Track is already loaded (src won't change, so the
-                // src-change effect above won't fire) — start playback
-                // here directly, respecting the autoplay flag.
+                // Track already loaded; start playback if autoplay is requested
                 if (autoplay) {
                     const audio = audioRef.current;
                     if (audio) {
@@ -139,18 +170,26 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 }
                 return prev;
             }
+            // New track: Create a new queue with just this track
             setCurrentIndex(0);
             return [track];
         });
         setIsActive(true);
     }, []);
 
-    // Load a track into the player (making it visible/ready) without
-    // starting playback.
+    /**
+     * Loads a track into the player without starting playback.
+     * Useful when transitioning between views (e.g., loading an album cover)
+     * before the user explicitly clicks play.
+     */
     const loadTrack = useCallback((track: PlayerTrack) => {
         playTrack(track, { autoplay: false });
     }, [playTrack]);
 
+    /**
+     * Toggles play/pause state.
+     * Handles both HTML5 API play() and pause() methods.
+     */
     const togglePlayPause = useCallback(() => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -163,11 +202,65 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
     }, [isPlaying]);
 
+    /**
+     * Converts a raw PodcastRecord object into a PlayerTrack object.
+     * Handles nullish coalescing for optional fields.
+     */
+    function buildPlayerTrack(podcast: ExplorePodcastRecord | ExplorePodcastSummary): PlayerTrack {
+        const id = podcast.slug ?? "";
+        const title = podcast.title ?? "Untitled Podcast";
+        const artist = podcast.hostName ?? "Unknown Host";
+        const audioUrl = podcast.audioUrl ?? "";
+        const imageUrl = podcast.imageUrl || "/logo-icon.svg";
+        const duration = podcast.duration ?? 0;
+
+        return {
+            id,
+            title,
+            artist,
+            src: audioUrl,
+            imageUrl,
+            duration,
+        };
+    }
+
+    // --- Queue Management ---
+
+    /**
+     * Replaces the entire queue of tracks.
+     * Does not automatically play the new queue unless explicitly told to via playQueue.
+     */
+    const setQueue = useCallback((queue: PlayerTrack[]) => {
+        setTracks(queue);
+        return queue;
+    }, []);
+
+    /**
+     * Starts playing the queue from a specific index.
+     * Defaults to index 0 if not provided.
+     * Resets the autoplay flag to true for subsequent track changes.
+     */
+    const playQueue = useCallback((startIndex = 0) => {
+        pendingAutoPlayRef.current = true;
+        setCurrentIndex(
+            Math.min(Math.max(startIndex, 0), Math.max(tracks.length - 1, 0))
+        );
+        setIsActive(true);
+    }, [tracks.length]);
+
+    /**
+     * Moves to the next track in the queue.
+     * Behavior:
+     * - If shuffled: Picks a random index different from the current one.
+     * - If not shuffled: Increments index cyclically.
+     */
     const next = useCallback(() => {
         if (tracks.length === 0) return;
         pendingAutoPlayRef.current = true;
+        
         if (isShuffled) {
             let nextIndex = Math.floor(Math.random() * tracks.length);
+            // Ensure the next track isn't the same as the current one
             if (tracks.length > 1) {
                 while (nextIndex === currentIndex) {
                     nextIndex = Math.floor(Math.random() * tracks.length);
@@ -179,6 +272,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
     }, [tracks.length, isShuffled, currentIndex]);
 
+    /**
+     * Moves to the previous track in the queue.
+     * Behavior:
+     * - If more than 3 seconds have passed in the current track, restarts it (0:00).
+     * - Otherwise, moves to the previous index cyclically.
+     */
     const previous = useCallback(() => {
         if (tracks.length === 0) return;
         const audio = audioRef.current;
@@ -191,6 +290,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
     }, [tracks.length]);
 
+    /**
+     * Handles the 'ended' event of the audio track.
+     * Logic based on repeatMode:
+     * - "one": Restart the current track.
+     * - "all" / "off": Move to the next track (unless it's the last and mode is "off").
+     */
     const handleEnded = useCallback(() => {
         if (repeatMode === "one") {
             const audio = audioRef.current;
@@ -208,16 +313,31 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         next();
     }, [repeatMode, currentIndex, tracks.length, isShuffled, next]);
 
+    // --- User Controls ---
+
+    /**
+     * Seeks to a specific timestamp.
+     * Updates both React state and the underlying audio element.
+     */
     const seek = useCallback((time: number) => {
         setCurrentTime(time);
         if (audioRef.current) audioRef.current.currentTime = time;
     }, []);
 
+    /**
+     * Sets the volume level (0.0 to 1.0).
+     * Automatically updates the muted state if volume becomes 0.
+     */
     const setVolume = useCallback((value: number) => {
         setVolumeState(value);
         setIsMuted(value === 0);
     }, []);
 
+    /**
+     * Toggles the mute state.
+     * - If currently muted: Restores to the last known non-muted volume.
+     * - If currently playing: Saves current volume as the "previous" volume.
+     */
     const toggleMute = useCallback(() => {
         setIsMuted((prevMuted) => {
             if (prevMuted) {
@@ -231,12 +351,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const toggleShuffle = useCallback(() => setIsShuffled((s) => !s), []);
 
+    /**
+     * Cycles through repeat modes: off -> all -> one -> off.
+     */
     const cycleRepeatMode = useCallback(() => {
         setRepeatMode((prev) =>
             prev === "off" ? "all" : prev === "all" ? "one" : "off"
         );
     }, []);
 
+    /**
+     * Closes the player completely.
+     * Stops audio, clears source, and resets all state variables to defaults.
+     */
     const closePlayer = useCallback(() => {
         const audio = audioRef.current;
         if (audio) {
@@ -256,9 +383,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setHidePlayer(hide);
     }, []);
 
+    const toggleViewPlaylist = useCallback(() => setIsViewPlaylist((p) => !p), []);
+
+    // --- Render ---
+
     return (
         <PlayerContext.Provider
             value={{
+                // State
                 tracks,
                 currentTrack,
                 currentIndex,
@@ -271,9 +403,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 isShuffled,
                 repeatMode,
                 audioRef,
+                hidePlayer,
+                isViewPlaylist,
+
+                // Actions
+                buildPlayerTrack,
                 playTrack,
                 loadTrack,
+                setQueue,
                 playQueue,
+                addToQueue: (track, additionalTracks) => {
+                    // Appends the new track to the end of the existing queue (or creates new if empty)
+                    setQueue([...additionalTracks, track]);
+                },
+                replaceQueue: (newTracks, startIndex = 0) => {
+                    setQueue(newTracks);
+                    playQueue(startIndex);
+                },
                 togglePlayPause,
                 next,
                 previous,
@@ -286,13 +432,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 toggleShuffle,
                 cycleRepeatMode,
                 closePlayer,
-                hidePlayer,
                 setHidePlayer: handleSetHidePlayer,
+                toggleViewPlaylist,
             }}
         >
             {children}
             <audio
                 ref={audioRef}
+                // Only update React state during natural playback, not while user is seeking
                 onTimeUpdate={(e) => {
                     if (!isSeekingRef.current) setCurrentTime(e.currentTarget.currentTime);
                 }}

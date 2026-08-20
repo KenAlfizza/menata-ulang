@@ -22,8 +22,10 @@ export interface PodcastPlayerViewProps extends ExplorePodcastPlayerProps {
     volume: number;
     isMuted: boolean;
     isShuffled: boolean;
+    isViewPlaylist: boolean;
     repeatMode: "off" | "all" | "one" | string;
     togglePlayPause: () => void;
+    toggleViewPlaylist: () => void;
     next: () => void;
     previous: () => void;
     seek: (time: number) => void;

@@ -12,6 +12,7 @@ import {
     Volume1,
     VolumeX,
     X,
+    ListMusic,
 } from "lucide-react";
 import { 
     backgroundColorMap, 
@@ -30,6 +31,7 @@ export function ExplorePodcastPlayerDesktop({
     isMuted,
     isShuffled,
     repeatMode,
+    isViewPlaylist,
     togglePlayPause,
     next,
     previous,
@@ -38,6 +40,7 @@ export function ExplorePodcastPlayerDesktop({
     setVolume,
     toggleMute,
     toggleShuffle,
+    toggleViewPlaylist,
     cycleRepeatMode,
     closePlayer,
     page,
@@ -128,6 +131,10 @@ export function ExplorePodcastPlayerDesktop({
 
             {/* Volume & Desktop Close */}
             <div className="flex items-center gap-4 shrink-0 justify-end w-1/4">
+                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? "text-yellow-600" : "text-zinc-400"}`}>
+                    <ListMusic className="w-4 h-4" />
+                </button>
+
                 <div className="flex items-center gap-2">
                     <button onClick={toggleMute} className="text-zinc-500">
                         <VolumeIcon className="w-4 h-4" />
@@ -156,6 +163,8 @@ export function ExplorePodcastPlayerDesktop({
                         aria-label="Volume"
                     />
                 </div>
+
+                
 
                 <button onClick={closePlayer} className="text-zinc-400 hover:text-zinc-600 shrink-0">
                     <X className="w-4 h-4" />
