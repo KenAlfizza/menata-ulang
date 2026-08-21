@@ -11,7 +11,6 @@ import {
     type RefObject,
 } from "react";
 
-import { PodcastRecord } from "../../types/podcast.ts";
 import { ExplorePodcastRecord, ExplorePodcastSummary } from "../../types/explore/podcast.ts";
 
 // --- Types & Interfaces ---
@@ -52,10 +51,6 @@ interface PlayerContextValue {
     buildPlayerTrack: (track: ExplorePodcastRecord | ExplorePodcastSummary) => PlayerTrack;
     playTrack: (track: PlayerTrack, options?: { autoplay?: boolean }) => void;
     loadTrack: (track: PlayerTrack) => void;
-    setQueue: (queue: PlayerTrack[]) => void;
-    playQueue: (startIndex?: number) => void;
-    addToQueue: (track: PlayerTrack, additionalTracks: PlayerTrack[], options?: { autoplay?: boolean }) => void;
-    replaceQueue: (tracks: PlayerTrack[], startIndex?: number) => void;
     togglePlayPause: () => void;
     next: () => void;
     previous: () => void;
@@ -67,7 +62,14 @@ interface PlayerContextValue {
     cycleRepeatMode: () => void;
     closePlayer: () => void;
     setHidePlayer: (hide: boolean) => void;
+    
     toggleViewPlaylist: () => void;
+    playPlaylist: (startIndex?: number) => void;
+    setPlaylist: (playlist: PlayerTrack[]) => void;
+    addToPlaylist: (track: PlayerTrack, additionalTracks: PlayerTrack[], options?: { autoplay?: boolean }) => void;
+    replacePlaylist: (tracks: PlayerTrack[], startIndex?: number) => void;
+    clearPlaylist: () => void;
+    playTrackWithQueue: (track: PlayerTrack, queue?: PlayerTrack[], startIndex?: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -147,10 +149,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
      * Plays a specific track.
      * Options:
      * - autoplay: If true (default), the track will start playing immediately.
-     *            If false, it will load but pause, waiting for user interaction.
+     *             If false, it will load but pause, waiting for user interaction.
      * Behavior:
-     * - If the track already exists in the queue, it moves to that index.
-     * - If not, it resets the queue to contain only this track.
+     * - If the track already exists in the playlist, it moves to that index.
+     * - If not, it resets the playlist to contain only this track.
      */
     const playTrack = useCallback((track: PlayerTrack, options?: { autoplay?: boolean }) => {
         const autoplay = options?.autoplay ?? true;
@@ -170,7 +172,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 }
                 return prev;
             }
-            // New track: Create a new queue with just this track
+            // New track: Create a new playlist with just this track
             setCurrentIndex(0);
             return [track];
         });
@@ -224,23 +226,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         };
     }
 
-    // --- Queue Management ---
+    // --- Playlist Management ---
 
     /**
-     * Replaces the entire queue of tracks.
-     * Does not automatically play the new queue unless explicitly told to via playQueue.
+     * Replaces the entire playlist of tracks.
+     * Does not automatically play the new playlist unless explicitly told to via playPlaylist.
      */
-    const setQueue = useCallback((queue: PlayerTrack[]) => {
-        setTracks(queue);
-        return queue;
+    const setPlaylist = useCallback((playlist: PlayerTrack[]) => {
+        setTracks(playlist);
+        return playlist;
     }, []);
 
     /**
-     * Starts playing the queue from a specific index.
+     * Starts playing the playlist from a specific index.
      * Defaults to index 0 if not provided.
      * Resets the autoplay flag to true for subsequent track changes.
      */
-    const playQueue = useCallback((startIndex = 0) => {
+    const playPlaylist = useCallback((startIndex = 0) => {
         pendingAutoPlayRef.current = true;
         setCurrentIndex(
             Math.min(Math.max(startIndex, 0), Math.max(tracks.length - 1, 0))
@@ -249,7 +251,65 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }, [tracks.length]);
 
     /**
-     * Moves to the next track in the queue.
+     * Replaces the playlist and starts playing from the specified index.
+     */
+    const replacePlaylist = useCallback((newTracks: PlayerTrack[], startIndex = 0) => {
+        setPlaylist(newTracks);
+        pendingAutoPlayRef.current = true;
+        setCurrentIndex(
+            Math.min(Math.max(startIndex, 0), Math.max(newTracks.length - 1, 0))
+        );
+        setIsActive(true);
+    }, [setPlaylist]);
+
+    /**
+     * Clears the existing playlist, leaving only the currently active track as the sole entry.
+     * Resets the current index to 0 explicitly.
+     */
+    const clearPlaylist = useCallback(() => {
+        if (!currentTrack) return;
+        
+        // Atomically set tracks to just the current track and force index to 0
+        setTracks([currentTrack]);
+        setCurrentIndex(0);
+    }, [currentTrack]);
+    
+    /**
+     * Plays a track with an optional full queue list and starting index.
+     */
+    const playTrackWithQueue = useCallback((track: PlayerTrack, queue?: PlayerTrack[], startIndex?: number) => {
+        pendingAutoPlayRef.current = true;
+
+        if (queue && queue.length > 0) {
+            const index = startIndex ?? queue.findIndex((t) => t.id === track.id);
+            replacePlaylist(queue, index >= 0 ? index : 0);
+            return;
+        }
+
+        // No queue provided: don't blindly replace the playlist.
+        // If the track is already part of the current playlist, just switch to it.
+        setTracks((prev) => {
+            const existingIndex = prev.findIndex((t) => t.id === track.id);
+            if (existingIndex !== -1) {
+                setCurrentIndex(existingIndex);
+                return prev; // keep the rest of the playlist intact
+            }
+            // Genuinely new track with no context — fall back to single-item playlist
+            setCurrentIndex(0);
+            return [track];
+        });
+        setIsActive(true);
+
+        const audio = audioRef.current;
+        if (audio && audio.src === track.src) {
+            audio.currentTime = 0;
+            audio.play().catch(() => setIsPlaying(false));
+            setIsPlaying(true);
+        }
+    }, [replacePlaylist]);
+    
+    /**
+     * Moves to the next track in the playlist.
      * Behavior:
      * - If shuffled: Picks a random index different from the current one.
      * - If not shuffled: Increments index cyclically.
@@ -273,7 +333,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }, [tracks.length, isShuffled, currentIndex]);
 
     /**
-     * Moves to the previous track in the queue.
+     * Moves to the previous track in the playlist.
      * Behavior:
      * - If more than 3 seconds have passed in the current track, restarts it (0:00).
      * - Otherwise, moves to the previous index cyclically.
@@ -410,16 +470,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 buildPlayerTrack,
                 playTrack,
                 loadTrack,
-                setQueue,
-                playQueue,
-                addToQueue: (track, additionalTracks) => {
-                    // Appends the new track to the end of the existing queue (or creates new if empty)
-                    setQueue([...additionalTracks, track]);
+                setPlaylist,
+                playPlaylist,
+                addToPlaylist: (track, additionalTracks) => {
+                    // Appends the new track to the end of the existing playlist (or creates new if empty)
+                    setPlaylist([...additionalTracks, track]);
                 },
-                replaceQueue: (newTracks, startIndex = 0) => {
-                    setQueue(newTracks);
-                    playQueue(startIndex);
-                },
+                replacePlaylist,
+                clearPlaylist,
+                playTrackWithQueue,
                 togglePlayPause,
                 next,
                 previous,

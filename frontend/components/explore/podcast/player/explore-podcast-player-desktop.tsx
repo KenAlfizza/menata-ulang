@@ -95,6 +95,7 @@ export function ExplorePodcastPlayerDesktop({
                             [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,var(--track-start)_0%,var(--track-mid)_var(--progress),#ffffff_var(--progress))]
                             [&::-webkit-slider-thumb]:appearance-none
                             [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2
+                            [&::-webkit-slider-thumb]:-mt-0.25
                             [&::-webkit-slider-thumb]:bg-[var(--thumb-color)]
                             [&::-webkit-slider-thumb]:rounded-full"
                         style={{
@@ -152,6 +153,7 @@ export function ExplorePodcastPlayerDesktop({
                             [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,var(--track-start)_0%,var(--track-mid)_var(--volume-progress),#ffffff_var(--volume-progress))]
                             [&::-webkit-slider-thumb]:appearance-none
                             [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2
+                            [&::-webkit-slider-thumb]:-mt-0.25
                             [&::-webkit-slider-thumb]:bg-[var(--thumb-color)]
                             [&::-webkit-slider-thumb]:rounded-full"
                         style={{
@@ -162,9 +164,7 @@ export function ExplorePodcastPlayerDesktop({
                         } as React.CSSProperties}
                         aria-label="Volume"
                     />
-                </div>
-
-                
+                </div>                
 
                 <button onClick={closePlayer} className="text-zinc-400 hover:text-zinc-600 shrink-0">
                     <X className="w-4 h-4" />

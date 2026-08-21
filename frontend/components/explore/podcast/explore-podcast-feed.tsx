@@ -64,6 +64,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
                             isLoading={isLoadingFeed}
+                            feedPodcast={feedPodcast}
                         />
                     ))
                 ) : (
@@ -72,6 +73,7 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                             key={podcast.slug}
                             podcast={podcast}
                             isLoading={isLoadingFeed}
+                            feedPodcast={feedPodcast}
                         />
                     ))
                 )}

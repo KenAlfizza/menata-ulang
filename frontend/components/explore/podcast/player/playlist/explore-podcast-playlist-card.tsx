@@ -2,35 +2,26 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRightFromSquare, Clock, Heart, Podcast } from "lucide-react";
+import { Podcast } from "lucide-react";
 
-import { formatDate } from "@/utils/format-date.ts";
-import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
-import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
+import { PlayerTrack } from "@/context/podcast/player-context.tsx";
 import { ExplorePodcastPlayButton } from "../../explore-podcast-play.tsx";
 
-
-interface PodcastCardProps {
-    podcast?: ExplorePodcastSummary;
+interface PlaylistCardProps {
+    track: PlayerTrack;
+    isCurrent?: boolean;
+    onClick?: () => void;
     isLoading?: boolean;
 }
 
-export function ExplorePodcastPlaylistCard({ podcast, isLoading = false }: PodcastCardProps) {
+export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, isLoading = false }: PlaylistCardProps) {
     
-    // Pass callbacks straight into the hook
-    const currentPodcast = podcast;
-
-    const slug = currentPodcast?.slug ?? "";
-    const title = currentPodcast?.title ?? "Untitled Podcast";
-    const imageUrl = (currentPodcast?.imageUrl && currentPodcast.imageUrl.trim() !== "") ? `${currentPodcast.imageUrl}` : (podcast?.imageUrl && podcast.imageUrl.trim() !== "") ? `${podcast.imageUrl}` : "/logo-icon.svg";
-    const hostName = currentPodcast?.hostName ?? "Menata Ulang";
-    const alt = currentPodcast?.title ?? "Podcast Image";
-    const description = currentPodcast?.description ?? "A short description describing the main point of the podcast";
-    const date = currentPodcast?.publishedAt ? formatDate(new Date(currentPodcast.publishedAt)) : formatDate(new Date());
-    const audioUrl = currentPodcast?.audioUrl ?? "";
-    const duration = currentPodcast?.duration ? formatTime(currentPodcast?.duration) : formatTime(0);
-    const heartsCount = currentPodcast?.heartsCount ?? 0;
+    const slug = track?.id ?? "";
+    const title = track?.title ?? "Untitled Podcast";
+    const imageUrl = track?.imageUrl && track.imageUrl.trim() !== "" ? track.imageUrl : "/logo-icon.svg";
+    const hostName = track?.artist ?? "Menata Ulang";
+    const alt = track?.title ?? "Podcast Image";
 
     if (isLoading) {
         return (
@@ -47,11 +38,19 @@ export function ExplorePodcastPlaylistCard({ podcast, isLoading = false }: Podca
     }
 
     return (
-        <Card className="group relative w-full h-16 bg-white/50 ring-0 rounded-md [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0 flex items-center">
+        <Card 
+            onClick={onClick}
+            className={`group relative w-full h-16 ring-0 rounded-md overflow-hidden p-0 flex items-center cursor-pointer transition-colors duration-200 ${
+                isCurrent 
+                    ? "bg-white/90 border-l-4 border-yellow-500 shadow-sm" 
+                    : "bg-white/50 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75"
+            }`}
+        >
             <Link
                 href={`/explore/podcast/${slug}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
                 aria-label={`View ${title}`}
+                onClick={(e) => e.stopPropagation()}
             />
 
             <CardContent className="p-2 w-full h-full relative z-10 pointer-events-none flex items-center">
@@ -67,7 +66,7 @@ export function ExplorePodcastPlaylistCard({ podcast, isLoading = false }: Podca
                     </div>
                     
                     <div className="w-full flex flex-col justify-center min-w-0">
-                        <p className="text-left tracking-tight font-medium text-zinc-800 break-words transition-colors line-clamp-1">
+                        <p className={`text-left tracking-tight font-medium break-words transition-colors line-clamp-1 ${isCurrent ? "text-yellow-700 font-semibold" : "text-zinc-800"}`}>
                             {title}
                         </p>
                         <p className="flex items-center gap-1 text-xs text-left tracking-tight text-zinc-400 break-words line-clamp-1">
@@ -76,16 +75,8 @@ export function ExplorePodcastPlaylistCard({ podcast, isLoading = false }: Podca
                         </p>
                     </div>
 
-                    <div className="flex flex-row gap-2 items-center justify-center shrink-0">
-                        <ExplorePodcastPlayButton
-                            track={{
-                                id: String(slug),
-                                title,
-                                artist: hostName,
-                                src: audioUrl,
-                                imageUrl,
-                            }}
-                        />
+                    <div className="flex flex-row gap-2 items-center justify-center shrink-0 pointer-events-auto">
+                        <ExplorePodcastPlayButton track={track} />
                     </div>
                 </div>                
             </CardContent>

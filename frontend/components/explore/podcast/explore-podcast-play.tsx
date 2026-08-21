@@ -6,11 +6,15 @@ import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.ts
 
 interface ExplorePodcastPlayButtonProps {
     track: PlayerTrack;
-    hidePlayer?: boolean
+    queue?: PlayerTrack[]; // Optional full queue
+    startIndex?: number;    // Optional index in the queue
+    hidePlayer?: boolean;
+    popular?: boolean;
+    recent?: boolean;
 }
 
-export function ExplorePodcastPlayButton({ track, hidePlayer }: ExplorePodcastPlayButtonProps) {
-    const { currentTrack, isPlaying, playTrack, togglePlayPause, setHidePlayer } = usePlayer();
+export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer }: ExplorePodcastPlayButtonProps) {
+    const { currentTrack, isPlaying, togglePlayPause, setHidePlayer, playTrackWithQueue } = usePlayer();
     const isCurrentTrack = currentTrack?.id === track.id;
     const isDisabled = !track.src;
 
@@ -22,7 +26,7 @@ export function ExplorePodcastPlayButton({ track, hidePlayer }: ExplorePodcastPl
         if (isCurrentTrack) {
             togglePlayPause();
         } else {
-            playTrack(track);
+            playTrackWithQueue(track, queue, startIndex);
         }
 
         if (hidePlayer) {
