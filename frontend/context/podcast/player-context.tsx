@@ -415,9 +415,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
      * Cycles through repeat modes: off -> all -> one -> off.
      */
     const cycleRepeatMode = useCallback(() => {
-        setRepeatMode((prev) =>
-            prev === "off" ? "all" : prev === "all" ? "one" : "off"
-        );
+        setRepeatMode((prev) => {
+            const next = prev === "off" ? "all" : prev === "all" ? "one" : "off";
+            return next;
+        });
     }, []);
 
     /**
