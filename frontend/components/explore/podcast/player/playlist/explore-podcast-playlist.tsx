@@ -33,7 +33,7 @@ export function ExplorePodcastPlaylist({page} : {page: PageType}) {
     }
     
     return (
-        <div className={`rounded-lg flex flex-col gap-4 p-4 w-full h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-500 scrollbar-track-transparent ${backgroundColorMap[page]}`}>
+        <div className={`rounded-lg flex flex-col gap-4 p-4 w-full h-70 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-500 scrollbar-track-transparent ${backgroundColorMap[page]}`}>
             <div className="flex justify-between">
                 <div className="flex flex-row items-center gap-1">
                     <X size={18} onClick={handleClosePlaylist} className="hover:cursor-pointer hover:scale-110 transition-scale duration-200"/>
@@ -56,6 +56,7 @@ export function ExplorePodcastPlaylist({page} : {page: PageType}) {
                             track={track}
                             isCurrent={index === currentIndex}
                             onClick={() => playPlaylist(index)}
+                            page={page}
                         />
                     ))
                 )}

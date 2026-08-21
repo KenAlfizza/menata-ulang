@@ -32,7 +32,7 @@ export function ExploreBackground({ children }: ExploreBackgroundProps) {
             }
 
             {(page === 'research') && 
-                <ViewSection className="absolute mt-95 inset-0 z-0 pointer-events-none select-none overflow-hidden">
+                <ViewSection className="absolute mt-80 inset-0 z-0 pointer-events-none select-none overflow-hidden">
                     <DecorativeRope className="scale-100" src="/explore/rope3.svg" />
                 </ViewSection>
             }

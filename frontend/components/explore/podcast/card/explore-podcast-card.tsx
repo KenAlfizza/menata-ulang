@@ -64,7 +64,7 @@ export function ExplorePodcastCard({ podcast, feedPodcast, isLoading = false, fe
                 aria-label={`View ${title}`}
             />
 
-            <CardContent className="p-4 w-full flex flex-col h-full gap-2 relative z-10 pointer-events-none">
+            <CardContent className="bg-yellow-100/50 p-4 w-full flex flex-col h-full gap-2 relative z-10 pointer-events-none">
                 <div className="m-auto relative w-full h-40 shrink-0 overflow-hidden rounded-md bg-zinc-50 flex items-center justify-center">
                     <Image
                         src={imageUrl}
@@ -117,6 +117,7 @@ export function ExplorePodcastCard({ podcast, feedPodcast, isLoading = false, fe
                                 track={buildPlayerTrack(podcast)}
                                 queue={queue}
                                 startIndex={queue.findIndex((item) => item.id === podcast.slug)}
+                                page="podcast"
                             />
                         }
                     </div>

@@ -7,16 +7,32 @@ import { Podcast } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { PlayerTrack } from "@/context/podcast/player-context.tsx";
 import { ExplorePodcastPlayButton } from "../../explore-podcast-play.tsx";
+import { PageType } from "@/types/explore/explore.ts";
 
 interface PlaylistCardProps {
     track: PlayerTrack;
     isCurrent?: boolean;
     onClick?: () => void;
     isLoading?: boolean;
+    page: PageType;
 }
 
-export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, isLoading = false }: PlaylistCardProps) {
-    
+const isCurrentColorMap = {
+    story: "border-red-500",
+    podcast: "border-yellow-500",
+    research: "border-blue-500",
+};
+
+const textColorMap = {
+    story: "text-red-500",
+    podcast: "text-yellow-500",
+    research: "text-blue-500",
+}
+
+export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, isLoading = false, page }: PlaylistCardProps) {
+    const activeIsCurrentColor = page ? isCurrentColorMap[page] : isCurrentColorMap.podcast;
+    const activeTextColorMap = page ? textColorMap[page] : textColorMap.podcast;
+
     const slug = track?.id ?? "";
     const title = track?.title ?? "Untitled Podcast";
     const imageUrl = track?.imageUrl && track.imageUrl.trim() !== "" ? track.imageUrl : "/logo-icon.svg";
@@ -42,7 +58,7 @@ export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, 
             onClick={onClick}
             className={`group relative w-full h-16 ring-0 rounded-md overflow-hidden p-0 flex items-center cursor-pointer transition-colors duration-200 ${
                 isCurrent 
-                    ? "bg-white/90 border-l-4 border-yellow-500 shadow-sm" 
+                    ? `bg-white/90 border-l-4 ${activeIsCurrentColor} shadow-sm` 
                     : "bg-white/50 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75"
             }`}
         >
@@ -66,7 +82,7 @@ export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, 
                     </div>
                     
                     <div className="w-full flex flex-col justify-center min-w-0">
-                        <p className={`text-left tracking-tight font-medium break-words transition-colors line-clamp-1 ${isCurrent ? "text-yellow-700 font-semibold" : "text-zinc-800"}`}>
+                        <p className={`text-left tracking-tight font-medium break-words transition-colors line-clamp-1 ${isCurrent ? `${activeTextColorMap} font-semibold` : "text-zinc-800"}`}>
                             {title}
                         </p>
                         <p className="flex items-center gap-1 text-xs text-left tracking-tight text-zinc-400 break-words line-clamp-1">
@@ -76,7 +92,7 @@ export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, 
                     </div>
 
                     <div className="flex flex-row gap-2 items-center justify-center shrink-0 pointer-events-auto">
-                        <ExplorePodcastPlayButton track={track} />
+                        <ExplorePodcastPlayButton track={track} page={page} />
                     </div>
                 </div>                
             </CardContent>

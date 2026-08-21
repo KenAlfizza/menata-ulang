@@ -60,3 +60,9 @@ export const backgroundColorMap = {
     podcast: "bg-yellow-300/60",
     research: "bg-blue-300/60",
 };
+
+export const accentColorMap = {
+    story: "text-red-600",
+    podcast: "text-yellow-600",
+    research: "text-blue-600",
+}

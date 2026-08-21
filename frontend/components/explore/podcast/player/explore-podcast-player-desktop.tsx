@@ -19,7 +19,8 @@ import {
     PodcastPlayerViewProps, 
     playButtonBgMap, 
     sliderColorMap, 
-    thumbColorMap 
+    thumbColorMap,
+    accentColorMap, 
 } from "./explore-podcast-player-config.tsx";
 
 export function ExplorePodcastPlayerDesktop({
@@ -45,9 +46,10 @@ export function ExplorePodcastPlayerDesktop({
     closePlayer,
     page,
 }: PodcastPlayerViewProps) {
-    const activeColors = sliderColorMap[page] || sliderColorMap.story;
-    const activeThumbColor = thumbColorMap[page] || thumbColorMap.story;
-    const activePlayButtonBg = playButtonBgMap[page] || playButtonBgMap.story;
+    const activeColors = sliderColorMap[page] || sliderColorMap.podcast;
+    const activeThumbColor = thumbColorMap[page] || thumbColorMap.podcast;
+    const activePlayButtonBg = playButtonBgMap[page] || playButtonBgMap.podcast;
+    const activeAccentColor = accentColorMap[page] || accentColorMap.podcast;
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
     const volumePct = (isMuted ? 0 : volume) * 100;
     const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
@@ -96,6 +98,7 @@ export function ExplorePodcastPlayerDesktop({
                             [&::-webkit-slider-thumb]:appearance-none
                             [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2
                             [&::-webkit-slider-thumb]:-mt-0.25
+                            [&::-webkit-slider-thumb]:-ml-0.25
                             [&::-webkit-slider-thumb]:bg-[var(--thumb-color)]
                             [&::-webkit-slider-thumb]:rounded-full"
                         style={{
@@ -112,7 +115,7 @@ export function ExplorePodcastPlayerDesktop({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button onClick={toggleShuffle} className={`p-1 rounded-full ${isShuffled ? "text-yellow-600" : "text-zinc-400"}`}>
+                    <button onClick={toggleShuffle} className={`p-1 rounded-full ${isShuffled ? activeAccentColor : "text-zinc-400"}`}>
                         <Shuffle className="w-4 h-4" />
                     </button>
                     <button onClick={previous} className="text-zinc-600">
@@ -124,7 +127,7 @@ export function ExplorePodcastPlayerDesktop({
                     <button onClick={next} className="text-zinc-600">
                         <SkipForward className="w-4 h-4 fill-current" />
                     </button>
-                    <button onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? "text-yellow-600" : "text-zinc-400"}`}>
+                    <button onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? activeAccentColor : "text-zinc-400"}`}>
                         <RepeatIcon className="w-4 h-4" />
                     </button>
                 </div>
@@ -132,7 +135,7 @@ export function ExplorePodcastPlayerDesktop({
 
             {/* Volume & Desktop Close */}
             <div className="flex items-center gap-4 shrink-0 justify-end w-1/4">
-                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? "text-yellow-600" : "text-zinc-400"}`}>
+                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? activeAccentColor : "text-zinc-400"}`}>
                     <ListMusic className="w-4 h-4" />
                 </button>
 

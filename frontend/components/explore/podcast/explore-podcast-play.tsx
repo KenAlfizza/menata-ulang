@@ -3,20 +3,27 @@
 import type { MouseEvent } from "react";
 import { Play, Pause } from "lucide-react";
 import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
+import { PageType } from "@/types/explore/explore.ts";
 
 interface ExplorePodcastPlayButtonProps {
     track: PlayerTrack;
     queue?: PlayerTrack[]; // Optional full queue
     startIndex?: number;    // Optional index in the queue
     hidePlayer?: boolean;
-    popular?: boolean;
-    recent?: boolean;
+    page: PageType;
 }
 
-export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer }: ExplorePodcastPlayButtonProps) {
+export const playButtonBgMap = {
+    story: "bg-red-300 hover:bg-red-400",
+    podcast: "bg-yellow-300 hover:bg-yellow-400",
+    research: "bg-blue-300 hover:bg-blue-400",
+};
+
+export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer, page }: ExplorePodcastPlayButtonProps) {
     const { currentTrack, isPlaying, togglePlayPause, setHidePlayer, playTrackWithQueue } = usePlayer();
     const isCurrentTrack = currentTrack?.id === track.id;
     const isDisabled = !track.src;
+    const activePlayButtonBg = page ? playButtonBgMap[page] : playButtonBgMap.podcast;
 
     const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -43,7 +50,7 @@ export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer 
             onClick={handleClick}
             disabled={isDisabled}
             aria-label={isCurrentTrack && isPlaying ? "Pause" : "Play"}
-            className="relative z-50 pointer-events-auto bg-yellow-300 p-2 rounded-full shadow-sm cursor-default transition-all duration-200 hover:bg-yellow-400 hover:scale-110 hover:shadow-md hover:cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:bg-zinc-300 disabled:cursor-default disabled:hover:shadow-sm"
+            className={`${activePlayButtonBg} relative z-50 pointer-events-auto p-2 rounded-full shadow-sm cursor-default transition-all duration-200 hover:scale-110 hover:shadow-md hover:cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:bg-zinc-300 disabled:cursor-default disabled:hover:shadow-sm`}
         >
             {isCurrentTrack && isPlaying ? (
                 <Pause size={20} className="text-white" fill="currentColor" />
