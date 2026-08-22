@@ -30,7 +30,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
                         onNavigate={handleNavigate} 
                     />
                     {children}
-                    {!hidePlayer && isActive && <div className="w-full h-10"></div>}
+                    {!hidePlayer && isActive && <div className="w-full h-18"></div>}
                 </div>
             </div>
         </ExploreBackground>
@@ -45,7 +45,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
                         onNavigate={handleNavigate} 
                     />
                     {children}
-                    {!hidePlayer && isActive && <div className="w-full h-10"></div>}
+                    {!hidePlayer && isActive && <div className="w-full h-18"></div>}
                 </div>
             </div>
         </ExploreBackground>
