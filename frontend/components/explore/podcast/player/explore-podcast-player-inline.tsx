@@ -160,7 +160,7 @@ export function PodcastPlayerInline({ track, showHost = true }: PodcastPlayerPro
             <div className="w-full flex items-center gap-4">
                 {/* Play Controls */}
                 <div className="flex items-center gap-2 shrink-0">
-                    <ExplorePodcastPlayButton track={track} hidePlayer />
+                    <ExplorePodcastPlayButton track={track} hidePlayer page="podcast" />
                 </div>
                 {/* Progress Bar & Times */}
                 <div className="flex-1 flex items-center gap-2">

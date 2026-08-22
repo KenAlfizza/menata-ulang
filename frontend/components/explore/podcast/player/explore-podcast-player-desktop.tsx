@@ -100,7 +100,12 @@ export function ExplorePodcastPlayerDesktop({
                             [&::-webkit-slider-thumb]:-mt-0.25
                             [&::-webkit-slider-thumb]:-ml-0.25
                             [&::-webkit-slider-thumb]:bg-[var(--thumb-color)]
-                            [&::-webkit-slider-thumb]:rounded-full"
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:border
+                            [&::-webkit-slider-thumb]:border-transparent
+                            [&::-webkit-slider-thumb]:transition-[all_0.3s_ease]
+                            [&::-webkit-slider-thumb]:hover:scale-200
+                            [&::-webkit-slider-thumb]:hover:border-white"
                         style={{
                             "--progress": `${progressPct}%`,
                             "--track-start": activeColors.start,
@@ -115,19 +120,19 @@ export function ExplorePodcastPlayerDesktop({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button onClick={toggleShuffle} className={`p-1 rounded-full ${isShuffled ? activeAccentColor : "text-zinc-400"}`}>
+                    <button onClick={toggleShuffle} className={`p-1 rounded-full ${isShuffled ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
                         <Shuffle className="w-4 h-4" />
                     </button>
-                    <button onClick={previous} className="text-zinc-600">
+                    <button onClick={previous} className="text-zinc-600 hover:cursor-pointer hover:text-zinc-700 hover:scale-110 transition duration-200">
                         <SkipBack className="w-4 h-4 fill-current" />
                     </button>
-                    <button onClick={togglePlayPause} className={`${activePlayButtonBg} text-white p-2 rounded-full shadow-sm`}>
+                    <button onClick={togglePlayPause} className={`${activePlayButtonBg} text-white p-2 rounded-full shadow-sm hover:cursor-pointer`}>
                         {isPlaying ? <Pause className="w-4.5 h-4.5 fill-current" /> : <Play className="w-4.5 h-4.5 fill-current ml-0.5" />}
                     </button>
-                    <button onClick={next} className="text-zinc-600">
+                    <button onClick={next} className="text-zinc-600 hover:cursor-pointer hover:text-zinc-700 hover:scale-110 transition duration-200">
                         <SkipForward className="w-4 h-4 fill-current" />
                     </button>
-                    <button onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? activeAccentColor : "text-zinc-400"}`}>
+                    <button onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
                         <RepeatIcon className="w-4 h-4" />
                     </button>
                 </div>
@@ -135,12 +140,12 @@ export function ExplorePodcastPlayerDesktop({
 
             {/* Volume & Desktop Close */}
             <div className="flex items-center gap-4 shrink-0 justify-end w-1/4">
-                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? activeAccentColor : "text-zinc-400"}`}>
+                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
                     <ListMusic className="w-4 h-4" />
                 </button>
 
                 <div className="flex items-center gap-2">
-                    <button onClick={toggleMute} className="text-zinc-500">
+                    <button onClick={toggleMute} className="text-zinc-500 hover:cursor-pointer hover:scale-110 transition duration-200">
                         <VolumeIcon className="w-4 h-4" />
                     </button>
                     <input
@@ -158,7 +163,12 @@ export function ExplorePodcastPlayerDesktop({
                             [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2
                             [&::-webkit-slider-thumb]:-mt-0.25
                             [&::-webkit-slider-thumb]:bg-[var(--thumb-color)]
-                            [&::-webkit-slider-thumb]:rounded-full"
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:border
+                            [&::-webkit-slider-thumb]:border-transparent
+                            [&::-webkit-slider-thumb]:transition-[all_0.3s_ease]
+                            [&::-webkit-slider-thumb]:hover:scale-200
+                            [&::-webkit-slider-thumb]:hover:border-white"
                         style={{
                             "--volume-progress": `${volumePct}%`,
                             "--track-start": activeColors.start,
@@ -169,7 +179,7 @@ export function ExplorePodcastPlayerDesktop({
                     />
                 </div>                
 
-                <button onClick={closePlayer} className="text-zinc-400 hover:text-zinc-600 shrink-0">
+                <button onClick={closePlayer} className="text-zinc-500 hover:cursor-pointer hover:scale-110 transition duration-200 shrink-0">
                     <X className="w-4 h-4" />
                 </button>
             </div>
