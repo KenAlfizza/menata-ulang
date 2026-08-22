@@ -25,7 +25,7 @@ export function ExplorePodcastPlayer({ page }: ExplorePodcastPlayerProps) {
             {/* Playlist */}
             <div 
                 className={`absolute bottom-0 p-2 flex justify-end w-full ${
-                    isMobile ? "h-full inset-x-0" : "right-0 md:w-1/3 lg:w-1/4"
+                    isMobile ? "h-[100vh]" : "right-0 md:w-1/3 lg:w-1/4"
                 }`}
             >
                 <ExplorePodcastPlaylist page={page} />

@@ -46,6 +46,7 @@ export function ExplorePodcastPlaylist({page} : {page: PageType}) {
             }`}
             aria-hidden={!isOpen}
         >
+
             <div className={`flex flex-col overflow-hidden rounded-lg ${backgroundColorMap[page]} h-full`}>
                 
                 {/* Header */}
