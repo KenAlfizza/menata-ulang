@@ -4,13 +4,15 @@ import Image from "next/image";
 import {
     Play,
     Pause,
+    ListMusic,
 } from "lucide-react";
 import { 
     backgroundColorMap, 
     PodcastPlayerViewProps, 
     playButtonBgMap, 
     sliderColorMap, 
-    thumbColorMap 
+    thumbColorMap,
+    accentColorMap, 
 } from "./explore-podcast-player-config.tsx";
 
 export function ExplorePodcastPlayerMobile({
@@ -18,21 +20,17 @@ export function ExplorePodcastPlayerMobile({
     isPlaying,
     currentTime,
     duration,
-    repeatMode,
     togglePlayPause,
-    next,
-    previous,
     seek,
     setIsSeeking,
-    toggleShuffle,
-    isShuffled,
-    cycleRepeatMode,
-    closePlayer,
+    toggleViewPlaylist,
+    isViewPlaylist,
     page,
 }: PodcastPlayerViewProps) {
     const activeColors = sliderColorMap[page] || sliderColorMap.story;
     const activeThumbColor = thumbColorMap[page] || thumbColorMap.story;
     const activePlayButtonBg = playButtonBgMap[page] || playButtonBgMap.story;
+    const activeAccentColor = accentColorMap[page] || accentColorMap.podcast;
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
@@ -60,14 +58,20 @@ export function ExplorePodcastPlayerMobile({
                     </div>
                 </div>
                 
-                <button 
-                    type="button"
-                    onClick={togglePlayPause} 
-                    aria-label={isPlaying ? "Pause" : "Play"}
-                    className={`${activePlayButtonBg} text-white p-2 rounded-full shadow-sm z-10`}
-                >
-                    {isPlaying ? <Pause className="w-4.5 h-4.5 fill-current" /> : <Play className="w-4.5 h-4.5 fill-current ml-0.5" />}
-                </button>
+                <div className="flex flex-row gap-1">
+                    <button onClick={toggleViewPlaylist} className={`p-1 z-10 ${isViewPlaylist ? activeAccentColor : "text-white"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
+                        <ListMusic className="w-6.5 h-6.5" />
+                    </button>
+
+                    <button 
+                        type="button"
+                        onClick={togglePlayPause} 
+                        aria-label={isPlaying ? "Pause" : "Play"}
+                        className={`${activePlayButtonBg} text-white z-10 p-2 rounded-full`}
+                    >
+                        {isPlaying ? <Pause className="w-4.5 h-4.5 fill-current" /> : <Play className="w-4.5 h-4.5 fill-current" />}
+                    </button>
+                </div>
             </div>
 
             {/* Progress Bar */}

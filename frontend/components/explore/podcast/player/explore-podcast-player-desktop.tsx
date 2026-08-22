@@ -140,7 +140,7 @@ export function ExplorePodcastPlayerDesktop({
 
             {/* Volume & Desktop Close */}
             <div className="flex items-center gap-4 shrink-0 justify-end w-1/4">
-                <button onClick={toggleViewPlaylist} className={`p-1 rounded-full ${isViewPlaylist ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
+                <button onClick={toggleViewPlaylist} className={`p-1 ${isViewPlaylist ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
                     <ListMusic className="w-4 h-4" />
                 </button>
 

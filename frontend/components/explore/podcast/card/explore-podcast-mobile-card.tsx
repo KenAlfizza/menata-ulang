@@ -109,6 +109,7 @@ export function ExplorePodcastMobileCard({ podcast, isLoading = false }: Podcast
                                 src: audioUrl,
                                 imageUrl,
                             }}
+                            page="podcast"
                         />
                     </div>
                 </div>

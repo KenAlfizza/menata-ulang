@@ -57,7 +57,7 @@ export function ExplorePodcastCard({ podcast, feedPodcast, isLoading = false, fe
     }
 
     return (
-        <Card className={`group relative w-full h-[360px] bg-white/50 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0`}>
+        <Card className={`group relative w-full h-[360px] bg-white/75 ring-0 [&:hover:not(:has([data-play-button]:hover))]:bg-white/75 transition-colors duration-200 overflow-hidden p-0`}>
             <Link
                 href={`/explore/podcast/${slug}`}
                 className="absolute inset-0 z-0 rounded-md cursor-pointer"
