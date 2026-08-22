@@ -13,7 +13,7 @@ export function useExplorePodcast() {
     const [popularPodcast, setPopularPodcast] = useState<ExplorePodcastSummary>();
     const [recentPodcasts, setRecentPodcasts] = useState<ExplorePodcastSummary[]>([]);
     
-    const [feedPodcast, setFeedPodcast] = useState<ExplorePodcastSummary[]>([]);
+    const [feedPodcasts, setFeedPodcasts] = useState<ExplorePodcastSummary[]>([]);
     const [totalCount, setTotalCount] = useState(0);
 
     const [page, setPage] = useState(1);
@@ -69,7 +69,7 @@ export function useExplorePodcast() {
 
                 const feedResult = await getPodcasts(feedFilter);
 
-                setFeedPodcast(feedResult.items);
+                setFeedPodcasts(feedResult.items);
                 setTotalCount(feedResult.total);
                 setPage(feedResult.page);
                 setTotalPages(feedResult.totalPages);
@@ -90,7 +90,7 @@ export function useExplorePodcast() {
         error,
         popularPodcast,
         recentPodcasts,
-        feedPodcast,
+        feedPodcasts,
         totalCount,
         page,
         setPage,

@@ -46,10 +46,9 @@ export function ExplorePodcastPlaylist({page} : {page: PageType}) {
             }`}
             aria-hidden={!isOpen}
         >
-            {/* CHANGED: Added "flex flex-col overflow-hidden" to the inner wrapper */}
             <div className={`flex flex-col overflow-hidden rounded-lg ${backgroundColorMap[page]} h-full`}>
                 
-                {/* Header (Takes up its natural height) */}
+                {/* Header */}
                 <div className="flex justify-between p-3 shrink-0">
                     <div className="flex flex-row items-center gap-1">
                         <X size={18} onClick={handleClosePlaylist} className="hover:cursor-pointer hover:scale-110 transition-scale duration-200"/>
@@ -63,7 +62,7 @@ export function ExplorePodcastPlaylist({page} : {page: PageType}) {
                     </Button>
                 </div>
 
-                {/* Scrollable List (Takes up remaining space via flex-1 on mobile) */}
+                {/* Scrollable List */}
                 <div className={`bg-white/20 flex flex-col gap-1 p-2 w-full ${listHeight} overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-500 scrollbar-track-transparent`}>
                     <div className="flex flex-col gap-1">
                         {tracks.length === 0 ? (

@@ -14,14 +14,14 @@ import { usePlayer } from "@/context/podcast/player-context.tsx";
 
 interface PodcastCardProps {
     podcast?: ExplorePodcastSummary;
-    feedPodcast?: ExplorePodcastSummary[];
+    feedPodcasts?: ExplorePodcastSummary[];
     isLoading?: boolean;
     feature?: boolean;
 }
 
-export function ExplorePodcastCard({ podcast, feedPodcast, isLoading = false, feature = false }: PodcastCardProps) {
+export function ExplorePodcastCard({ podcast, feedPodcasts, isLoading = false }: PodcastCardProps) {
     const { buildPlayerTrack } = usePlayer();
-    const queue = feedPodcast?.map(buildPlayerTrack) ?? [];
+    const queue = feedPodcasts?.map(buildPlayerTrack) ?? [];
 
     // Pass callbacks straight into the hook
     const currentPodcast = podcast;

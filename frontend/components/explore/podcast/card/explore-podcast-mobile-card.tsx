@@ -9,15 +9,19 @@ import { formatTime } from "@/utils/format-time.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
+import { usePlayer } from "@/context/podcast/player-context.tsx";
 
 
 interface PodcastCardProps {
     podcast?: ExplorePodcastSummary;
+    feedPodcasts?: ExplorePodcastSummary[];
     isLoading?: boolean;
 }
 
-export function ExplorePodcastMobileCard({ podcast, isLoading = false }: PodcastCardProps) {
-    
+export function ExplorePodcastMobileCard({ podcast, feedPodcasts, isLoading = false }: PodcastCardProps) {
+    const { buildPlayerTrack } = usePlayer();
+    const queue = feedPodcasts?.map(buildPlayerTrack) ?? [];
+
     // Pass callbacks straight into the hook
     const currentPodcast = podcast;
 
@@ -30,7 +34,6 @@ export function ExplorePodcastMobileCard({ podcast, isLoading = false }: Podcast
     const date = currentPodcast?.publishedAt ? formatDate(new Date(currentPodcast.publishedAt)) : formatDate(new Date());
     const audioUrl = currentPodcast?.audioUrl ?? "";
     const duration = currentPodcast?.duration ? formatTime(currentPodcast?.duration) : formatTime(0);
-    const heartsCount = currentPodcast?.heartsCount ?? 0;
 
     if (isLoading) {
         return (
@@ -109,6 +112,8 @@ export function ExplorePodcastMobileCard({ podcast, isLoading = false }: Podcast
                                 src: audioUrl,
                                 imageUrl,
                             }}
+                            queue={queue}
+                            startIndex={queue.findIndex((item) => item.id === slug)}
                             page="podcast"
                         />
                     </div>

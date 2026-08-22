@@ -47,7 +47,7 @@ export function ExplorePodcast() {
                     )}
                     
                     <ExplorePodcastFeed 
-                        feedPodcast={explore.feedPodcast}
+                        feedPodcasts={explore.feedPodcasts}
                         isLoadingFeed={explore.isLoadingFeed}
                         feedFilter={{
                             search: explore.search,
@@ -109,7 +109,7 @@ export function ExplorePodcast() {
                 )}
                 
                 <ExplorePodcastFeed 
-                    feedPodcast={explore.feedPodcast}
+                    feedPodcasts={explore.feedPodcasts}
                     isLoadingFeed={explore.isLoadingFeed}
                     feedFilter={{
                         search: explore.search,

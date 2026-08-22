@@ -9,7 +9,7 @@ import { ExplorePodcastMobileCard } from "./card/explore-podcast-mobile-card.tsx
 import { ExploreMobileFilter } from "../mobile/explore-mobile-filter.tsx";
 
 interface ExplorePodcastFeedProps {
-    feedPodcast: ExplorePodcastSummary[];
+    feedPodcasts: ExplorePodcastSummary[];
     isLoadingFeed: boolean;
     feedFilter: ExploreFilter;
     onSortChange: (sort: ExploreFilter["sort"], order: ExploreFilter["order"]) => void;
@@ -18,7 +18,7 @@ interface ExplorePodcastFeedProps {
     onPageChange: (feedPage: number) => void;
 }
 
-export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onSortChange, feedPage, feedTotalPages, onPageChange }: ExplorePodcastFeedProps) {
+export function ExplorePodcastFeed({ feedPodcasts, isLoadingFeed, feedFilter, onSortChange, feedPage, feedTotalPages, onPageChange }: ExplorePodcastFeedProps) {
     const isMobile = useIsMobile();
     if (isMobile) return (
         <div className="w-full flex flex-col gap-4">
@@ -35,11 +35,12 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                         />
                     ))
                 ) : (
-                    feedPodcast.map((podcast) => (
+                    feedPodcasts.map((podcast) => (
                         <ExplorePodcastMobileCard
                             key={podcast.slug}
                             podcast={podcast}
                             isLoading={isLoadingFeed}
+                            feedPodcasts={feedPodcasts}
                         />
                     ))
                 )}
@@ -64,16 +65,15 @@ export function ExplorePodcastFeed({ feedPodcast, isLoadingFeed, feedFilter, onS
                         <ExplorePodcastCard
                             key={`skeleton-${index}`}
                             isLoading={isLoadingFeed}
-                            feedPodcast={feedPodcast}
                         />
                     ))
                 ) : (
-                    feedPodcast.map((podcast) => (
+                    feedPodcasts.map((podcast) => (
                         <ExplorePodcastCard
                             key={podcast.slug}
                             podcast={podcast}
                             isLoading={isLoadingFeed}
-                            feedPodcast={feedPodcast}
+                            feedPodcasts={feedPodcasts}
                         />
                     ))
                 )}
