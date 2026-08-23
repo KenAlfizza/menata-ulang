@@ -16,7 +16,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
         router.push(`/explore/${newPage}`, { scroll: false });
     }, [router]);
 
-    const { setHidePlayer, hidePlayer, isActive, isViewPlaylist } = usePlayer();
+    const { setHidePlayer, hidePlayer, isActive } = usePlayer();
     useEffect(() => {
         setHidePlayer(false);
     })

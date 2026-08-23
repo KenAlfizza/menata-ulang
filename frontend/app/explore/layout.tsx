@@ -1,5 +1,5 @@
 "use client"
-import { PlayerProvider, usePlayer } from "@/context/podcast/player-context.tsx";
+import { PlayerProvider } from "@/context/podcast/player-context.tsx";
 import { ExplorePodcastPlayer } from "@/components/explore/podcast/player/explore-podcast-player.tsx";
 import { useExplore } from "@/hooks/explore/use-explore.ts";
 

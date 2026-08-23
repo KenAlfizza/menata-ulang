@@ -53,7 +53,6 @@ export function ExplorePodcastPlayerDesktop({
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
     const volumePct = (isMuted ? 0 : volume) * 100;
     const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-    const RepeatIcon = repeatMode === "one" ? Repeat1 : Repeat;
 
     return (
         <div className={`flex items-center gap-4 p-2 w-full ${backgroundColorMap[page]}`}>
@@ -133,7 +132,7 @@ export function ExplorePodcastPlayerDesktop({
                         <SkipForward className="w-4 h-4 fill-current" />
                     </button>
                     <button onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? activeAccentColor : "text-zinc-500"} hover:cursor-pointer hover:scale-110 transition duration-200`}>
-                        <RepeatIcon className="w-4 h-4" />
+                        {repeatMode === "one" ? <Repeat1 className="w-4 h-4" /> :<Repeat className="w-4 h-4" /> }
                     </button>
                 </div>
             </div>
