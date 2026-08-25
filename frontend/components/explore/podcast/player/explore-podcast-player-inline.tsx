@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, Repeat, Repeat1, RepeatIcon, Shuffle, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lucide-react";
 import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
 import { formatTime } from "@/utils/format-time.ts";
 import { playButtonBgMap } from "../explore-podcast-play.tsx";
@@ -9,9 +9,12 @@ import { accentColorMap, sliderColorMap, thumbColorMap } from "./explore-podcast
 interface PodcastPlayerProps {
     track: PlayerTrack;
     showHost?: boolean;
+    onPrevious: () => void;
+    onNext: () => void;
+    isLive: boolean;
 }
 
-export function PodcastPlayerInline({ track }: PodcastPlayerProps) {
+export function PodcastPlayerInline({ track, onPrevious, onNext, isLive }: PodcastPlayerProps) {
     const {
         currentTrack,
         isActive,
@@ -21,15 +24,11 @@ export function PodcastPlayerInline({ track }: PodcastPlayerProps) {
         toggleShuffle,
         isPlaying,
         isShuffled,
-        next,
-        previous,
         repeatMode,
         cycleRepeatMode,
         seek,
         setIsSeeking,
     } = usePlayer();
-
-    const isLive = isActive && currentTrack?.id === track.id;
 
     const displayDuration = isLive ? duration : (track.duration ?? 0);
     const displayCurrentTime = isLive ? currentTime : 0;
@@ -39,6 +38,15 @@ export function PodcastPlayerInline({ track }: PodcastPlayerProps) {
     const activeThumbColor = thumbColorMap.podcast;
     const activePlayButtonBg = playButtonBgMap.podcast;
     const activeAccentColor = accentColorMap.podcast;
+
+
+    const handlePrevious = () => {
+        onPrevious();
+    }
+
+    const handleNext = () => {
+        onNext();
+    }
 
     return (
         <div className={`w-full rounded-md flex flex-col gap-4`}>
@@ -91,13 +99,13 @@ export function PodcastPlayerInline({ track }: PodcastPlayerProps) {
                     <button type="button" onClick={toggleShuffle} className={`p-1 rounded-full ${isShuffled ? activeAccentColor : "text-zinc-500"}`}>
                         <Shuffle size={24} />
                     </button>
-                    <button type="button" onClick={previous} className="text-zinc-600">
+                    <button type="button" onClick={handlePrevious} className="text-zinc-600">
                         <SkipBack size={28} className="fill-current" />
                     </button>
                     <button type="button" onClick={togglePlayPause} className={`p-4 ${activePlayButtonBg} text-white rounded-full shadow-sm hover:cursor-pointer`}>
                         {isPlaying ? <Pause size={32} className="fill-current" /> : <Play size={32} className="fill-current" />}
                     </button>
-                    <button type="button" onClick={next} className="text-zinc-600">
+                    <button type="button" onClick={handleNext} className="text-zinc-600">
                         <SkipForward size={28} className="fill-current" />
                     </button>
                     <button type="button" onClick={cycleRepeatMode} className={`p-1 rounded-full ${repeatMode !== "off" ? activeAccentColor : "text-zinc-500"}`}>

@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { ArrowUpRightFromSquare, EllipsisVertical, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
@@ -13,7 +15,8 @@ import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
 import { formatTimeSentence } from "@/utils/format-time.ts";
 
 export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePodcastRecord }) {
-    const { currentTrack, setHidePlayer, isActive } = usePlayer();
+    const router = useRouter();
+    const { currentTrack, setHidePlayer, isActive, next, previous } = usePlayer();
     const currentPodcast = podcast
 
     const slug = currentPodcast?.slug ?? "";
@@ -32,7 +35,28 @@ export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePod
     const durationSeconds = currentPodcast?.duration ?? 0;
     const transcript = currentPodcast?.transcript ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget odio varius, rutrum mauris sed, auctor enim. Sed consequat, quam ut volutpat imperdiet, nunc sem pulvinar nulla, in mollis nisl odio vitae metus. Cras a eleifend sapien. Quisque blandit ante odio. Vivamus fringilla elit ac consequat vehicula. Vivamus laoreet rhoncus turpis in commodo. Pellentesque fermentum nisl in sagittis euismod. Integer vel vehicula dolor. Nam a urna vel sem tempus ultricies. Vestibulum ut tortor interdum, pharetra libero eget, commodo ipsum. Pellentesque posuere sem at arcu hendrerit, eget porta elit posuere. Nullam sagittis pulvinar nunc, a fermentum lectus egestas in.";
 
-    const isLive = isActive && currentTrack?.id == slug;
+    // Navigation between tracks
+    const pendingNavRef = useRef(false);
+    
+    useEffect(() => {
+        if (!pendingNavRef.current) return;
+        if (!currentTrack?.id || currentTrack.id === slug) return;
+
+        router.push(`/explore/podcast/${currentTrack.id}`);
+    }, [currentTrack?.id, slug, router]);
+
+    const handleNext = () => {
+        pendingNavRef.current = true;
+        next();
+    };
+
+    const handlePrevious = () => {
+        pendingNavRef.current = true;
+        previous();
+    };
+
+    // Determine whether to show player or the play button
+    const isLive = isActive && (currentTrack?.id == slug || pendingNavRef.current);
 
     return (
         <div className="flex flex-col gap-4">
@@ -130,6 +154,9 @@ export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePod
                                                     imageUrl,
                                                     duration: durationSeconds,
                                                 }}
+                                                onNext={handleNext}
+                                                onPrevious={handlePrevious}
+                                                isLive={isLive}
                                             />
                                         </div>
                                     </div>
@@ -161,4 +188,3 @@ export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePod
         </div>
     );
 }
-
