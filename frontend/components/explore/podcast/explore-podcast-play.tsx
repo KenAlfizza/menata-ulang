@@ -7,12 +7,14 @@ import { PageType } from "@/types/explore/explore.ts";
 
 interface ExplorePodcastPlayButtonProps {
     track: PlayerTrack;
-    queue?: PlayerTrack[]; // Optional full queue
-    startIndex?: number;    // Optional index in the queue
+    queue?: PlayerTrack[];
+    startIndex?: number;
     hidePlayer?: boolean;
     page: PageType;
     size?: number;
     padding?: string;
+    isCurrent?: boolean;
+    onPlay?: () => void;
 }
 
 export const playButtonBgMap = {
@@ -21,9 +23,19 @@ export const playButtonBgMap = {
     research: "bg-blue-300 hover:bg-blue-400",
 };
 
-export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer, page, size, padding }: ExplorePodcastPlayButtonProps) {
-    const { currentTrack, isPlaying, togglePlayPause, setHidePlayer, playTrackWithQueue } = usePlayer();
-    const isCurrentTrack = currentTrack?.id === track.id;
+export function ExplorePodcastPlayButton({
+    track,
+    hidePlayer,
+    page,
+    size,
+    padding,
+    isCurrent,
+    onPlay,
+}: ExplorePodcastPlayButtonProps) {
+    const { currentTrack, isPlaying, togglePlayPause, setHidePlayer, playTrackKeepPlaylist } = usePlayer();
+
+    const isCurrentTrack = isCurrent ?? (currentTrack?.slug === track.slug);
+
     const isDisabled = !track.src;
     const activePlayButtonBg = page ? playButtonBgMap[page] : playButtonBgMap.podcast;
     const currentSize = size ?? 20;
@@ -36,8 +48,10 @@ export function ExplorePodcastPlayButton({ track, queue, startIndex, hidePlayer,
 
         if (isCurrentTrack) {
             togglePlayPause();
+        } else if (onPlay) {
+            onPlay();
         } else {
-            playTrackWithQueue(track, queue, startIndex);
+            playTrackKeepPlaylist(track);
         }
 
         if (hidePlayer) {

@@ -33,7 +33,7 @@ export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, 
     const activeIsCurrentColor = page ? isCurrentColorMap[page] : isCurrentColorMap.podcast;
     const activeTextColorMap = page ? textColorMap[page] : textColorMap.podcast;
 
-    const slug = track?.id ?? "";
+    const slug = track?.slug ?? "";
     const title = track?.title ?? "Untitled Podcast";
     const imageUrl = track?.imageUrl && track.imageUrl.trim() !== "" ? track.imageUrl : "/logo-icon.svg";
     const hostName = track?.artist ?? "Menata Ulang";
@@ -92,7 +92,7 @@ export function ExplorePodcastPlaylistCard({ track, isCurrent = false, onClick, 
                     </div>
 
                     <div className="flex flex-row gap-2 items-center justify-center shrink-0 pointer-events-auto">
-                        <ExplorePodcastPlayButton track={track} page={page} />
+                        <ExplorePodcastPlayButton track={track} page={page} isCurrent={isCurrent} onPlay={onClick} />
                     </div>
                 </div>                
             </CardContent>

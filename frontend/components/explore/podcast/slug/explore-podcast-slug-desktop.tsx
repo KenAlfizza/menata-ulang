@@ -1,38 +1,60 @@
 import Image from "next/image";
-import { ArrowUpRightFromSquare, Clock, EllipsisVertical, Heart, ListPlus, ListStart, ListVideo, Podcast } from "lucide-react";
+import { EllipsisVertical, Heart, Podcast } from "lucide-react";
 
 import { formatDate } from "@/utils/format-date.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastRecord } from "@/types/explore/podcast.ts";
-import { usePlayer } from "@/context/podcast/player-context.tsx";
-import { useEffect } from "react";
+import { PlayerTrack, usePlayer } from "@/context/podcast/player-context.tsx";
+import { useEffect, useMemo } from "react";
 import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
-import { formatTime, formatTimeSentence } from "@/utils/format-time.ts";
+import { formatTimeSentence } from "@/utils/format-time.ts";
+import { ExplorePodcastSlugDropdownDesktop } from "./dropdown/explore-podcast-slug-dropdown-desktop.tsx";
 
 export function ExplorePodcastSlugDesktopView({ podcast }: { podcast?: ExplorePodcastRecord }) {
-    const { currentTrack, setHidePlayer } = usePlayer();
+    // Data extraction
+    const slug = podcast?.slug ?? "";
+    const title = podcast?.title ?? "Untitled Podcast";
+    const imageUrl = 
+        (podcast?.imageUrl && podcast.imageUrl.trim() !== "") 
+        ? podcast.imageUrl 
+        : "/logo-icon.svg";
+    const hostName = podcast?.hostName ?? "Menata Ulang";
+    const alt = podcast?.title ?? "Podcast Image";
+    const description = podcast?.description ?? "A description describing the main point of the podcast";
+    const date = podcast?.publishedAt 
+        ? formatDate(new Date(podcast.publishedAt)) 
+        : formatDate(new Date());
+    const audioUrl = podcast?.audioUrl ?? "";
+    const durationSeconds = podcast?.duration ?? 0;
+    const transcript = podcast?.transcript ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget odio varius, rutrum mauris sed, auctor enim. Sed consequat, quam ut volutpat imperdiet, nunc sem pulvinar nulla, in mollis nisl odio vitae metus. Cras a eleifend sapien. Quisque blandit ante odio. Vivamus fringilla elit ac consequat vehicula. Vivamus laoreet rhoncus turpis in commodo. Pellentesque fermentum nisl in sagittis euismod. Integer vel vehicula dolor. Nam a urna vel sem tempus ultricies. Vestibulum ut tortor interdum, pharetra libero eget, commodo ipsum. Pellentesque posuere sem at arcu hendrerit, eget porta elit posuere. Nullam sagittis pulvinar nunc, a fermentum lectus egestas in.";
+
+    // Player context
+    const { setHidePlayer, addToPlaylist, addToPlaylistNext, buildPlayerTrack, playTrackKeepPlaylist } = usePlayer();
+    const playerTrack = useMemo(
+        () => (podcast ? buildPlayerTrack(podcast) : null),
+        [podcast?.slug] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+    
+    // Ensure that the player is shown on default
     useEffect(() => {
         setHidePlayer(false);
     })
-    const currentPodcast = podcast;
 
-    // Data extraction (same as main component)
-    const slug = currentPodcast?.slug ?? "";
-    const title = currentPodcast?.title ?? "Untitled Podcast";
-    const imageUrl = 
-        (currentPodcast?.imageUrl && currentPodcast.imageUrl.trim() !== "") 
-        ? currentPodcast.imageUrl 
-        : "/logo-icon.svg";
-    const hostName = currentPodcast?.hostName ?? "Menata Ulang";
-    const alt = currentPodcast?.title ?? "Podcast Image";
-    const description = currentPodcast?.description ?? "A description describing the main point of the podcast";
-    const date = currentPodcast?.publishedAt 
-        ? formatDate(new Date(currentPodcast.publishedAt)) 
-        : formatDate(new Date());
-    const audioUrl = currentPodcast?.audioUrl ?? "";
-    const durationSeconds = currentPodcast?.duration ?? 0;
-    const heartsCount = currentPodcast?.heartsCount ?? 100;
-    const transcript = currentPodcast?.transcript ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget odio varius, rutrum mauris sed, auctor enim. Sed consequat, quam ut volutpat imperdiet, nunc sem pulvinar nulla, in mollis nisl odio vitae metus. Cras a eleifend sapien. Quisque blandit ante odio. Vivamus fringilla elit ac consequat vehicula. Vivamus laoreet rhoncus turpis in commodo. Pellentesque fermentum nisl in sagittis euismod. Integer vel vehicula dolor. Nam a urna vel sem tempus ultricies. Vestibulum ut tortor interdum, pharetra libero eget, commodo ipsum. Pellentesque posuere sem at arcu hendrerit, eget porta elit posuere. Nullam sagittis pulvinar nunc, a fermentum lectus egestas in.";
+    const handlePlayTrack = () => {
+        if (!playerTrack) return;
+        playTrackKeepPlaylist(playerTrack);
+    }
+
+    const handleAddToPlaylist = () => {
+        if (!playerTrack) return;
+        addToPlaylist(playerTrack);
+    }
+
+
+    const handlePlayNext = () => {
+        if (!playerTrack) return;
+        addToPlaylistNext(playerTrack);
+    }
 
     return (
         <div className="flex flex-col gap-8">
@@ -62,15 +84,24 @@ export function ExplorePodcastSlugDesktopView({ podcast }: { podcast?: ExplorePo
                                             {title}
                                         </h1>
 
-                                        <div className="flex flex-row gap-2 items-center">
+                                        <div className="flex flex-row gap-1 items-center">
                                             {/** Heart */}
                                             <div className="text-zinc-500">
-                                                <Heart size={32} />
+                                                <Heart size={28} />
                                             </div>
                                             {/** Dropdown */}
-                                            <div className="text-zinc-500">
-                                                <EllipsisVertical size={30}/>
-                                            </div>
+                                            <ExplorePodcastSlugDropdownDesktop
+                                                onAddToPlaylist={handleAddToPlaylist}
+                                                onPlayNext={handlePlayNext}
+                                                onShare={() => {/* share logic */}}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="text-zinc-500 hover:text-zinc-800 transition-colors outline-none"
+                                                >
+                                                    <EllipsisVertical size={24} />
+                                                </button>
+                                            </ExplorePodcastSlugDropdownDesktop>
                                         </div>
                                     </div>
 
@@ -93,35 +124,15 @@ export function ExplorePodcastSlugDesktopView({ podcast }: { podcast?: ExplorePo
                                     <div className="text-lg text-zinc-400">
                                         <span>{formatTimeSentence(durationSeconds)}</span>
                                     </div>
-                                    <ExplorePodcastPlayButton 
-                                        track={{
-                                            id: slug,
-                                            title,
-                                            artist: hostName,
-                                            src: audioUrl,
-                                            imageUrl,
-                                            duration: durationSeconds,
-                                        }}
+                                    {playerTrack && <ExplorePodcastPlayButton 
+                                        track={playerTrack}
                                         page="podcast"
                                         size={30}
                                         padding="p-3"
+                                        onPlay={handlePlayTrack}
                                     />
+                                    }
                                 </div>
-                                
-                                {/* <div className="w-full flex-1 flex items-center">
-                                    <div className="w-full">
-                                        <PodcastPlayerInline
-                                            track={{
-                                                id: slug,
-                                                title,
-                                                artist: hostName,
-                                                src: audioUrl,
-                                                imageUrl,
-                                                duration: durationSeconds,
-                                            }}
-                                        />
-                                    </div>
-                                </div> */}
                             </div>
                         </CardContent>
                     </div>

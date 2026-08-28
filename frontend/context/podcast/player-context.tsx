@@ -17,6 +17,7 @@ import { ExplorePodcastRecord, ExplorePodcastSummary } from "../../types/explore
 
 export interface PlayerTrack {
     id: string;
+    slug: string;
     title: string;
     artist: string;
     src: string;
@@ -49,7 +50,10 @@ interface PlayerContextValue {
 
     // Actions (State Modifiers)
     buildPlayerTrack: (track: ExplorePodcastRecord | ExplorePodcastSummary) => PlayerTrack;
+    
     playTrack: (track: PlayerTrack, options?: { autoplay?: boolean }) => void;
+    playTrackKeepPlaylist: (track: PlayerTrack) => void;
+
     loadTrack: (track: PlayerTrack) => void;
     togglePlayPause: () => void;
     next: () => void;
@@ -66,10 +70,12 @@ interface PlayerContextValue {
     toggleViewPlaylist: () => void;
     playPlaylist: (startIndex?: number) => void;
     setPlaylist: (playlist: PlayerTrack[]) => void;
-    addToPlaylist: (track: PlayerTrack, additionalTracks: PlayerTrack[], options?: { autoplay?: boolean }) => void;
+    
+    addToPlaylist: (newTrack: PlayerTrack) => void;
+    addToPlaylistNext: (newTrack: PlayerTrack) => void;
+
     replacePlaylist: (tracks: PlayerTrack[], startIndex?: number) => void;
     clearPlaylist: () => void;
-    playTrackWithQueue: (track: PlayerTrack, queue?: PlayerTrack[], startIndex?: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -209,7 +215,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
      * Handles nullish coalescing for optional fields.
      */
     function buildPlayerTrack(podcast: ExplorePodcastRecord | ExplorePodcastSummary): PlayerTrack {
-        const id = podcast.slug ?? "";
+        const id = crypto.randomUUID();
+        const slug = podcast.slug ?? "";
         const title = podcast.title ?? "Untitled Podcast";
         const artist = podcast.hostName ?? "Unknown Host";
         const audioUrl = podcast.audioUrl ?? "";
@@ -218,6 +225,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
         return {
             id,
+            slug,
             title,
             artist,
             src: audioUrl,
@@ -275,9 +283,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }, [currentTrack]);
     
     /**
-     * Plays a track with an optional full queue list and starting index.
+     * Plays a track with an optional full playlist queue and starting index.
      */
-    const playTrackWithQueue = useCallback((track: PlayerTrack, queue?: PlayerTrack[], startIndex?: number) => {
+    const playTrackInPlaylist = useCallback((track: PlayerTrack, queue?: PlayerTrack[], startIndex?: number) => {
         pendingAutoPlayRef.current = true;
 
         if (queue && queue.length > 0) {
@@ -307,6 +315,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             setIsPlaying(true);
         }
     }, [replacePlaylist]);
+
+    /**
+     * Play newly selected track but keep the existing playlist
+     * Behaviour:
+     * - It will replace playlist with the selected track first followed by the existing playlist
+     */
+    const playTrackKeepPlaylist = useCallback((track: PlayerTrack) => {
+        pendingAutoPlayRef.current = true;
+        const newPlaylist = tracks.length > 0 ? [track, ...tracks] : [track];
+        replacePlaylist(newPlaylist, 0);
+        setIsActive(true);
+    }, [replacePlaylist, tracks]);
     
     /**
      * Moves to the next track in the playlist.
@@ -469,17 +489,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
                 // Actions
                 buildPlayerTrack,
+                
                 playTrack,
+                playTrackKeepPlaylist,
+                
                 loadTrack,
                 setPlaylist,
                 playPlaylist,
-                addToPlaylist: (track, additionalTracks) => {
-                    // Appends the new track to the end of the existing playlist (or creates new if empty)
-                    setPlaylist([...additionalTracks, track]);
+                addToPlaylist: (newTrack: PlayerTrack) => {
+                    setPlaylist([...tracks, newTrack]);
+                },
+                addToPlaylistNext: (newTrack: PlayerTrack) => {
+                    setTracks((prev) => {
+                        const insertAt = currentIndex + 1;
+                        const next = [...prev];
+                        next.splice(insertAt, 0, newTrack);
+                        return next;
+                    });
                 },
                 replacePlaylist,
                 clearPlaylist,
-                playTrackWithQueue,
+
                 togglePlayPause,
                 next,
                 previous,

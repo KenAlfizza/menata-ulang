@@ -16,8 +16,6 @@ interface PodcastPlayerProps {
 
 export function PodcastPlayerInline({ track, onPrevious, onNext, isLive }: PodcastPlayerProps) {
     const {
-        currentTrack,
-        isActive,
         currentTime,
         duration,
         togglePlayPause,
