@@ -2,7 +2,8 @@
 
 import type { MouseEvent } from "react";
 import { Play, Pause } from "lucide-react";
-import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
+import { usePlayer } from "@/context/podcast/player-context.tsx";
+import { PlayerTrack } from "@/types/player.ts"
 import { PageType } from "@/types/explore/explore.ts";
 
 interface ExplorePodcastPlayButtonProps {
@@ -25,14 +26,13 @@ export const playButtonBgMap = {
 
 export function ExplorePodcastPlayButton({
     track,
-    hidePlayer,
     page,
     size,
     padding,
     isCurrent,
     onPlay,
 }: ExplorePodcastPlayButtonProps) {
-    const { currentTrack, isPlaying, togglePlayPause, setHidePlayer, playTrackKeepPlaylist } = usePlayer();
+    const { currentTrack, isPlaying, togglePlayPause, playTrackKeepPlaylist } = usePlayer();
 
     const isCurrentTrack = isCurrent ?? (currentTrack?.slug === track.slug);
 
@@ -45,19 +45,12 @@ export function ExplorePodcastPlayButton({
         e.preventDefault();
         e.stopPropagation();
         if (isDisabled) return;
-
+        
         if (isCurrentTrack) {
             togglePlayPause();
-        } else if (onPlay) {
-            onPlay();
         } else {
+            if (onPlay) onPlay();
             playTrackKeepPlaylist(track);
-        }
-
-        if (hidePlayer) {
-            setHidePlayer(true);
-        } else {
-            setHidePlayer(false);
         }
     };
 

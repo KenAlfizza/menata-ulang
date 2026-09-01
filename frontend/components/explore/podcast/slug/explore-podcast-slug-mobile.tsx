@@ -1,72 +1,52 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
 import { ArrowUpRightFromSquare, EllipsisVertical, Heart, Podcast } from "lucide-react";
 
-import { formatDate } from "@/utils/format-date.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { ExplorePodcastRecord } from "@/types/explore/podcast.ts";
 import { PodcastPlayerInline } from "@/components/explore/podcast/player/explore-podcast-player-inline.tsx";
-import { usePlayer } from "@/context/podcast/player-context.tsx";
 import { ScrollTrigger } from "@/components/common/scroll-trigger.tsx";
 import { ExplorePodcastPlayButton } from "../explore-podcast-play.tsx";
 import { formatTimeSentence } from "@/utils/format-time.ts";
+import { useExplorePodcastSlug } from "@/hooks/explore/podcast/use-explore-podcast-slug.ts";
+import { useEffect } from "react";
 
-export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePodcastRecord }) {
-    const router = useRouter();
-    const { currentTrack, setHidePlayer, isActive, next, previous } = usePlayer();
-    const currentPodcast = podcast
+export function ExplorePodcastSlugMobileView({ podcast }: { podcast: ExplorePodcastRecord }) {
+    const {
+        slug,
+        title,
+        imageUrl,
+        hostName,
+        alt,
+        description,
+        date,
+        audioUrl,
+        durationSeconds,
+        transcript,
+        
+        isLive,
 
-    const slug = currentPodcast?.slug ?? "";
-    const title = currentPodcast?.title ?? "Untitled Podcast";
-    const imageUrl = 
-        (currentPodcast?.imageUrl && currentPodcast.imageUrl.trim() !== "") 
-        ? currentPodcast.imageUrl 
-        : "/logo-icon.svg";
-    const hostName = currentPodcast?.hostName ?? "Menata Ulang";
-    const alt = currentPodcast?.title ?? "Podcast Image";
-    const description = currentPodcast?.description ?? "A description describing the main point of the podcast";
-    const date = currentPodcast?.publishedAt 
-        ? formatDate(new Date(currentPodcast.publishedAt)) 
-        : formatDate(new Date());
-    const audioUrl = currentPodcast?.audioUrl ?? "";
-    const durationSeconds = currentPodcast?.duration ?? 0;
-    const transcript = currentPodcast?.transcript ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget odio varius, rutrum mauris sed, auctor enim. Sed consequat, quam ut volutpat imperdiet, nunc sem pulvinar nulla, in mollis nisl odio vitae metus. Cras a eleifend sapien. Quisque blandit ante odio. Vivamus fringilla elit ac consequat vehicula. Vivamus laoreet rhoncus turpis in commodo. Pellentesque fermentum nisl in sagittis euismod. Integer vel vehicula dolor. Nam a urna vel sem tempus ultricies. Vestibulum ut tortor interdum, pharetra libero eget, commodo ipsum. Pellentesque posuere sem at arcu hendrerit, eget porta elit posuere. Nullam sagittis pulvinar nunc, a fermentum lectus egestas in.";
+        handlePlayMobile,
+        handleNextMobile,
+        handlePreviousMobile,
+        setPlayerVisibility,
+    } = useExplorePodcastSlug(podcast);
 
-    // Navigation between tracks
-    const pendingNavRef = useRef(false);
-    
+    // Hide the player when the page is live on first load
     useEffect(() => {
-        if (!pendingNavRef.current) return;
-        if (!currentTrack?.id || currentTrack.id === slug) return;
-
-        router.push(`/explore/podcast/${currentTrack.id}`);
-    }, [currentTrack?.id, slug, router]);
-
-    const handleNext = () => {
-        pendingNavRef.current = true;
-        next();
-    };
-
-    const handlePrevious = () => {
-        pendingNavRef.current = true;
-        previous();
-    };
-
-    // Determine whether to show player or the play button
-    const isLive = isActive && (currentTrack?.id == slug || pendingNavRef.current);
+        if (isLive) setPlayerVisibility(false);
+    }, [slug])
 
     return (
         <div className="flex flex-col gap-4">
             {/* Top Section: Image + Meta + Player */}
             <ScrollTrigger 
                 onViewportChange={(inView) => {
-                    if (!isLive) {
-                        setHidePlayer(false);
+                    if (isLive) {
+                        setPlayerVisibility(!inView);
                     } else {
-                        setHidePlayer(inView);
+                        setPlayerVisibility(true);
                     }
                 }}
             >
@@ -124,12 +104,24 @@ export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePod
                                         </p>
                                     </div>
 
-                                    {!isLive ? (
+                                    { isLive ? (
+                                    <div className="w-full flex-1 flex items-center p-2">
+                                        <div className="w-full">
+                                            <PodcastPlayerInline
+                                                onNext={handleNextMobile}
+                                                onPrevious={handlePreviousMobile}
+                                            />
+                                        </div>
+                                    </div>
+                                    ) 
+                                    : 
+                                    (
                                     <div className="flex flex-row justify-between items-center">
                                         <span className="text-zinc-600">{formatTimeSentence(durationSeconds)}</span>
                                         <ExplorePodcastPlayButton 
                                             track={{
                                                 id: slug,
+                                                slug,
                                                 title,
                                                 artist: hostName,
                                                 src: audioUrl,
@@ -139,26 +131,8 @@ export function ExplorePodcastSlugMobileView({ podcast }: { podcast?: ExplorePod
                                             page="podcast"
                                             size={30}
                                             padding="p-3"
-                                            hidePlayer
+                                            onPlay={handlePlayMobile}
                                         />   
-                                    </div>
-                                    ) : (
-                                    <div className="w-full flex-1 flex items-center p-2">
-                                        <div className="w-full">
-                                            <PodcastPlayerInline
-                                                track={{
-                                                    id: slug,
-                                                    title,
-                                                    artist: hostName,
-                                                    src: audioUrl,
-                                                    imageUrl,
-                                                    duration: durationSeconds,
-                                                }}
-                                                onNext={handleNext}
-                                                onPrevious={handlePrevious}
-                                                isLive={isLive}
-                                            />
-                                        </div>
                                     </div>
                                     )}
                                 </div>

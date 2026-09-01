@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { ExplorePodcastSummary } from "@/types/explore/podcast.ts";
 import { ApiError } from "@/types/error.ts";
-import { getPodcastPopular, getPodcasts } from "../../services/explore/podcast.ts";
-import { ExploreFilter } from "../../types/explore/explore.ts";
+import { getPodcastPopular, getPodcasts } from "@/services/explore/podcast.ts";
+import { ExploreFilter } from "@/types/explore/explore.ts";
 
 export function useExplorePodcast() {
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
@@ -43,7 +43,7 @@ export function useExplorePodcast() {
 
                 setRecentPodcasts(recentResult.items);
                 setPopularPodcast(popularResult);
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Failed to load featured podcasts:", err);
             } finally {
                 setIsLoadingFeatured(false);
@@ -73,7 +73,7 @@ export function useExplorePodcast() {
                 setTotalCount(feedResult.total);
                 setPage(feedResult.page);
                 setTotalPages(feedResult.totalPages);
-            } catch (err: any) {
+            } catch (err) {
                 const apiError = err as ApiError;
                 setError(apiError);
             } finally {

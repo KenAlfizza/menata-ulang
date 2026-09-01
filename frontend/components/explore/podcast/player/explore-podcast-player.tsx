@@ -10,9 +10,9 @@ export function ExplorePodcastPlayer({ page }: ExplorePodcastPlayerProps) {
     const isMobile = useIsMobile();
     const playerProps = usePlayer();
 
-    const { isActive, currentTrack, hidePlayer } = playerProps;
+    const { isActive, currentTrack, isVisible } = playerProps;
 
-    if (!isActive || !currentTrack || hidePlayer) return null;
+    if (!isActive || !currentTrack || !isVisible) return null;
 
     const viewProps: PodcastPlayerViewProps = {
         ...playerProps,

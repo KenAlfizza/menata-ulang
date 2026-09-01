@@ -107,6 +107,7 @@ export function ExplorePodcastMobileCard({ podcast, feedPodcasts, isLoading = fa
                         <ExplorePodcastPlayButton
                             track={{
                                 id: String(slug),
+                                slug,
                                 title,
                                 artist: hostName,
                                 src: audioUrl,

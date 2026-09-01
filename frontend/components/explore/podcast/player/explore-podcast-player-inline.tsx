@@ -1,20 +1,18 @@
 "use client";
 
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lucide-react";
-import { usePlayer, type PlayerTrack } from "@/context/podcast/player-context.tsx";
+import { usePlayer } from "@/context/podcast/player-context.tsx";
 import { formatTime } from "@/utils/format-time.ts";
 import { playButtonBgMap } from "../explore-podcast-play.tsx";
 import { accentColorMap, sliderColorMap, thumbColorMap } from "./explore-podcast-player-config.tsx";
 
 interface PodcastPlayerProps {
-    track: PlayerTrack;
     showHost?: boolean;
     onPrevious: () => void;
     onNext: () => void;
-    isLive: boolean;
 }
 
-export function PodcastPlayerInline({ track, onPrevious, onNext, isLive }: PodcastPlayerProps) {
+export function PodcastPlayerInline({ onPrevious, onNext }: PodcastPlayerProps) {
     const {
         currentTime,
         duration,
@@ -28,8 +26,8 @@ export function PodcastPlayerInline({ track, onPrevious, onNext, isLive }: Podca
         setIsSeeking,
     } = usePlayer();
 
-    const displayDuration = isLive ? duration : (track.duration ?? 0);
-    const displayCurrentTime = isLive ? currentTime : 0;
+    const displayDuration = duration;
+    const displayCurrentTime = currentTime;
     const progressPct = displayDuration > 0 ? (displayCurrentTime / displayDuration) * 100 : 0;
 
     const activeSliderColors = sliderColorMap.podcast;

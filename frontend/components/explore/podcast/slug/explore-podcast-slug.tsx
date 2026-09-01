@@ -5,7 +5,7 @@ import { ExplorePodcastSlugDesktopView } from "./explore-podcast-slug-desktop.ts
 import { ExplorePodcastSlugSkeletonMobile, ExplorePodcastSlugSkeletonDesktop } from "./explore-podcast-slug-skeleton.tsx";
 
 interface PodcastCardProps {
-    podcast?: ExplorePodcastRecord;
+    podcast: ExplorePodcastRecord;
     isLoading?: boolean;
 }
 

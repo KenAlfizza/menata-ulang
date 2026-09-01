@@ -4,7 +4,7 @@ import { ExploreSearchBar } from "../explore-searchbar.tsx";
 import { ExplorePodcastFeed } from "./explore-podcast-feed.tsx";
 import { ExplorePodcastPopular } from "./explore-podcast-popular.tsx";
 import { ExplorePodcastRecent } from "./explore-podcast-recent.tsx";
-import { useExplorePodcast } from "@/hooks/explore/use-explore-podcast.ts";
+import { useExplorePodcast } from "@/hooks/explore/podcast/use-explore-podcast.ts";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 
 export function ExplorePodcast() {

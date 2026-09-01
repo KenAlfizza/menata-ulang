@@ -16,25 +16,27 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
         router.push(`/explore/${newPage}`, { scroll: false });
     }, [router]);
 
-    const { setHidePlayer, hidePlayer, isActive } = usePlayer();
+    const { isActive, isVisible, setVisibility } = usePlayer();
     useEffect(() => {
-        setHidePlayer(false);
-    })
+        setVisibility(true);
+    }, [router])
 
-    if (isMobile) return (
-        <ExploreBackground>
-            <ExploreNavbar route="explore"/>
-            <div className="w-full flex justify-center items-center">
-                <div className="w-full pt-20 p-6 flex flex-col">
-                    <ExploreNavigation 
-                        onNavigate={handleNavigate} 
-                    />
-                    {children}
-                    {!hidePlayer && isActive && <div className="w-full h-18"></div>}
+    if (isMobile)  {
+        return (
+            <ExploreBackground>
+                <ExploreNavbar route="explore"/>
+                <div className="w-full flex justify-center items-center">
+                    <div className="w-full pt-20 p-6 flex flex-col">
+                        <ExploreNavigation 
+                            onNavigate={handleNavigate} 
+                        />
+                        {children}
+                        {isVisible && isActive && <div className="w-full h-18"></div>}
+                    </div>
                 </div>
-            </div>
-        </ExploreBackground>
-    );
+            </ExploreBackground>
+        );
+    }
 
     return (
         <ExploreBackground>
@@ -45,7 +47,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
                         onNavigate={handleNavigate} 
                     />
                     {children}
-                    {!hidePlayer && isActive && <div className="w-full h-18"></div>}
+                    {isVisible && isActive && <div className="w-full h-18"></div>}
                 </div>
             </div>
         </ExploreBackground>

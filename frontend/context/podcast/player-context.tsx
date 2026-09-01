@@ -14,18 +14,7 @@ import {
 import { ExplorePodcastRecord, ExplorePodcastSummary } from "../../types/explore/podcast.ts";
 
 // --- Types & Interfaces ---
-
-export interface PlayerTrack {
-    id: string;
-    slug: string;
-    title: string;
-    artist: string;
-    src: string;
-    imageUrl?: string;
-    duration?: number;
-}
-
-type RepeatMode = "off" | "all" | "one";
+import { PlayerTrack, RepeatMode } from "@/types/player.ts";
 
 /**
  * Defines all available state and actions exposed to components via usePlayer().
@@ -45,7 +34,7 @@ interface PlayerContextValue {
     isShuffled: boolean;
     repeatMode: RepeatMode;
     audioRef: RefObject<HTMLAudioElement | null>;
-    hidePlayer: boolean;
+    isVisible: boolean;
     isViewPlaylist: boolean;
 
     // Actions (State Modifiers)
@@ -56,8 +45,8 @@ interface PlayerContextValue {
 
     loadTrack: (track: PlayerTrack) => void;
     togglePlayPause: () => void;
-    next: () => void;
-    previous: () => void;
+    next: () => PlayerTrack | null;
+    previous: () => PlayerTrack | null;
     seek: (time: number) => void;
     setIsSeeking: (seeking: boolean) => void;
     setVolume: (volume: number) => void;
@@ -65,7 +54,7 @@ interface PlayerContextValue {
     toggleShuffle: () => void;
     cycleRepeatMode: () => void;
     closePlayer: () => void;
-    setHidePlayer: (hide: boolean) => void;
+    setVisibility: (value: boolean) => void;
     
     toggleViewPlaylist: () => void;
     playPlaylist: (startIndex?: number) => void;
@@ -100,7 +89,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const [isMuted, setIsMuted] = useState(false);
     const [isShuffled, setIsShuffled] = useState(false);
     const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
-    const [hidePlayer, setHidePlayer] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
     const [isViewPlaylist, setIsViewPlaylist] = useState(false);
 
     // Derived state: Get the current track object safely
@@ -335,22 +324,32 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
      * - If not shuffled: Increments index cyclically.
      */
     const next = useCallback(() => {
-        if (tracks.length === 0) return;
+        if (tracks.length === 0) return null;
         pendingAutoPlayRef.current = true;
-        
+
+        let nextIndex: number;
         if (isShuffled) {
-            let nextIndex = Math.floor(Math.random() * tracks.length);
+            nextIndex = Math.floor(Math.random() * tracks.length);
             // Ensure the next track isn't the same as the current one
             if (tracks.length > 1) {
                 while (nextIndex === currentIndex) {
                     nextIndex = Math.floor(Math.random() * tracks.length);
                 }
             }
-            setCurrentIndex(nextIndex);
         } else {
-            setCurrentIndex((prev) => (prev + 1) % tracks.length);
+            nextIndex = (currentIndex + 1) % tracks.length;
         }
-    }, [tracks.length, isShuffled, currentIndex]);
+
+        setCurrentIndex(nextIndex);
+
+        const audio = audioRef.current;
+        if (audio) {
+            audio.currentTime = 0;
+            setCurrentTime(0);
+        }
+
+        return tracks[nextIndex];
+    }, [tracks, isShuffled, currentIndex]);
 
     /**
      * Moves to the previous track in the playlist.
@@ -359,16 +358,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
      * - Otherwise, moves to the previous index cyclically.
      */
     const previous = useCallback(() => {
-        if (tracks.length === 0) return;
+        if (tracks.length === 0) return null;
         const audio = audioRef.current;
         if (audio && audio.currentTime > 3) {
             audio.currentTime = 0;
             setCurrentTime(0);
-            return;
+            return null;
         }
+
         pendingAutoPlayRef.current = true;
-        setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
-    }, [tracks.length]);
+        const newIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+        setCurrentIndex(newIndex);
+
+        if (audio) {
+            audio.currentTime = 0;
+            setCurrentTime(0);
+        }
+
+        return tracks[newIndex];
+    }, [tracks, currentIndex]);
 
     /**
      * Handles the 'ended' event of the audio track.
@@ -460,8 +468,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setDuration(0);
     }, []);
 
-    const handleSetHidePlayer = useCallback((hide: boolean) => {
-        setHidePlayer(hide);
+    const setVisibility = useCallback((value: boolean) => {
+        setIsVisible(value);
     }, []);
 
     const toggleViewPlaylist = useCallback(() => setIsViewPlaylist((p) => !p), []);
@@ -484,7 +492,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 isShuffled,
                 repeatMode,
                 audioRef,
-                hidePlayer,
+                isVisible,
                 isViewPlaylist,
 
                 // Actions
@@ -522,7 +530,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 toggleShuffle,
                 cycleRepeatMode,
                 closePlayer,
-                setHidePlayer: handleSetHidePlayer,
+                setVisibility,
                 toggleViewPlaylist,
             }}
         >

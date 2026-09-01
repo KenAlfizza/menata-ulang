@@ -1,12 +1,5 @@
 import { PageType } from "@/types/explore/explore.ts";
-
-export interface Track {
-    id: string;
-    title: string;
-    artist: string;
-    src: string;
-    imageUrl?: string;
-}
+import { PlayerTrack } from "@/types/player.ts";
 
 // Props for the main entry point component
 export interface ExplorePodcastPlayerProps {
@@ -15,7 +8,7 @@ export interface ExplorePodcastPlayerProps {
 
 // Props shared by both Mobile and Desktop views
 export interface PodcastPlayerViewProps extends ExplorePodcastPlayerProps {
-    currentTrack: Track;
+    currentTrack: PlayerTrack;
     isPlaying: boolean;
     currentTime: number;
     duration: number;

@@ -38,7 +38,7 @@ export function ExplorePodcastPlayerMobile({
             {/* Track Info & Close */}
             <div className="flex items-center justify-between w-full min-w-0">
                  <Link
-                    href={`/explore/podcast/${currentTrack.id}`}
+                    href={`/explore/podcast/${currentTrack.slug}`}
                     className="absolute inset-0 z-0 rounded-md cursor-pointer"
                     aria-label={`View ${currentTrack.title}`}
                 />
